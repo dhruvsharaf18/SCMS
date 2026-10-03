@@ -45,8 +45,6 @@ import StaffKitchen from './pages/staff/StaffKitchen'
 import StaffReservations from './pages/staff/StaffReservations'
 import StaffLeads from './pages/staff/StaffLeads'
 import StaffPayments from './pages/staff/StaffPayments'
-import StaffInvoices from './pages/staff/StaffInvoices'
-import StaffExpenses from './pages/staff/StaffExpenses'
 import StaffReports from './pages/staff/StaffReports'
 import StaffHR from './pages/staff/StaffHR'
 import StaffAudit from './pages/staff/StaffAudit'
@@ -127,8 +125,6 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
                 <Route path="/staff/reservations" element={<StaffReservations />} />
                 <Route path="/staff/leads" element={<StaffLeads />} />
                 <Route path="/staff/payments" element={<StaffPayments />} />
-                <Route path="/staff/invoices" element={<StaffInvoices />} />
-                <Route path="/staff/expenses" element={<StaffExpenses />} />
                 <Route path="/staff/reports" element={<StaffReports />} />
                 <Route path="/staff/hr" element={<StaffHR />} />
                 <Route path="/staff/audit" element={<StaffAudit />} />
