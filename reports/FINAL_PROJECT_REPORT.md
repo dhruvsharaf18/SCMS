@@ -7,6 +7,8 @@
 **Scope**: `FRONTEND_DIR` (`frontend/`) and static asset configuration  
 
 > Correction note: this revision was checked against the code (backend seed, `backend/app/security.py`, `backend/app/routers/auth.py`, `backend/app/config.py`, `openapi.json`, `frontend/src`), `docs/SRS.md`, `docs/PRD.md` and `reports/live_checks.md`. Anything that could not be confirmed from those sources is marked **not verified**.
+>
+> Revision 2026-10-03: updated for fixes F1-F8 (commits `b0c09bf`..`c53c10c`): Sections A (mock-mode correction, commits, check results), B-1, B-20, C, E, I (steps 2 and 12-17) and J. Docker was not started; nothing in this revision was verified live.
 
 ---
 
@@ -31,9 +33,11 @@ The backend uses a **server-side session cookie**, not JWT access/refresh tokens
 - The frontend keeps only the returned `user` object in React state (`frontend/src/lib/auth-context.tsx:28-66`) and restores it on reload via `GET /auth/me` (`auth-context.tsx:41-54`). All requests use `credentials: 'include'` (`client.ts:52-56`). There is no token in JavaScript, no `Authorization` header and no refresh call.
 
 ### Data source (mock mode)
-- The frontend calls the real API unless `VITE_USE_MOCKS` is set to the string `"true"` at build time (`frontend/src/api/hooks/index.ts:108`).
+- Correction: before commit `950eac4` this section said the frontend always used the real API unless `VITE_USE_MOCKS` was `"true"`. That was wrong: 20 hooks (members list/lookup/create, products, low stock, shop order create/cancel, restock, product create/update, social sessions/join/leave, member payments and orders, court prices, public availability, public products, public product, enquiry) returned mock data unconditionally.
+- Since `950eac4` every hook calls the real API unless `VITE_USE_MOCKS` is the string `"true"` at build time (`frontend/src/api/hooks/index.ts:82`). Mock mode loads `mocks/store.ts` only through `import('../../mocks/store')` (`hooks/index.ts:85`); there is no static import of `frontend/src/mocks/` anywhere in `frontend/src`.
+- Verified on the production build: `frontend/dist/assets` has one JS chunk and no `store-*.js` chunk; the mock-only product description `Advanced offensive badminton racket` (`mocks/seed-data.ts:60`), the mock member name `Rahul Sharma` and the function name `getMockProducts` each have 0 matches in `dist`. (`Yonex Astrox 88` does appear, because the real presentation layer and `RKT-001.svg` use the product name.) A build with `VITE_USE_MOCKS=true` into a temp folder outside the repo emitted a separate `store-*.js` chunk that contains the mock description.
+- Where the API returns a different shape, adapters in `frontend/src/api/mappers.ts` fill the view types; the gaps are listed in Section E.
 - `VITE_USE_MOCKS` is not set in `.env`, `.env.example`, `frontend/Dockerfile`, `backend/Dockerfile`, `docker-compose.yml`, `docker-compose.dev.yml` or `frontend/vite.config.ts` (0 matches for `VITE_` in each). There is no `.env*` file inside `frontend/`.
-- Mock data and mock functions in `frontend/src/mocks/` are only called when `USE_MOCKS` is true. The module is still imported statically by `hooks/index.ts:106` for the dev error-simulation toggle (`useErrorSimulation`, `hooks/index.ts:111-117`). That toggle only affects mock functions (`mocks/store.ts:69-85`), and its buttons render only when `import.meta.env.DEV` is true.
 - The app never falls back to mock data on a network error: `request()` in `client.ts:50-59` turns a failed `fetch` into `ApiError(0, 'NETWORK_ERROR', ...)` and throws, and non-2xx responses also throw `ApiError` (`client.ts:61-70`).
 
 ### Git Commits on `frontend-hardening`
@@ -44,16 +48,30 @@ The backend uses a **server-side session cookie**, not JWT access/refresh tokens
 0bbdd8e security(enquiry): add hidden honeypot website field and client-side throttling (Item 12)
 8551edf docs(report): add final project report covering hardening, audit, and checklist
 633a78f docs: add live verification results
+fd8c6c4 docs(report): correct credentials, URLs, auth model and endpoint details
+b0c09bf fix(auth): honour safe same-origin ?next= path after login (F1)
+13a8707 fix(pwa): add the 192/512 manifest icons and link them as favicon (F3)
+950eac4 fix(mocks): load mocks/store only via dynamic import in mock mode and wire the mock-only hooks to the real API (F6)
+a77b3d1 fix(shop): product page Add to cart fills the shared cart instead of placing an order; Buy now opens checkout (F2)
+b9aca63 feat(audit): OWNER-only read-only audit log page with pagination and API filters (F4)
+da29e0e feat(social): staff social sessions page for OWNER/MANAGER: create, list with roster, cancel, plain-language 409s (F7)
+63d9e1b feat(courts): courts admin page for OWNER/MANAGER: list incl. inactive, create, rename/re-sport, (de)activate (F8)
+c53c10c fix(nav): remove the Invoices and Expenses placeholder routes and the unused PlaceholderPage (F5)
 ```
+The report update is committed after these. Nothing was pushed.
 
 ### Build, Typecheck, and Audit Verification
+Run on 2026-10-03 in `frontend/` after commit `c53c10c` (Node via `npm`; Docker not started).
+
 | Check | Command | Exit Code | Result Summary |
 |-------|---------|-----------|----------------|
-| **TypeScript Typecheck** | `npm run typecheck` | not verified | Not re-run for this correction. |
-| **Vite Production Build** | `npm run build` | not verified | Not re-run for this correction. An existing `frontend/dist/` (built 2026-10-04 01:32) contains 14 SVGs in `dist/products/`. Bundle sizes: not verified. |
-| **Secret Scan in Bundle** | PowerShell `Select-String` over `frontend/dist` for `SECRET_KEY`, `DATABASE_URL`, `argon2`, `ADMIN_PASSWORD`, `POSTGRES_PASSWORD`, `Club@12345` | n/a | 0 matches in the existing `dist/`. |
-| **Dependency Audit (all)** | `npm audit` | 1 | 9 vulnerabilities (3 moderate, 6 high). See B-20. |
-| **Dependency Audit (production)** | `npm audit --omit=dev` | 1 | 2 moderate (`react-router`, `react-router-dom`). See B-20. |
+| **TypeScript Typecheck** | `npm run typecheck` (`tsc --noEmit`) | 0 | No errors. |
+| **Vite Production Build** | `npm run build` (`vite build`) | 0 | 2495 modules; `dist/index.html` 0.64 kB, `dist/assets/index-*.css` 58.49 kB (gzip 10.13 kB), `dist/assets/index-*.js` 1,051.06 kB (gzip 273.84 kB). Vite warns that the JS chunk is over 500 kB (warning only). |
+| **Linter** | none | n/a | Not run: `frontend/package.json` has no lint script and no ESLint dependency or config exists. Adding one would need a new library, which was out of scope. |
+| **Mock code in bundle** | `rg -F` over `frontend/dist` | n/a | 0 matches for `Advanced offensive badminton racket`, `Rahul Sharma`, `getMockProducts`; no `store-*.js` chunk (see Section A, Data source). |
+| **Secret Scan in Bundle** | PowerShell `Select-String` over `frontend/dist` for `SECRET_KEY`, `DATABASE_URL`, `argon2`, `ADMIN_PASSWORD`, `POSTGRES_PASSWORD`, `Club@12345` | n/a | 0 matches in the earlier `dist/`; not re-run on the new build (not verified). |
+| **Dependency Audit (all)** | `npm audit` | 1 | 9 vulnerabilities (3 moderate, 6 high) at the previous revision; not re-run (not verified). See B-20. |
+| **Dependency Audit (production)** | `npm audit --omit=dev` | 1 | Re-run: 2 moderate (`react-router`, `react-router-dom`). See B-20. |
 
 ---
 
@@ -61,7 +79,7 @@ The backend uses a **server-side session cookie**, not JWT access/refresh tokens
 
 | # | Security Item | Status | Evidence (File, Line, or Command Output) |
 |---|---------------|--------|------------------------------------------|
-| 1 | **Hide API keys** | **VERIFIED** | `import.meta.env` usages in `frontend/src`: `VITE_USE_MOCKS` (`api/hooks/index.ts:108`) and `DEV` (`main.tsx:136`, `pages/public/LoginPage.tsx:208`, `pages/staff/StaffBookings.tsx:195`, `pages/staff/StaffBar.tsx:264`, `pages/staff/StaffKitchen.tsx:144`, `pages/staff/StaffShop.tsx:163`). Neither is a secret. Existing `dist/` scan: 0 secret matches. |
+| 1 | **Hide API keys** | **VERIFIED** | `import.meta.env` usages in `frontend/src` (re-checked after `c53c10c`): `VITE_USE_MOCKS` (`api/hooks/index.ts:82`) and `DEV` (`main.tsx:134`, `pages/public/LoginPage.tsx:207`, `pages/staff/StaffBookings.tsx:195`, `pages/staff/StaffBar.tsx:264`, `pages/staff/StaffKitchen.tsx:144`, `pages/staff/StaffShop.tsx:164`). Neither is a secret. Mock data is no longer in the production bundle (Section A). Earlier `dist/` secret scan: 0 matches. |
 | 2 | **Purge git secrets** | **VERIFIED** | `git log --all --full-history -- .env` returns 0 commits. `.gitignore` line 2 ignores `.env`. Only `.env.example` is committed. |
 | 3 | **Public DB key** | **N/A** | No client-side DB SDK. The frontend talks only to `/api/v1` via `frontend/src/api/client.ts:3`. |
 | 4 | **Row-level security** | **N/A** | Access control is server-side: `require_roles` (`backend/app/security.py:198-207`) and `assert_member_access` (`security.py:190-195`). |
@@ -80,7 +98,7 @@ The backend uses a **server-side session cookie**, not JWT access/refresh tokens
 | 17 | **Trim API responses** | **not verified** | `MemberOut` returns `id, member_code, full_name, phone, email, dob, emergency_contact, notes, status, membership` (`backend/app/routers/members.py:43-55`). It does not include `created_at`/`updated_at`, so the old claim was removed. Whether every returned field is displayed by the UI: not verified. |
 | 18 | **Security headers** | **VERIFIED** | `nginx.conf:8-12`: `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: no-referrer`, and CSP `default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; font-src 'self'; connect-src 'self'; object-src 'none'; frame-ancestors 'none'; base-uri 'self'`. Product SVGs are local and load under `'self'`. |
 | 19 | **Force HTTPS** | **REPORTED** | Not applicable to the local demo (plain http, no HSTS by design, `nginx.conf:8`). In production: terminate TLS, set `COOKIE_SECURE=true`, add HSTS and redirect HTTP to HTTPS (see Section D). |
-| 20 | **Scan dependencies** | **REPORTED** | `npm audit` (all dependencies): 9 vulnerabilities (3 moderate, 6 high), split into three groups. (1) `braces` (high) via `micromatch`, `fast-glob`, `chokidar` → `tailwindcss` 3.x; dev-only build tooling. (2) `esbuild` (moderate) via `vite` ≤6.4.2; dev-only, affects the dev server. (3) `react-router` and `react-router-dom` (moderate). `npm audit --omit=dev` (production dependencies only): **2 moderate**, `react-router` and `react-router-dom` (open redirect via backslash in `<Link>`/`useNavigate`, GHSA-wrjc-x8rr-h8h6; SSR hydration constructor injection, GHSA-337j-9hxr-rhxg, which needs SSR, and the app is client-only). So `react-router` is a **production** dependency, not dev-only. All fixes need breaking major upgrades (`tailwindcss` 4, `vite` 8, `react-router-dom` 7). `npm audit fix --force` was not run. Whether a plain `npm audit fix` was run earlier: not verified. |
+| 20 | **Scan dependencies** | **REPORTED** | `npm audit` (all dependencies): 9 vulnerabilities (3 moderate, 6 high), split into three groups. (1) `braces` (high) via `micromatch`, `fast-glob`, `chokidar` → `tailwindcss` 3.x; dev-only build tooling. (2) `esbuild` (moderate) via `vite` ≤6.4.2; dev-only, affects the dev server. (3) `react-router` and `react-router-dom` (moderate). `npm audit --omit=dev` (production dependencies only): **2 moderate**, `react-router` and `react-router-dom` (open redirect via backslash in `<Link>`/`useNavigate`, GHSA-wrjc-x8rr-h8h6; SSR hydration constructor injection, GHSA-337j-9hxr-rhxg, which needs SSR, and the app is client-only). So `react-router` is a **production** dependency, not dev-only. Mitigation for the backslash open redirect: the only user-controlled navigation target is `?next=` on the login page, and `safeNextPath` (`frontend/src/lib/utils.ts:39`) rejects any value containing `\`, starting with `//`, not starting with `/`, or containing control characters. All fixes need breaking major upgrades (`tailwindcss` 4, `vite` 8, `react-router-dom` 7). `npm audit fix --force` was not run. Whether a plain `npm audit fix` was run earlier: not verified. |
 | 21 | **Login credentials handling (A3)** | **DONE** | `LoginPage.tsx:77-83` clears the password in `finally`. `client.ts:96-110` documents the no-hash rationale. The password is sent only in the JSON POST body to `/auth/login` (`client.ts:108-110`). |
 
 ---
@@ -91,23 +109,23 @@ Status reflects what exists in `frontend/src` and the backend routers. "Page exi
 
 | Feature ID | PRD Feature Description | Priority | Frontend Status | Implementation Notes |
 |------------|-------------------------|----------|-----------------|----------------------|
-| **F-01** | Authentication & Roles | P0 | **BUILT** | Session-cookie login (`client.ts`, `auth-context.tsx`), login page with 423/429 handling (`LoginPage.tsx:66-72`), role-based routing to `/portal` or `/staff` (`LoginPage.tsx:59-64`), `RoleGuard.tsx`. The old "role switcher" claim was not found in code and was removed. |
+| **F-01** | Authentication & Roles | P0 | **BUILT** | Session-cookie login (`client.ts`, `auth-context.tsx`), login page with 423/429 handling, `RoleGuard.tsx`. After login the page goes to a safe `?next=` path if one is given (`LoginPage.tsx:31`, `safeNextPath` in `lib/utils.ts:39`: same-origin path only, no `//`, `\`, control characters or `/login` loop), otherwise to `/portal` or `/staff`. The old "role switcher" claim was not found in code and was removed. |
 | **F-02** | Member Registration & Plans | P0 | **BUILT** | `StaffMembers.tsx`, `StaffMemberDetail.tsx`, member card with QR (`PortalHome.tsx:3`, `:411`). Plan selector and discount display details: not verified. |
-| **F-03** | Court Availability & Booking | P0 | **BUILT** | `CourtScheduleGrid.tsx`, slot states FREE/BOOKED/SOCIAL/PAST (`backend/app/enums.py:79-85`). Live: race and validation checks passed (`live_checks.md`, checks 1-3). |
-| **F-04** | Friday Social Play | P1 | **PARTIAL** | Member join/leave in `PortalSocial.tsx`. Staff page `StaffSocial.tsx` is a placeholder (`PlaceholderPage`). |
-| **F-05** | Gear Shop & Stock (Counter) | P0 | **BUILT** | `StaffShop.tsx` (counter checkout, stock chips, link to product detail), `StaffStock.tsx`. Live: stock race check passed (`live_checks.md`, check 4). |
-| **F-06** | Online Shop Orders | P1 | **BUILT** | `PortalShop.tsx`: PICKUP/DELIVERY, delivery address required client-side (`PortalShop.tsx:200-201`) and server-side `ADDRESS_REQUIRED` (`PortalShop.tsx:233-234`). |
-| **A1 / A2** | Product Detail Pages & Photos | **Approved addition (not a PRD feature)** | **BUILT** | `/shop/:productId`, local SVG per SKU, 5 bullets per product, In stock / Out of stock, up to 4 related items (`ProductDetailPage.tsx:110-112`). |
+| **F-03** | Court Availability & Booking | P0 | **BUILT** | `CourtScheduleGrid.tsx`, slot states FREE/BOOKED/SOCIAL/PAST (`backend/app/enums.py:79-85`). Live: race and validation checks passed (`live_checks.md`, checks 1-3). Courts admin for OWNER/MANAGER: `StaffCourts.tsx` lists all courts including inactive (`GET /courts?include_inactive=true`), creates (`POST /courts {name, sport}`), renames or changes sport and deactivates/reactivates (`PATCH /courts/{id}`); `COURT_EXISTS` and `COURT_HAS_BOOKINGS` are shown in plain language. Delete is not offered because the API has no delete endpoint. |
+| **F-04** | Friday Social Play | P1 | **BUILT** | Member join/leave in `PortalSocial.tsx`, now on the real API (`POST /social-sessions/{id}/join`, `/leave`). Staff page `StaffSocial.tsx` (OWNER/MANAGER): create a session (court, date, start, end, capacity 1-100, fee), list sessions in a date range with players/capacity, fee and status, view the roster (`GET /social-sessions/{id}/participants`), cancel (`DELETE /social-sessions/{id}`). `SLOTS_NOT_FREE` (409) lists the clashing times in IST; `INVALID_SLOT`, `COURT_NOT_FOUND` and `ALREADY_CANCELLED` also have plain-language messages. Staff adding a member or guest to a session is not built. |
+| **F-05** | Gear Shop & Stock (Counter) | P0 | **BUILT** | `StaffShop.tsx` (counter checkout, stock chips, link to product detail), `StaffStock.tsx`; both now on the real API (`/products`, `/products/low-stock`, `POST /products`, `PATCH /products/{id}`, `POST /products/{id}/restock`, `POST /shop/orders`). SKU and stock are read-only in the edit form because `ProductUpdate` does not accept them. Live: stock race check passed (`live_checks.md`, check 4). |
+| **F-06** | Online Shop Orders | P1 | **BUILT** | `PortalShop.tsx`: PICKUP/DELIVERY, delivery address required client-side and server-side `ADDRESS_REQUIRED`. The cart is shared with the product page (`frontend/src/lib/cart-context.tsx`). |
+| **A1 / A2** | Product Detail Pages & Photos | **Approved addition (not a PRD feature)** | **BUILT** | `/shop/:productId`, local SVG per SKU, 5 bullets per product, In stock / Out of stock, up to 4 related items. "Add to Cart" adds one unit to the shared cart (member portal cart or staff counter cart) and never places an order; "Buy Now" adds the item and opens the member cart drawer (`/portal/shop?cart=open`) or the staff counter (`/staff/shop`). BAR_STAFF see a note instead of the buttons because they cannot buy. Logged-out users go to `/login?next=/shop/:productId` and come back after login. |
 | **F-07** | Bar POS, Kitchen & Tabs | P0 | **BUILT** | `StaffBar.tsx`, `StaffKitchen.tsx`; hooks for tables, kitchen status, tab and settle (`api/hooks/index.ts:474`, `:556`, `:591`, `:600`). UI behaviour: not verified. |
 | **F-08** | Public Website | P0 | **BUILT** | Routes `/`, `/about`, `/plans`, `/availability`, `/shop`, `/contact` (`main.tsx`). Public availability returns FREE/BUSY only (`backend/app/schemas.py:45`). |
 | **F-09** | Lead Management | P0 capture / P1 pipeline | **BUILT** | Public enquiry form with honeypot and throttle (`ContactPage.tsx`), staff leads board (`StaffLeads.tsx`). |
 | **F-10** | Payments Ledger & Owner Dashboard | P0 | **BUILT** | `StaffDashboard.tsx`, `StaffPayments.tsx`, `StaffReports.tsx`. Chart contents: not verified. |
-| **F-11** | Invoices & Business Clients | P1 | **NOT BUILT (frontend)** | `StaffInvoices.tsx` is a placeholder. Backend endpoints exist (`/clients`, `/invoices`, `openapi.json`). |
-| **F-12** | Expenses | P1 | **NOT BUILT (frontend)** | `StaffExpenses.tsx` is a placeholder. Backend endpoints exist (`/expenses`). |
+| **F-11** | Invoices & Business Clients | P1 | **NOT BUILT (frontend)** | The placeholder route `/staff/invoices` and `StaffInvoices.tsx` were removed (`c53c10c`); there was never a nav item. Backend endpoints exist (`/clients`, `/invoices`, `openapi.json`). |
+| **F-12** | Expenses | P1 | **NOT BUILT (frontend)** | The placeholder route `/staff/expenses` and `StaffExpenses.tsx` were removed (`c53c10c`); there was never a nav item. Backend endpoints exist (`/expenses`). |
 | **F-13** | Staff, Shifts, Leave, Payroll | P2 | **PARTIAL** | `StaffHR.tsx` uses only employee list/create/update hooks. No leave-approval, shift or payroll UI was found. Backend endpoints for all four exist (`openapi.json`). |
 | **F-14** | Notifications | P0 minimal | **BUILT** | Bell with unread count in `TopBar.tsx` (`useUnreadNotificationsCount`, `useNotifications`, `useMarkNotificationRead`). |
-| **F-15** | Security & Audit | P0 | **PARTIAL** | Security items: Section B. The audit-log viewer `StaffAudit.tsx` is a placeholder; backend `GET /audit-logs` (OWNER) exists (`backend/app/routers/payments.py:119-127`). |
-| **F-16** | Responsive Layout & PWA-lite | P0 | **PARTIAL** | In PRD (`docs/PRD.md:190`). Mobile bottom bar (`IconRail.tsx:55`), 44 px touch targets in `PublicLayout.tsx`, viewport/theme-color/manifest link (`frontend/index.html:5-7`), `frontend/public/manifest.webmanifest`. The manifest references `/icon-192.png` and `/icon-512.png`, which do not exist in `frontend/public/`. Layout down to 360 px: not verified. |
+| **F-15** | Security & Audit | P0 | **BUILT** | Security items: Section B. Audit log viewer `StaffAudit.tsx` at `/staff/audit` (nav item "Audit Log", OWNER only): read-only table from `GET /audit-logs` (`backend/app/routers/payments.py:119-155`) with time (IST), actor (employee name, "User #id" when the user is not an employee, "System" when null), action, target (entity #id) and details (`meta` keys and IP). 50 rows per page with Previous/Next; exact-match filters for action, target and actor, which the API supports. Loading, empty, error and forbidden states; non-owners see "Only the owner can view the audit log." without calling the API. |
+| **F-16** | Responsive Layout & PWA-lite | P0 | **PARTIAL** | In PRD (`docs/PRD.md:190`). Mobile bottom bar (`IconRail.tsx:55`), 44 px touch targets in `PublicLayout.tsx`, viewport/theme-color/manifest link, `frontend/public/manifest.webmanifest`. `frontend/public/icon-192.png` and `icon-512.png` now exist (brand blue `#3B82F6`→`#1D4ED8` rounded square with a white trophy) and are also linked as favicon and apple-touch-icon in `frontend/index.html`. Layout down to 360 px: not verified. |
 
 Not in PRD but present: dining reservations (`/portal/dining`, `/staff/reservations`, backend `/dining/*`). Approval status: not verified.
 
@@ -150,13 +168,25 @@ The following changes are recommended. As per scope rules, these files were not 
 
 ## E. Known Issues & Unverified Live Behavior
 
-1. **Live checks**: concurrency, validation, IDOR and RBAC checks were run against the stack (see Section K). Other end-to-end UI flows: not verified.
+Fixed in this revision and removed from this list: login ignoring `?next=` (F1, `b0c09bf`), missing manifest icons (F3, `13a8707`), mock store in the production bundle and hooks that always used mock data (F6, `950eac4`), "Add to Cart" placing a real order (F2, `a77b3d1`), placeholder Audit, Social and Courts pages (F4/F7/F8), placeholder Invoices and Expenses routes (F5, `c53c10c`).
+
+1. **No live run of the new UI**: Docker was not started for this revision, so none of F1-F8 was exercised against the running stack. Typecheck and build pass; behaviour against the real API is not verified. Section I lists the manual steps.
 2. **Dependency vulnerabilities**: see B-20. `react-router` (production) has 2 moderate advisories; `braces` and `esbuild` are dev-only tooling. All fixes need breaking major upgrades.
-3. **Login ignores `?next=`**: the product page sends logged-out users to `/login?next=/shop/:productId` (`ProductDetailPage.tsx:182`), but `LoginPage.tsx:59-64` always redirects to `/portal` or `/staff`.
-4. **"Add to Cart" on the product page places a real order**: `handleAddToCart` posts an ONLINE / PICKUP order with `payment_method: 'ONLINE_MOCK'` (`ProductDetailPage.tsx:185-215`). It does not add to a cart.
-5. **Placeholder staff pages**: `StaffCourts.tsx`, `StaffSocial.tsx`, `StaffInvoices.tsx`, `StaffExpenses.tsx`, `StaffAudit.tsx`.
-6. **Missing PWA icons**: `manifest.webmanifest` references `/icon-192.png` and `/icon-512.png`, which are not in `frontend/public/`.
-7. **Stale generated types**: `frontend/src/api/schema.d.ts` still contains `/api/v1/auth/refresh` and an `access_token` login response (lines 24-34, 3068-3071), but `openapi.json` contains neither.
+3. **No linter**: there is no ESLint setup or lint script in `frontend/`, so no lint result exists.
+4. **Removed placeholder routes (F5)**: `/staff/invoices` (`StaffInvoices.tsx`) and `/staff/expenses` (`StaffExpenses.tsx`), plus the now-unused `frontend/src/pages/PlaceholderPage.tsx`. Neither route had a nav item. `/staff/courts`, `/staff/social` and `/staff/audit` were placeholders and are now real pages, so they were kept.
+5. **API gaps bridged in the frontend** (`frontend/src/api/mappers.ts`, `frontend/src/api/hooks/index.ts`). Each is a workaround, not new API behaviour:
+   - `/public/products` returns no SKU or description (S-15). The SKU, used only for the product image and bullets, comes from a name map of the 14 seeded products (`lib/product-presentation.ts`); products added later show the placeholder image and no SKU line.
+   - There is no public single-product endpoint, so the product page reads `/public/products` and picks the id.
+   - Members cannot read `/products` (staff only) and never see stock counts (S-15), so a member's cart caps each line at 20 for in-stock items. The server still rejects an order that exceeds real stock with `OUT_OF_STOCK`.
+   - `ShopOrderOut` has no timestamp. "My orders" takes `created_at` from the member history feed (`GET /members/{id}/history`, up to 10 pages of 100); the staff counter receipt shows the time of the sale on the device.
+   - `/payments` is OWNER-only, so a member's recent payments come from their history feed; `source_id`, `tax_paise`, `reference` and `received_by` are not available there and are set to 0 or null (the portal does not display them).
+   - The roster (`/social-sessions/{id}/participants`) is staff-only and no endpoint tells a member which sessions they joined. The portal remembers joins made in the current tab (an `ALREADY_JOINED` reply also marks the session); after a reload the "Joined" state is lost until the member tries again. Cancelled sessions are hidden from members.
+   - `CourtPriceOut` has no id; the list index is used as the React key.
+   - Members list: the API has no tier filter, so the tier filter on `StaffMembers.tsx` is applied to the first 100 results in the browser.
+6. **Audit actor names**: names come from `GET /employees`, so actions by a member account (or a user without an employee record) show as "User #id".
+7. **Courts rename clash**: `PATCH /courts/{id}` does not check for a duplicate name (only `POST` does, `backend/app/services/booking.py:468-473`). Not verified what the database returns on a duplicate rename.
+8. **Bundle size**: the single JS chunk is 1,051 kB (273.8 kB gzip); Vite prints its 500 kB warning. Not split, to avoid changing the build setup.
+9. **Stale generated types**: `frontend/src/api/schema.d.ts` still contains `/api/v1/auth/refresh` and an `access_token` login response (lines 24-34, 3068-3071), but `openapi.json` contains neither.
 
 ---
 
@@ -260,9 +290,17 @@ Use this checklist for live manual validation. All URLs go through nginx at `htt
 - [ ] **Step**: On `/shop/:productId`, while logged out, click "Add to Cart" or "Buy Now".
 - [ ] **Verification**: Redirects to `/login?next=/shop/:productId`.
 - [ ] **Step**: Log in as `member1@club.test` / `Club@12345`.
-- [ ] **Verification**: Known issue: the browser goes to `/portal`, not back to the product (`LoginPage.tsx:59-64` ignores `next`). Navigate back to `http://localhost:8080/shop/:productId` manually; the badge "Member discount applied at checkout" appears.
-- [ ] **Step**: Click "Add to Cart".
-- [ ] **Verification**: The button shows "Added!". Note: this places a real ONLINE / PICKUP order (`ProductDetailPage.tsx:185-200`); check it under `/portal/orders`.
+- [ ] **Verification**: The browser returns to `/shop/:productId` (not `/portal`) and the badge "Member discount applied at checkout" appears.
+- [ ] **Step**: Note the order count under `/portal/orders`, go back to the product, click "Add to Cart" twice.
+- [ ] **Verification**: A toast "… added to your cart." appears and the button shows "Added!". `/portal/orders` has **no** new order. `/portal/shop` → cart drawer shows the product with quantity 2.
+- [ ] **Step**: Back on the product page, click "Buy Now".
+- [ ] **Verification**: The browser opens `/portal/shop` with the cart drawer already open and the product at quantity 3; the URL loses `?cart=open`. Placing the order from the drawer creates it under `/portal/orders`.
+- [ ] **Step**: Log out, log in as `desk@club.test`, open `/shop/:productId`, click "Add to Cart".
+- [ ] **Verification**: The cart starts empty for the new account; `/staff/shop` → "Counter Cart" shows the product. "Buy Now" goes to `/staff/shop`.
+- [ ] **Step**: Log in as `bar@club.test` and open `/shop/:productId`.
+- [ ] **Verification**: No cart buttons; the note "Shop orders are placed by members online or by front-desk staff at the counter." is shown.
+- [ ] **Step**: While logged out, open `http://localhost:8080/login?next=//evil.example` and log in; repeat with `?next=/%5Cevil.example` and `?next=https://evil.example`.
+- [ ] **Verification**: Each time the browser lands on `/portal` or `/staff`, never on another origin.
 
 ### 3. Delivery Order Address Validation
 - [ ] **Step**: In `http://localhost:8080/portal/shop`, add an item to the cart and open the cart drawer.
@@ -357,11 +395,59 @@ Set-Content -Path desk.json    -NoNewline -Value '{"email":"desk@club.test","pas
   ```
 - [ ] **Expected Output**: logout returns 200 `{"status":"ok"}` and a `Set-Cookie` that clears `ccms_session` (`backend/app/routers/auth.py:47-56`). The old cookie then returns 401 `NOT_AUTHENTICATED` because the session row is revoked (`backend/app/security.py:118-127`, `:170-171`). The reviewer verified this live.
 
+### 12. Manifest and Icons (no 404s)
+- [ ] **Step**: DevTools → **Network**, reload `http://localhost:8080/`, filter on `manifest` and `icon`.
+- [ ] **Verification**: `/manifest.webmanifest`, `/icon-192.png` (and `/icon-512.png` under **Application** → **Manifest**) return 200 with content type `image/png`; the tab shows the blue trophy favicon.
+
+### 13. Audit Log (OWNER only)
+- [ ] **Step**: Log in as `owner@club.test`, open **Audit Log** in the Finance section (`/staff/audit`).
+- [ ] **Verification**: A table with Time (IST), Actor, Action, Target and Details; "Page 1 of N · T entries" with Previous/Next. Times are IST.
+- [ ] **Step**: Type `COURT_CREATED` in the action box and click Apply; then click Clear. Pick an actor from "Any actor".
+- [ ] **Verification**: Only matching rows are shown; an unknown action shows "No audit entries match these filters".
+- [ ] **Step**: Log in as `manager@club.test` and open `/staff/audit` directly.
+- [ ] **Verification**: No "Audit Log" nav item; the page shows "Only the owner can view the audit log." and DevTools shows no `/audit-logs` request.
+
+### 14. Staff Social Play (OWNER / MANAGER)
+- [ ] **Step**: As `manager@club.test`, open **Social Play** (`/staff/social`), click "New session", choose a court, tomorrow, 18:00-20:00, capacity 8, fee 200, and create it.
+- [ ] **Verification**: A success toast; the session appears with 0 / 8 players, ₹200.00 and "Open".
+- [ ] **Step**: Create a second session on the same court, date and overlapping time.
+- [ ] **Verification**: The form shows "That court is already booked at 06:00 pm, … Pick another court or time." (409 `SLOTS_NOT_FREE`) and the modal stays open.
+- [ ] **Step**: Choose an end time before the start time and submit.
+- [ ] **Verification**: "The session must end after it starts." No request is sent.
+- [ ] **Step**: Log in as `member1@club.test`, join the session from `/portal/social`; log back in as manager and click "Players".
+- [ ] **Verification**: The roster drawer lists the member by name with the fee.
+- [ ] **Step**: Click "Cancel" on the session and confirm.
+- [ ] **Verification**: Status becomes "Cancelled"; the court slots are free again in `/staff/bookings`.
+
+### 15. Courts Admin (OWNER / MANAGER)
+- [ ] **Step**: As `manager@club.test`, open **Courts** (`/staff/courts`), click "Add court", enter `Tennis 1`.
+- [ ] **Verification**: "A court with that name already exists. Choose a different name." (409 `COURT_EXISTS`).
+- [ ] **Step**: Add `Tennis 9` (Tennis), then Edit it to `Padel 9` / Padel.
+- [ ] **Verification**: The row updates; the court appears in booking and availability grids.
+- [ ] **Step**: Deactivate a court that has a future booking.
+- [ ] **Verification**: "This court has N upcoming booking(s). Cancel them before deactivating the court." (409 `COURT_HAS_BOOKINGS`). Deactivating `Padel 9` works and its status chip becomes "Inactive".
+- [ ] **Step**: As `desk@club.test`, check the nav and open `/staff/courts` and `/staff/social` directly.
+- [ ] **Verification**: No Courts or Social Play nav items; both pages show the "Only owners and managers…" card.
+
+### 16. Removed Placeholder Routes
+- [ ] **Step**: As `owner@club.test`, open `http://localhost:8080/staff/invoices` and `/staff/expenses`.
+- [ ] **Verification**: Both fall through to the catch-all and redirect to `/`; no "coming soon" page exists.
+
+### 17. No Mock Code in the Production Bundle
+- [ ] **Command** (in `frontend/`, after `npm run build`):
+  ```powershell
+  rg -l -F "Advanced offensive badminton racket" dist
+  Get-ChildItem dist/assets -Name
+  ```
+- [ ] **Expected Output**: no file listed by `rg`; `dist/assets` has one `index-*.js` and one `index-*.css`, no `store-*.js`.
+
 ---
 
 ## J. Deviations from SRS
 
 Places where the implementation differs from `docs/SRS.md`:
+
+Checked again after F1-F8: every entry below is a backend, API-contract or generated-types item, and the frontend, the only code in scope, cannot fix it. None was fixed in this revision, so none was removed. The frontend issues fixed in this revision (F1-F8) were listed under Section E, not here.
 
 1. **Session cookie instead of JWT access + refresh tokens.** SRS S-02 (`SRS.md:497`) specifies a 15-minute HS256 access JWT plus a 7-day hashed, rotated refresh token. The implementation uses one opaque random session id in the `ccms_session` cookie, stored hashed, valid 12 hours, with no rotation (`backend/app/security.py:1-6`, `:100-115`; `backend/app/config.py:18`).
 2. **No `Authorization: Bearer` header.** SRS 3.2 (`SRS.md:141`) says all endpoints require `Authorization: Bearer <access_token>`. The implementation authenticates every request from the cookie (`security.py:162-178`).
