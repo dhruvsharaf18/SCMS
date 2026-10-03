@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import './index.css'
 
 import { AuthProvider } from './lib/auth-context'
+import { CartProvider } from './lib/cart-context'
 import { ToastProvider } from './components/ui/Toast'
 import { AppShell } from './components/layout/AppShell'
 import { PublicLayout } from './components/layout/PublicLayout'
@@ -71,6 +72,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
+        <CartProvider>
         <ToastProvider>
           <BrowserRouter>
             <Routes>
@@ -145,6 +147,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
             </Routes>
           </BrowserRouter>
         </ToastProvider>
+        </CartProvider>
       </AuthProvider>
     </QueryClientProvider>
   </React.StrictMode>,

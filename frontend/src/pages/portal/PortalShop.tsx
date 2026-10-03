@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import React, { useState, useMemo, useEffect } from 'react'
+import { useNavigate, Link, useSearchParams } from 'react-router-dom'
 import type {
   Product,
   ProductCategory,
@@ -19,6 +19,7 @@ import {
   calcShopTaxPaise,
 } from '../../lib/format'
 import { getProductPresentation } from '../../lib/product-presentation'
+import { useCart, type CartLine } from '../../lib/cart-context'
 import {
   Card,
   Button,
@@ -45,10 +46,7 @@ import {
   Search,
 } from 'lucide-react'
 
-interface CartItem {
-  product: Product
-  quantity: number
-}
+type CartItem = CartLine
 
 const CATEGORIES: { id: 'ALL' | ProductCategory; label: string }[] = [
   { id: 'ALL', label: 'All Items' },
@@ -79,9 +77,17 @@ export default function PortalShop() {
   const createOrderMutation = useCreateShopOrder()
   const { currentError, setSimulatedError } = useErrorSimulation()
 
-  // Cart state
-  const [cart, setCart] = useState<CartItem[]>([])
+  // Cart state (shared with the product page through CartProvider)
+  const { lines: cart, setLines: setCart } = useCart()
+  const [searchParams, setSearchParams] = useSearchParams()
   const [isCartOpen, setIsCartOpen] = useState(false)
+
+  useEffect(() => {
+    if (searchParams.get('cart') === 'open') {
+      setIsCartOpen(true)
+      setSearchParams({}, { replace: true })
+    }
+  }, [searchParams, setSearchParams])
   const [fulfilment, setFulfilment] = useState<ShopFulfilment>('PICKUP')
   const [deliveryAddress, setDeliveryAddress] = useState('')
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('ONLINE_MOCK')

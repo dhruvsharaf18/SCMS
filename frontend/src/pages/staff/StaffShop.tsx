@@ -30,13 +30,14 @@ import {
   Printer,
 } from 'lucide-react'
 import { cn } from '../../lib/utils'
+import { useCart } from '../../lib/cart-context'
 
 export default function StaffShop() {
   const [activeCategory, setActiveCategory] = useState<string>('ALL')
   const [searchQuery, setSearchQuery] = useState('')
 
   // Cart State
-  const [cart, setCart] = useState<{ product: Product; qty: number }[]>([])
+  const { lines: cart, setLines: setCart } = useCart()
   const [isMember, setIsMember] = useState(true)
   const [memberCodeInput, setMemberCodeInput] = useState('CC-000001')
   const [guestName, setGuestName] = useState('')
@@ -63,7 +64,7 @@ export default function StaffShop() {
     : 0
 
   // Integer cart totals
-  const subtotalPaise = cart.reduce((sum, item) => sum + item.product.price_paise * item.qty, 0)
+  const subtotalPaise = cart.reduce((sum, item) => sum + item.product.price_paise * item.quantity, 0)
   const discountPaise = calcDiscountPaise(subtotalPaise, discountPct)
   const totalPaise = subtotalPaise - discountPaise
   const taxPaise = calcTaxPaise(totalPaise, 5)
@@ -79,15 +80,15 @@ export default function StaffShop() {
     setCart((prev) => {
       const existing = prev.find((item) => item.product.id === product.id)
       if (existing) {
-        if (existing.qty >= product.stock_qty) {
+        if (existing.quantity >= product.stock_qty) {
           toast(`Cannot exceed available stock of ${product.stock_qty}`, 'warning')
           return prev
         }
         return prev.map((item) =>
-          item.product.id === product.id ? { ...item, qty: item.qty + 1 } : item
+          item.product.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
         )
       }
-      return [...prev, { product, qty: 1 }]
+      return [...prev, { product, quantity: 1 }]
     })
   }
 
@@ -97,16 +98,16 @@ export default function StaffShop() {
       prev
         .map((item) => {
           if (item.product.id === productId) {
-            const newQty = item.qty + delta
+            const newQty = item.quantity + delta
             if (newQty > item.product.stock_qty) {
               toast(`Only ${item.product.stock_qty} in stock`, 'warning')
               return item
             }
-            return { ...item, qty: newQty }
+            return { ...item, quantity: newQty }
           }
           return item
         })
-        .filter((item) => item.qty > 0)
+        .filter((item) => item.quantity > 0)
     )
   }
 
@@ -128,11 +129,11 @@ export default function StaffShop() {
         guest_name: !isMember ? (guestName.trim() || 'Walk-in Guest') : null,
         channel: 'COUNTER',
         fulfilment: 'INSTORE',
-        items: cart.map((item) => ({ product_id: item.product.id, qty: item.qty })),
+        items: cart.map((item) => ({ product_id: item.product.id, qty: item.quantity })),
         payment_method: paymentMethod,
       })
 
-      setReceiptOrder(order)
+      setReceiptOrder(isMember && lookedUpMember ? { ...order, member_name: lookedUpMember.full_name } : order)
       setCart([])
       toast('Counter order completed successfully', 'success')
     } catch (err: any) {
@@ -281,7 +282,7 @@ export default function StaffShop() {
               Counter Cart
             </h2>
             <span className="text-xs font-semibold text-text-tertiary">
-              {cart.reduce((s, i) => s + i.qty, 0)} items
+              {cart.reduce((s, i) => s + i.quantity, 0)} items
             </span>
           </div>
 
@@ -354,7 +355,7 @@ export default function StaffShop() {
             {cart.length === 0 ? (
               <p className="text-xs text-text-tertiary text-center py-6">No items in cart</p>
             ) : (
-              cart.map(({ product, qty }) => (
+              cart.map(({ product, quantity: qty }) => (
                 <div key={product.id} className="flex items-center justify-between gap-2 p-2.5 rounded-xl bg-canvas text-xs">
                   <div className="flex-1 min-w-0">
                     <p className="font-bold text-text-primary truncate">{product.name}</p>

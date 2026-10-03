@@ -12,12 +12,16 @@ import {
   Tag,
   Layers,
 } from 'lucide-react'
-import { Button, Card, Skeleton } from '../../components/ui'
-import { usePublicProduct, usePublicProducts, useCreateShopOrder } from '../../api/hooks'
+import { Button, Card, Skeleton, useToast } from '../../components/ui'
+import { usePublicProduct, usePublicProducts, useProducts } from '../../api/hooks'
+import { publicToProduct, MEMBER_LINE_CAP } from '../../api/mappers'
 import { useAuth } from '../../hooks/useAuth'
+import { useCart } from '../../lib/cart-context'
 import { formatMoney } from '../../lib/format'
 import { getProductPresentation } from '../../lib/product-presentation'
 import type { PublicProduct } from '../../api/types'
+
+const SHOP_STAFF_ROLES = ['OWNER', 'MANAGER', 'FRONT_DESK']
 
 // ── Product Image Component ────────────────────────────────────────────────
 function ProductImage({
@@ -93,12 +97,9 @@ export default function ProductDetailPage() {
   const isLoggedIn = user !== null
   const isMember = user?.role === 'MEMBER'
 
-  const numericId = productId ? parseInt(productId, 10) : null
-
-  // Validate id is a positive integer
-  if (!numericId || isNaN(numericId) || numericId <= 0) {
-    return <Navigate to="/shop" replace />
-  }
+  const parsedId = productId ? parseInt(productId, 10) : NaN
+  const validId = Number.isInteger(parsedId) && parsedId > 0
+  const numericId = validId ? parsedId : null
 
   const {
     data: product,
@@ -111,9 +112,18 @@ export default function ProductDetailPage() {
   const { data: allProducts = [] } = usePublicProducts(product?.category)
   const related = allProducts.filter((p) => p.id !== numericId).slice(0, 4)
 
-  const createOrderMutation = useCreateShopOrder()
+  const canBuy = isMember || (!!user && SHOP_STAFF_ROLES.includes(user.role))
+  // Staff carts need real stock levels from /products; members get the public catalogue.
+  const { data: buyableProducts = [] } = useProducts()
+  const { addOne } = useCart()
+  const { toast } = useToast()
   const [addedToCart, setAddedToCart] = useState(false)
   const [orderError, setOrderError] = useState<string | null>(null)
+
+  // Validate id is a positive integer
+  if (!validId) {
+    return <Navigate to="/shop" replace />
+  }
 
   // ── Loading state ──────────────────────────────────────────────────────
   if (isLoading) {
@@ -182,45 +192,46 @@ export default function ProductDetailPage() {
   const loginTarget = `/login?next=/shop/${product.id}`
 
   // ── Actions ───────────────────────────────────────────────────────────
-  async function handleAddToCart() {
-    if (!isMember) {
-      navigate(loginTarget)
-      return
-    }
+  // Both buttons only touch the shared cart; the order is placed from the cart's checkout.
+  function addToSharedCart(): 'added' | 'full' | 'unavailable' {
     setOrderError(null)
-    try {
-      // Send only product_id and qty — never price or discount
-      await createOrderMutation.mutateAsync({
-        channel: 'ONLINE',
-        fulfilment: 'PICKUP',
-        items: [{ product_id: product!.id, qty: 1 }],
-        payment_method: 'ONLINE_MOCK',
-      })
-      setAddedToCart(true)
-      setTimeout(() => setAddedToCart(false), 3000)
-    } catch (err: any) {
-      if (err?.error?.code === 'OUT_OF_STOCK') {
-        const avail = err?.error?.details?.available
-        setOrderError(
-          avail !== undefined
-            ? `Only ${avail} unit(s) left in stock.`
-            : 'Out of stock.'
-        )
-      } else if (err?.error?.code === 'ADDRESS_REQUIRED') {
-        setOrderError('A delivery address is required for delivery orders.')
-      } else {
-        setOrderError(err?.error?.message || 'Could not add to cart. Please try again.')
-      }
+    const buyable = buyableProducts.find((p) => p.id === product!.id)
+    if (!buyable && !isMember) {
+      setOrderError('This product is not available at the counter right now.')
+      return 'unavailable'
     }
+    const line = buyable ?? publicToProduct(product!)
+    const maxQty = isMember ? Math.min(line.stock_qty, MEMBER_LINE_CAP) : line.stock_qty
+    if (maxQty <= 0) {
+      setOrderError('Out of stock.')
+      return 'unavailable'
+    }
+    return addOne(line, maxQty) ? 'added' : 'full'
   }
 
-  async function handleBuyNow() {
-    if (!isMember) {
+  function handleAddToCart() {
+    if (!canBuy) {
       navigate(loginTarget)
       return
     }
-    // Buy now: navigate to portal shop pre-filtered to this product
-    navigate(`/portal/shop?product=${product!.id}`)
+    const result = addToSharedCart()
+    if (result === 'full') {
+      setOrderError('Your cart already holds the most you can order of this item.')
+      return
+    }
+    if (result !== 'added') return
+    toast(`${product!.name} added to your cart.`, 'success')
+    setAddedToCart(true)
+    setTimeout(() => setAddedToCart(false), 3000)
+  }
+
+  function handleBuyNow() {
+    if (!canBuy) {
+      navigate(loginTarget)
+      return
+    }
+    if (addToSharedCart() === 'unavailable') return
+    navigate(isMember ? '/portal/shop?cart=open' : '/staff/shop')
   }
 
   return (
@@ -248,9 +259,11 @@ export default function ProductDetailPage() {
           </div>
 
           {/* SKU label */}
-          <p className="text-[11px] text-text-tertiary text-center">
-            SKU: <span className="font-mono font-semibold">{product.sku}</span>
-          </p>
+          {product.sku && (
+            <p className="text-[11px] text-text-tertiary text-center">
+              SKU: <span className="font-mono font-semibold">{product.sku}</span>
+            </p>
+          )}
         </div>
 
         {/* Right: Product Info */}
@@ -342,14 +355,17 @@ export default function ProductDetailPage() {
                   Log in to Order
                 </Button>
               </Link>
+            ) : !canBuy ? (
+              <p className="text-xs text-text-tertiary">
+                Shop orders are placed by members online or by front-desk staff at the counter.
+              </p>
             ) : (
               <>
                 <Button
                   id="btn-add-to-cart"
                   variant="secondary"
                   pill
-                  disabled={!product.in_stock || createOrderMutation.isPending}
-                  loading={createOrderMutation.isPending}
+                  disabled={!product.in_stock}
                   onClick={handleAddToCart}
                   className="flex-1 min-h-[48px] text-sm font-bold gap-2"
                 >
