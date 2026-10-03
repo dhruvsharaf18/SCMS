@@ -245,6 +245,25 @@ export interface SocialParticipant {
   status: 'JOINED' | 'LEFT'
 }
 
+// ── Audit log (SRS 3.2.11) ────────────────────────────────────────────────
+export interface AuditLog {
+  id: number
+  actor_id: number | null
+  action: string
+  entity: string | null
+  entity_id: number | null
+  meta: Record<string, unknown> | null
+  ip: string | null
+  created_at: string
+}
+
+export interface PaginatedAuditLogs {
+  items: AuditLog[]
+  total: number
+  page: number
+  page_size: number
+}
+
 // ── Members (SRS 3.2.3) ────────────────────────────────────────────────────
 export interface Membership {
   id: number

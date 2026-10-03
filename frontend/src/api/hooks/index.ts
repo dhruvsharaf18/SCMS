@@ -56,6 +56,7 @@ import type {
   UnreadCountResponse,
   ApiError,
   SocialParticipant,
+  PaginatedAuditLogs,
 } from '../types'
 import { api, ApiError as HttpError } from '../client'
 import { useAuth } from '../../hooks/useAuth'
@@ -1061,6 +1062,25 @@ export function useSubmitEnquiry() {
       }
       return api.post<PublicEnquiryResponse>('/public/enquiries', input)
     },
+  })
+}
+
+// ── Audit log (OWNER, read-only) ───────────────────────────────────────────
+export function useAuditLogs(
+  filters: { action?: string; entity?: string; actor_id?: number; page: number; page_size: number },
+  options?: { enabled?: boolean },
+) {
+  return useQuery<PaginatedAuditLogs, ApiError>({
+    queryKey: ['audit-logs', filters],
+    queryFn: () => {
+      const search = new URLSearchParams({ page: String(filters.page), page_size: String(filters.page_size) })
+      if (filters.action) search.set('action', filters.action)
+      if (filters.entity) search.set('entity', filters.entity)
+      if (filters.actor_id) search.set('actor_id', String(filters.actor_id))
+      return api.get<PaginatedAuditLogs>(`/audit-logs?${search.toString()}`)
+    },
+    placeholderData: (prev) => prev,
+    enabled: options?.enabled ?? true,
   })
 }
 

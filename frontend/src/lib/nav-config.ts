@@ -85,6 +85,8 @@ const financeItems: NavItem[] = [
   { id: 'reports', label: 'Reports', icon: BarChart3, path: '/staff/reports' },
 ]
 
+const auditItem: NavItem = { id: 'audit', label: 'Audit Log', icon: FileText, path: '/staff/audit' }
+
 // ── Role → nav config map (one entry per SRS role: OWNER, MANAGER, FRONT_DESK, BAR_STAFF, MEMBER) ──
 export const NAV_CONFIG: Record<Role, NavSection[]> = {
   OWNER: [
@@ -93,7 +95,7 @@ export const NAV_CONFIG: Record<Role, NavSection[]> = {
     { title: 'Commerce', items: [...shopItems, ...barItems] },
     { title: 'Pipeline', items: leadItems },
     { title: 'Team', items: teamItems },
-    { title: 'Finance', items: financeItems },
+    { title: 'Finance', items: [...financeItems, auditItem] },
   ],
   MANAGER: [
     { items: staffCommon },
