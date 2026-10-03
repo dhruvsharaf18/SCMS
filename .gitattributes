@@ -1,0 +1,6 @@
+# core.autocrlf=true is common on Windows. Without this, a fresh clone checks these out with
+# CRLF and the Postgres entrypoint fails to run db/init/01-app-role.sh inside the container.
+*.sh text eol=lf
+Dockerfile text eol=lf
+*.conf text eol=lf
+.env.example text eol=lf

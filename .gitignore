@@ -1,0 +1,12 @@
+# S-13: secrets never committed. .env.example is.
+.env
+
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+
+node_modules/
+dist/
+
+backup/

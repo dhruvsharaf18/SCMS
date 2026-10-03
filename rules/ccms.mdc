@@ -1,0 +1,36 @@
+
+```
+---
+description: CCMS project rules. Always follow the docs in /docs.
+alwaysApply: true
+---
+
+# CCMS: Champions Club Management System
+
+Source of truth: docs/SRS.md (contract), docs/PRD.md (features/acceptance), docs/BRD.md (business rules), docs/AI_BUILD_PLAYBOOK.md.
+If code and SRS disagree, the SRS wins. If the SRS is silent or ambiguous, STOP AND ASK. Never guess.
+
+## Hard rules
+- Do not add libraries, endpoints, fields, enums, tables or files that are not in the SRS. Stack is fixed (SRS section 1.3).
+- Backend: Python 3.12, FastAPI, SQLAlchemy 2.0 SYNC style (select(), Session.execute), Pydantic v2 (model_validate, ConfigDict, extra="forbid" on request bodies), PostgreSQL 16, psycopg 3. No async DB, no Alembic, no Celery/Redis/websockets.
+- Frontend: React 18 + Vite + TypeScript, Tailwind CSS 3.4 (tailwind.config.js, @tailwind directives; NOT v4), TanStack Query v5 (object syntax), react-router v6, recharts, qrcode.react, lucide-react. No other UI libs, no Redux.
+- Money = integer paise (BIGINT). Never float. Format in UI with formatINR(paise).
+- Time = UTC in DB and API (ISO-8601 with Z). Club timezone Asia/Kolkata via zoneinfo for "day" logic. Never hard-code +05:30.
+- All business logic lives in backend/app/services/. Routers are thin: validate, call service, return. No queries in routers.
+- Errors always use the envelope {"error":{"code","message","details"}} (SRS section 6) with the codes named in the SRS.
+- RBAC via require_roles(...) on every non-public endpoint (SRS section 3.1). Members only access their own records (return 404 for others').
+- Parameterised SQL only. No f-string SQL. No dangerouslySetInnerHTML.
+- Public/portal UI is MOBILE-FIRST (Tailwind default classes = phone, lg: = desktop). Every list/form has loading, empty and error states. App must work offline-from-internet: no CDN assets.
+- No service worker, no camera APIs, no cloud services, no real payment/SMS/email.
+- Double-booking is prevented by the DB unique constraint on court_slots(court_id, slot_start) inside a transaction. Never replace it with application-only checks.
+- payments rows are inserted ONLY via services/payments.record_payment().
+
+## Working style
+- Implement exactly what the prompt asks, nothing more. Keep diffs small.
+- Before multi-file changes, list the files you will touch.
+- Write or update tests named in the prompt. Run them. Report real output, not guesses.
+- Do not rewrite whole files to fix a small bug. If a fix fails twice, stop and explain your hypotheses.
+- Short explanations (max 5 lines) after the code.
+```
+
+---
