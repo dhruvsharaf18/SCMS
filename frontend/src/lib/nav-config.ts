@@ -54,6 +54,8 @@ const courtBooking: NavItem[] = [
   { id: 'bookings', label: 'Bookings', icon: CalendarDays, path: '/staff/bookings', mobileBar: true },
 ]
 
+const socialItem: NavItem = { id: 'social', label: 'Social Play', icon: Trophy, path: '/staff/social' }
+
 const shopItems: NavItem[] = [
   { id: 'shop', label: 'Shop', icon: ShoppingBag, path: '/staff/shop', mobileBar: true },
   { id: 'stock', label: 'Stock', icon: Package, path: '/staff/stock' },
@@ -91,7 +93,7 @@ const auditItem: NavItem = { id: 'audit', label: 'Audit Log', icon: FileText, pa
 export const NAV_CONFIG: Record<Role, NavSection[]> = {
   OWNER: [
     { items: staffCommon },
-    { title: 'Club', items: [...memberManagement, ...courtBooking] },
+    { title: 'Club', items: [...memberManagement, ...courtBooking, socialItem] },
     { title: 'Commerce', items: [...shopItems, ...barItems] },
     { title: 'Pipeline', items: leadItems },
     { title: 'Team', items: teamItems },
@@ -99,7 +101,7 @@ export const NAV_CONFIG: Record<Role, NavSection[]> = {
   ],
   MANAGER: [
     { items: staffCommon },
-    { title: 'Club', items: [...memberManagement, ...courtBooking] },
+    { title: 'Club', items: [...memberManagement, ...courtBooking, socialItem] },
     { title: 'Commerce', items: [...shopItems, ...barItems] },
     { title: 'Pipeline', items: leadItems },
     { title: 'Team', items: teamItems },

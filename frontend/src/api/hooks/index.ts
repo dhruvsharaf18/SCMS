@@ -56,6 +56,7 @@ import type {
   UnreadCountResponse,
   ApiError,
   SocialParticipant,
+  SocialSessionCreateInput,
   PaginatedAuditLogs,
 } from '../types'
 import { api, ApiError as HttpError } from '../client'
@@ -851,6 +852,54 @@ export function useSocialSessions(params?: { from?: string; to?: string; memberI
       return sessions
         .filter((s) => s.status !== 'CANCELLED')
         .map((s) => toSocialSession(s, courts, joinedSessionIds.has(s.id)))
+    },
+  })
+}
+
+/** Staff view: every session in the range, cancelled ones included. */
+export function useStaffSocialSessions(params: { from?: string; to?: string }, options?: { enabled?: boolean }) {
+  return useQuery<SocialSession[], ApiError>({
+    queryKey: ['social-sessions', 'staff', params],
+    queryFn: async () => {
+      const search = new URLSearchParams()
+      if (params.from) search.set('from', params.from)
+      if (params.to) search.set('to', params.to)
+      const [sessions, courts] = await Promise.all([
+        api.get<SocialSessionApi[]>(`/social-sessions${search.toString() ? `?${search.toString()}` : ''}`),
+        api.get<Court[]>('/courts?include_inactive=true'),
+      ])
+      return sessions.map((s) => toSocialSession(s, courts, false))
+    },
+    enabled: options?.enabled ?? true,
+  })
+}
+
+export function useSocialParticipants(sessionId: number | null) {
+  return useQuery<SocialParticipant[], ApiError>({
+    queryKey: ['social-sessions', 'participants', sessionId],
+    queryFn: () => api.get<SocialParticipant[]>(`/social-sessions/${sessionId}/participants`),
+    enabled: !!sessionId,
+  })
+}
+
+export function useCreateSocialSession() {
+  const qc = useQueryClient()
+  return useMutation<SocialSessionApi, ApiError, SocialSessionCreateInput>({
+    mutationFn: (input) => api.post<SocialSessionApi>('/social-sessions', input),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['social-sessions'] })
+      qc.invalidateQueries({ queryKey: ['courts', 'availability'] })
+    },
+  })
+}
+
+export function useCancelSocialSession() {
+  const qc = useQueryClient()
+  return useMutation<SocialSessionApi, ApiError, number>({
+    mutationFn: (id) => api.delete<SocialSessionApi>(`/social-sessions/${id}`),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['social-sessions'] })
+      qc.invalidateQueries({ queryKey: ['courts', 'availability'] })
     },
   })
 }

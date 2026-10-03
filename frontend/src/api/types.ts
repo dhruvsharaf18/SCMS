@@ -245,6 +245,15 @@ export interface SocialParticipant {
   status: 'JOINED' | 'LEFT'
 }
 
+export interface SocialSessionCreateInput {
+  court_id: number
+  title: string
+  start_at: string
+  end_at: string
+  capacity: number
+  fee_paise: number
+}
+
 // ── Audit log (SRS 3.2.11) ────────────────────────────────────────────────
 export interface AuditLog {
   id: number
