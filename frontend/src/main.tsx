@@ -16,6 +16,7 @@ import AboutPage from './pages/public/AboutPage'
 import PlansPage from './pages/public/PlansPage'
 import AvailabilityPage from './pages/public/AvailabilityPage'
 import ShopPage from './pages/public/ShopPage'
+import ProductDetailPage from './pages/public/ProductDetailPage'
 import ContactPage from './pages/public/ContactPage'
 import LoginPage from './pages/public/LoginPage'
 
@@ -80,6 +81,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
                 <Route path="/plans" element={<PlansPage />} />
                 <Route path="/availability" element={<AvailabilityPage />} />
                 <Route path="/shop" element={<ShopPage />} />
+                <Route path="/shop/:productId" element={<ProductDetailPage />} />
                 <Route path="/contact" element={<ContactPage />} />
                 <Route path="/login" element={<LoginPage />} />
               </Route>

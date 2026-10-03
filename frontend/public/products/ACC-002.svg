@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200" role="img" aria-label="Sports wrist band illustration">
+  <rect width="200" height="200" fill="#f9fafb" rx="16"/>
+  <!-- Wrist band (terry cloth loop shape) -->
+  <ellipse cx="100" cy="100" rx="55" ry="40" fill="none" stroke="#374151" stroke-width="28"/>
+  <!-- Texture dots for terry cotton -->
+  <ellipse cx="100" cy="100" rx="55" ry="40" fill="none" stroke="#6b7280" stroke-width="2" stroke-dasharray="3,4"/>
+  <!-- Inner hole -->
+  <ellipse cx="100" cy="100" rx="27" ry="14" fill="#f9fafb"/>
+  <!-- Label tag -->
+  <rect x="88" y="70" width="24" height="12" fill="#1f2937" rx="2"/>
+  <text x="100" y="79" text-anchor="middle" font-family="sans-serif" font-size="6" fill="white">CCMS</text>
+  <text x="100" y="185" text-anchor="middle" font-family="sans-serif" font-size="9" fill="#374151">Wrist Band</text>
+</svg>

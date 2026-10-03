@@ -99,6 +99,7 @@ import {
   getMockCourtPrices,
   getMockPublicAvailability,
   getMockPublicProducts,
+  getMockPublicProduct,
   submitMockPublicEnquiry,
   setSimulatedError,
   getSimulatedError,
@@ -900,6 +901,23 @@ export function usePublicProducts(category?: string) {
       await new Promise((r) => setTimeout(r, 60))
       return getMockPublicProducts(category)
     },
+  })
+}
+
+/**
+ * Fetch a single public product by id.
+ * Returns null when the product is not found (maps to 404 on the real API).
+ * S-15: Response never includes stock_qty, only in_stock boolean.
+ */
+export function usePublicProduct(id: number | null) {
+  return useQuery<PublicProduct | null, ApiError>({
+    queryKey: ['products', 'public', 'detail', id],
+    queryFn: async () => {
+      if (!id) return null
+      await new Promise((r) => setTimeout(r, 60))
+      return getMockPublicProduct(id)
+    },
+    enabled: id !== null && id > 0,
   })
 }
 

@@ -1073,6 +1073,22 @@ export function getMockPublicProducts(category?: string): PublicProduct[] {
   }))
 }
 
+export function getMockPublicProduct(id: number): PublicProduct | null {
+  const p = products.find((p) => p.id === id && p.is_active)
+  if (!p) return null
+  // S-15: Never return stock_qty or reorder_level on public endpoint
+  return {
+    id: p.id,
+    sku: p.sku,
+    name: p.name,
+    category: p.category,
+    variant: p.variant,
+    description: p.description,
+    price_paise: p.price_paise,
+    in_stock: p.stock_qty > 0,
+  }
+}
+
 let mockEnquiriesCount = 4
 
 export function submitMockPublicEnquiry(input: PublicEnquiryInput): PublicEnquiryResponse {

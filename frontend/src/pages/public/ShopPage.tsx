@@ -230,15 +230,16 @@ export default function ShopPage() {
 
                 {/* Card CTA */}
                 <div className="p-4 pt-0">
-                  <Button
-                    variant="secondary"
-                    onClick={() => navigate('/login')}
-                    disabled={!product.in_stock}
-                    className="w-full text-xs font-bold min-h-[44px] gap-1.5"
-                  >
-                    <LogIn size={14} />
-                    <span>{product.in_stock ? 'Log in to Order' : 'Out of Stock'}</span>
-                  </Button>
+                  <Link to={`/shop/${product.id}`}>
+                    <Button
+                      variant="secondary"
+                      disabled={!product.in_stock}
+                      className="w-full text-xs font-bold min-h-[44px] gap-1.5"
+                    >
+                      <LogIn size={14} />
+                      <span>{product.in_stock ? 'View Product' : 'Out of Stock'}</span>
+                    </Button>
+                  </Link>
                 </div>
               </Card>
             )
