@@ -14,6 +14,7 @@ import {
 import { Button, Card, EmptyState, Skeleton } from '../../components/ui'
 import { usePublicProducts } from '../../api/hooks'
 import { formatMoney } from '../../lib/format'
+import { getProductPresentation } from '../../lib/product-presentation'
 import type { ProductCategory } from '../../api/types'
 
 const CATEGORIES: { id: 'ALL' | ProductCategory; label: string }[] = [
@@ -202,20 +203,30 @@ export default function ShopPage() {
                     </span>
                   </div>
 
-                  {/* Visual Placeholder Frame */}
-                  <div className="w-full h-32 rounded-xl bg-canvas flex items-center justify-center border border-border-light group-hover:border-primary-200 transition-colors">
-                    <Package className="text-text-tertiary group-hover:text-primary-500 transition-colors" size={38} />
-                  </div>
+                  {/* Visual Image / Frame */}
+                  <Link to={`/shop/${product.id}`} className="block group">
+                    <div className="w-full h-32 rounded-xl bg-canvas flex items-center justify-center border border-border-light group-hover:border-primary-200 transition-colors overflow-hidden">
+                      {getProductPresentation(product.sku).imagePath ? (
+                        <img
+                          src={getProductPresentation(product.sku).imagePath}
+                          alt={getProductPresentation(product.sku).imageAlt}
+                          className="w-full h-full object-contain p-2"
+                        />
+                      ) : (
+                        <Package className="text-text-tertiary group-hover:text-primary-500 transition-colors" size={38} />
+                      )}
+                    </div>
+                  </Link>
 
                   {/* Product Details */}
-                  <div>
-                    <h3 className="font-bold text-text-primary text-base line-clamp-1">
+                  <Link to={`/shop/${product.id}`} className="block group">
+                    <h3 className="font-bold text-text-primary text-base line-clamp-1 group-hover:text-primary-600 transition-colors">
                       {product.name}
                     </h3>
                     <p className="text-xs text-text-tertiary mt-0.5 line-clamp-2">
                       {product.description || product.variant || `SKU: ${product.sku}`}
                     </p>
-                  </div>
+                  </Link>
 
                   {/* Price */}
                   <div className="pt-1">

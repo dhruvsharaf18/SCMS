@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { Link } from 'react-router-dom'
 import type { Product, ProductCategory, PaymentMethod, ShopOrder } from '../../api/types'
 import {
   useProducts,
@@ -237,7 +238,15 @@ export default function StaffShop() {
                         </span>
                       )}
                     </div>
-                    <h3 className="font-bold text-sm text-text-primary leading-snug">{product.name}</h3>
+                    <Link
+                      to={`/shop/${product.id}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="hover:text-primary-600 transition-colors"
+                      title="View product details in new tab"
+                    >
+                      <h3 className="font-bold text-sm text-text-primary leading-snug hover:text-primary-600 transition-colors">{product.name}</h3>
+                    </Link>
                     {product.variant && (
                       <p className="text-xs text-text-tertiary mt-0.5">{product.variant}</p>
                     )}

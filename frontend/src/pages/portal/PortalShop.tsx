@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import type {
   Product,
   ProductCategory,
@@ -18,6 +18,7 @@ import {
   calcDiscountPaise,
   calcShopTaxPaise,
 } from '../../lib/format'
+import { getProductPresentation } from '../../lib/product-presentation'
 import {
   Card,
   Button,
@@ -364,17 +365,27 @@ export default function PortalShop() {
                   </div>
 
                   {/* Product Visual Frame */}
-                  <div className="w-full h-32 rounded-xl bg-canvas flex items-center justify-center border border-border-light group-hover:border-primary-200 transition-colors">
-                    <Package className="text-text-tertiary group-hover:text-primary-500 transition-colors" size={40} />
-                  </div>
+                  <Link to={`/shop/${product.id}`} className="block group">
+                    <div className="w-full h-32 rounded-xl bg-canvas flex items-center justify-center border border-border-light group-hover:border-primary-200 transition-colors overflow-hidden">
+                      {getProductPresentation(product.sku).imagePath ? (
+                        <img
+                          src={getProductPresentation(product.sku).imagePath}
+                          alt={getProductPresentation(product.sku).imageAlt}
+                          className="w-full h-full object-contain p-2"
+                        />
+                      ) : (
+                        <Package className="text-text-tertiary group-hover:text-primary-500 transition-colors" size={40} />
+                      )}
+                    </div>
+                  </Link>
 
                   {/* Product Info */}
-                  <div>
-                    <h3 className="font-bold text-text-primary text-base line-clamp-1">
+                  <Link to={`/shop/${product.id}`} className="block group">
+                    <h3 className="font-bold text-text-primary text-base line-clamp-1 group-hover:text-primary-600 transition-colors">
                       {product.name}
                     </h3>
                     <p className="text-xs text-text-tertiary mt-0.5">SKU: {product.sku}</p>
-                  </div>
+                  </Link>
 
                   {/* Pricing */}
                   <div className="pt-1">
