@@ -174,7 +174,7 @@ export default function PortalShop() {
             const nextQty = item.quantity + delta
             if (nextQty <= 0) return null
             if (nextQty > Math.min(item.product.stock_qty, 20)) {
-              toast(`Only ${item.product.stock_qty} available in stock.`, 'warning')
+              toast(`You cannot add more than ${Math.min(item.product.stock_qty, 20)} of this item.`, 'warning')
               return item
             }
             return { ...item, quantity: nextQty }

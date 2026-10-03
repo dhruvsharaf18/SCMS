@@ -222,14 +222,27 @@ export interface SocialSession {
   capacity: number
   joined_count: number
   fee_paise: number
+  status?: SocialSessionStatus
   is_joined?: boolean
   participants: SocialSessionParticipant[]
 }
+
+export type SocialSessionStatus = 'OPEN' | 'CANCELLED'
 
 export interface SocialSessionJoinInput {
   sessionId: number
   memberId: number
   memberName?: string
+}
+
+/** Staff-only roster row from GET /social-sessions/{id}/participants. */
+export interface SocialParticipant {
+  id: number
+  session_id: number
+  member_id: number | null
+  guest_name: string | null
+  fee_paise: number
+  status: 'JOINED' | 'LEFT'
 }
 
 // ── Members (SRS 3.2.3) ────────────────────────────────────────────────────

@@ -155,6 +155,7 @@ export default function StaffStock() {
       await restockMutation.mutateAsync({
         id: restockProduct.id,
         qty: restockQty,
+        note: restockNote,
       })
       toast(`Successfully added ${restockQty} units to ${restockProduct.name}`, 'success')
       setRestockProduct(null)
@@ -539,7 +540,9 @@ export default function StaffStock() {
                 value={formData.sku}
                 onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
                 placeholder="e.g. RKT-004"
-                className="w-full px-3 py-2 rounded-xl border border-border-light bg-canvas text-xs font-mono font-bold text-text-primary focus:outline-none focus:border-primary-500 focus:bg-surface"
+                className="w-full px-3 py-2 rounded-xl border border-border-light bg-canvas text-xs font-mono font-bold text-text-primary focus:outline-none focus:border-primary-500 focus:bg-surface disabled:opacity-60"
+                disabled={!!editingProduct}
+                title={editingProduct ? 'SKU cannot be changed after creation' : undefined}
                 required
               />
             </div>
@@ -617,7 +620,9 @@ export default function StaffStock() {
                 min="0"
                 value={formData.stock_qty}
                 onChange={(e) => setFormData({ ...formData, stock_qty: parseInt(e.target.value) || 0 })}
-                className="w-full px-3 py-2 rounded-xl border border-border-light bg-canvas text-xs font-semibold text-text-primary focus:outline-none focus:border-primary-500 focus:bg-surface"
+                className="w-full px-3 py-2 rounded-xl border border-border-light bg-canvas text-xs font-semibold text-text-primary focus:outline-none focus:border-primary-500 focus:bg-surface disabled:opacity-60"
+                disabled={!!editingProduct}
+                title={editingProduct ? 'Use Restock to change stock' : undefined}
                 required
               />
             </div>

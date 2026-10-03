@@ -180,6 +180,31 @@ const PRODUCT_PRESENTATION: Record<string, ProductPresentation> = {
 }
 
 /**
+ * `/public/products` returns no SKU (S-15), so the catalogue seeded by backend/seed.py
+ * is matched by name. Products added later simply fall back to the placeholder.
+ */
+const SKU_BY_NAME: Record<string, string> = {
+  'Yonex Astrox 88': 'RKT-001',
+  'Wilson Pro Staff': 'RKT-002',
+  'Head Speed MP': 'RKT-003',
+  'Tennis Balls (can of 3)': 'BAL-001',
+  'Shuttlecocks (tube of 6)': 'BAL-002',
+  'Padel Balls (can of 3)': 'BAL-003',
+  'Asics Gel Court': 'SHO-001',
+  'Yonex Power Cushion': 'SHO-002',
+  'Overgrip (pack of 3)': 'ACC-001',
+  'Wrist Band': 'ACC-002',
+  'Racket Bag': 'ACC-003',
+  'Club Polo Shirt': 'APP-001',
+  'Club Shorts': 'APP-002',
+  'Club Cap': 'APP-003',
+}
+
+export function skuForProductName(name: string): string {
+  return SKU_BY_NAME[name] ?? ''
+}
+
+/**
  * Return the presentation data for a product SKU.
  * Falls back to a clean placeholder if the SKU has no mapping.
  */
