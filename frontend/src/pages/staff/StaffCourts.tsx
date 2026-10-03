@@ -242,7 +242,7 @@ export default function StaffCourts() {
               ? `${toggleTarget?.name} will stop accepting bookings and disappear from availability. A court with upcoming bookings cannot be deactivated.`
               : `${toggleTarget?.name} will accept bookings again.`}
           </p>
-          {toggleError && <p className="text-xs text-accent-red">{toggleError}</p>}
+          {toggleError && <p className="p-3 rounded-xl bg-status-error border border-status-error-accent text-xs text-ink font-semibold">{toggleError}</p>}
           <div className="flex items-center justify-end gap-3 pt-3 border-t border-border-light">
             <Button type="button" variant="ghost" onClick={() => setToggleTarget(null)}>
               Close

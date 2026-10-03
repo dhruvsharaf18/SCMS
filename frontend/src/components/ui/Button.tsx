@@ -24,7 +24,7 @@ const variantStyles: Record<ButtonVariant, string> = {
   ghost:
     'text-ink hover:bg-surface-light active:bg-surface-dark font-medium',
   danger:
-    'bg-status-error text-ink border border-accent-red hover:bg-red-100 active:bg-red-200 shadow-pill font-bold',
+    'bg-status-error text-ink border border-status-error-accent hover:opacity-90 active:opacity-80 shadow-pill font-bold',
 }
 
 const sizeStyles: Record<ButtonSize, string> = {

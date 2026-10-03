@@ -198,7 +198,7 @@ export default function StaffHR() {
                       <>
                         <p className="font-bold text-text-primary">
                           {employee.login_role ? ROLE_LABELS[employee.login_role] : ''}
-                          {employee.login_active === false && <span className="text-accent-red"> · disabled</span>}
+                          {employee.login_active === false && <span className="text-ink font-bold"> · disabled</span>}
                         </p>
                         <p className="text-[11px] text-text-secondary truncate" title={employee.login_email}>
                           {employee.login_email}

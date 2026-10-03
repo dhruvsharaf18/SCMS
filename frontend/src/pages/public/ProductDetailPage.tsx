@@ -275,7 +275,7 @@ export default function ProductDetailPage() {
             </span>
             <span
               className={`text-xs font-semibold flex items-center gap-1.5 ${
-                product.in_stock ? 'text-accent-green' : 'text-accent-red'
+                product.in_stock ? 'text-ink font-bold' : 'text-ink font-bold'
               }`}
             >
               {product.in_stock ? (
@@ -334,7 +334,7 @@ export default function ProductDetailPage() {
           {orderError && (
             <div
               role="alert"
-              className="flex items-start gap-2 p-3 rounded-xl bg-status-error border border-accent-red/20 text-xs text-accent-red"
+              className="flex items-start gap-2 p-3 rounded-xl bg-status-error border border-status-error-accent text-xs text-ink font-semibold"
             >
               <AlertTriangle size={14} className="shrink-0 mt-0.5" />
               <span>{orderError}</span>

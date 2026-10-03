@@ -145,10 +145,10 @@ export default function PortalHome() {
           {/* Card Bottom: QR Code snippet & Benefits */}
           <div className="flex items-center justify-between pt-3 border-t border-white/10">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-[11px] px-2.5 py-1 rounded-lg bg-white/10 text-white/90 font-medium">
+              <span className={`text-[11px] px-2.5 py-1 rounded-lg ${cardStyle.badge} border border-ink font-bold`}>
                 {tier === 'GOLD' ? '15% Off Shop & Bar' : tier === 'SILVER' ? '5% Off Shop & Bar' : '10% Off'}
               </span>
-              <span className="text-[11px] px-2.5 py-1 rounded-lg bg-white/10 text-white/90 font-medium hidden sm:inline">
+              <span className={`text-[11px] px-2.5 py-1 rounded-lg ${cardStyle.badge} border border-ink font-bold hidden sm:inline`}>
                 {tier === 'GOLD' ? 'Free Court Bookings' : 'Discounted Courts'}
               </span>
             </div>
@@ -156,7 +156,7 @@ export default function PortalHome() {
             <button
               type="button"
               onClick={() => setQrModalOpen(true)}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white text-slate-950 font-bold text-xs shadow-soft hover:bg-white/90 transition-all touch-target"
+              className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white text-ink border border-ink font-bold text-xs shadow-soft hover:bg-white/90 transition-all touch-target"
             >
               <QrCode size={16} />
               <span>Show QR</span>

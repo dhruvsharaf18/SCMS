@@ -112,14 +112,14 @@ export default function LoginPage() {
             role="alert"
             className={`p-3.5 rounded-2xl text-xs flex items-start gap-2.5 border ${
               isLockedOut
-                ? 'bg-accent-yellow/10 border-accent-yellow/30 text-accent-yellow font-medium'
-                : 'bg-status-error border-accent-red/20 text-accent-red'
+                ? 'bg-status-warning border-status-warning-accent text-ink font-semibold'
+                : 'bg-status-error border-status-error-accent text-ink font-semibold'
             }`}
           >
             {isLockedOut ? (
-              <ShieldAlert size={16} className="shrink-0 mt-0.5" />
+              <ShieldAlert size={16} className="shrink-0 mt-0.5 text-ink" />
             ) : (
-              <AlertTriangle size={16} className="shrink-0 mt-0.5" />
+              <AlertTriangle size={16} className="shrink-0 mt-0.5 text-ink" />
             )}
             <p className="leading-relaxed">{errorMessage}</p>
           </div>

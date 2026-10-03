@@ -146,8 +146,8 @@ function OwnerManagerDashboard() {
           label="Court Utilization"
           value={summaryLoading ? '—' : `${summary?.bookings.utilization_pct ?? 0}%`}
           icon={Activity}
-          iconBg="bg-accent-green/10"
-          iconColor="text-accent-green"
+          iconBg="bg-primary-500"
+          iconColor="text-ink"
         />
 
         <StatCard
@@ -542,18 +542,18 @@ function BarDailyReportCard() {
         <button
           type="button"
           onClick={() => navigate('/staff/kitchen')}
-          className="p-5 rounded-2xl bg-surface border border-border-light shadow-soft hover:shadow-card hover:border-primary-300 transition-all text-left flex items-center justify-between group touch-target"
+          className="p-5 rounded-2xl bg-surface border border-border-light shadow-soft hover:shadow-card hover:border-primary-500 transition-all text-left flex items-center justify-between group touch-target"
         >
           <div className="flex items-center gap-3.5">
-            <div className="w-12 h-12 rounded-2xl bg-accent-green/10 flex items-center justify-center text-accent-green group-hover:scale-105 transition-transform">
+            <div className="w-12 h-12 rounded-2xl bg-primary-500 text-ink border border-ink flex items-center justify-center group-hover:scale-105 transition-transform">
               <UtensilsCrossed size={24} />
             </div>
             <div>
               <p className="font-bold text-sm text-text-primary">Kitchen Display</p>
-              <p className="text-xs text-text-tertiary">KDS preparation board</p>
+              <p className="text-xs text-text-secondary">KDS preparation board</p>
             </div>
           </div>
-          <ArrowRight size={18} className="text-text-tertiary group-hover:text-accent-green transition-colors" />
+          <ArrowRight size={18} className="text-ink group-hover:text-ink transition-colors" />
         </button>
       </div>
 
@@ -630,7 +630,7 @@ function BarDailyReportCard() {
             </div>
             <div className="flex justify-between text-sm border-t border-border-light pt-2">
               <span className="text-text-secondary">Outstanding Tabs</span>
-              <span className="font-bold text-accent-red">{formatMoney(report?.outstanding_tabs_paise ?? 0)}</span>
+              <span className="font-bold text-ink">{formatMoney(report?.outstanding_tabs_paise ?? 0)}</span>
             </div>
             {report?.by_staff && report.by_staff.length > 0 && (
               <>
@@ -692,35 +692,35 @@ function FrontDeskDashboard() {
         <button
           type="button"
           onClick={() => navigate('/staff/bookings')}
-          className="p-5 rounded-2xl bg-surface border border-border-light shadow-soft hover:shadow-card hover:border-primary-300 transition-all text-left flex items-center justify-between group touch-target"
+          className="p-5 rounded-2xl bg-surface border border-border-light shadow-soft hover:shadow-card hover:border-primary-500 transition-all text-left flex items-center justify-between group touch-target"
         >
           <div className="flex items-center gap-3.5">
-            <div className="w-12 h-12 rounded-2xl bg-primary-50 flex items-center justify-center text-primary-600 group-hover:scale-105 transition-transform">
+            <div className="w-12 h-12 rounded-2xl bg-primary-500 text-ink border border-ink flex items-center justify-center group-hover:scale-105 transition-transform">
               <CalendarDays size={24} />
             </div>
             <div>
               <p className="font-bold text-sm text-text-primary">Book Court</p>
-              <p className="text-xs text-text-tertiary">Reserve 1-hour slot</p>
+              <p className="text-xs text-text-secondary">Reserve 1-hour slot</p>
             </div>
           </div>
-          <ArrowRight size={18} className="text-text-tertiary group-hover:text-primary-600 transition-colors" />
+          <ArrowRight size={18} className="text-ink group-hover:text-ink transition-colors" />
         </button>
 
         <button
           type="button"
           onClick={() => navigate('/staff/members')}
-          className="p-5 rounded-2xl bg-surface border border-border-light shadow-soft hover:shadow-card hover:border-primary-300 transition-all text-left flex items-center justify-between group touch-target"
+          className="p-5 rounded-2xl bg-surface border border-border-light shadow-soft hover:shadow-card hover:border-primary-500 transition-all text-left flex items-center justify-between group touch-target"
         >
           <div className="flex items-center gap-3.5">
-            <div className="w-12 h-12 rounded-2xl bg-accent-green/10 flex items-center justify-center text-accent-green group-hover:scale-105 transition-transform">
+            <div className="w-12 h-12 rounded-2xl bg-primary-500 text-ink border border-ink flex items-center justify-center group-hover:scale-105 transition-transform">
               <UserPlus size={24} />
             </div>
             <div>
               <p className="font-bold text-sm text-text-primary">Register Member</p>
-              <p className="text-xs text-text-tertiary">New subscription</p>
+              <p className="text-xs text-text-secondary">New subscription</p>
             </div>
           </div>
-          <ArrowRight size={18} className="text-text-tertiary group-hover:text-accent-green transition-colors" />
+          <ArrowRight size={18} className="text-ink group-hover:text-ink transition-colors" />
         </button>
 
         <button

@@ -357,7 +357,7 @@ export default function StaffPayments() {
             </div>
             <div className="flex justify-between border-t border-border-light pt-2">
               <span className="text-text-secondary font-bold">Refund amount</span>
-              <span className="font-bold text-base text-accent-red">{formatMoney(refundTarget?.amount_paise ?? 0)}</span>
+              <span className="font-bold text-base text-ink">{formatMoney(refundTarget?.amount_paise ?? 0)}</span>
             </div>
           </div>
 

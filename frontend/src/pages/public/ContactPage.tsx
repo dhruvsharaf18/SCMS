@@ -143,7 +143,7 @@ export default function ContactPage() {
           <Card className="p-6 sm:p-8 rounded-3xl border border-border-light shadow-card">
             {isSuccess ? (
               <div className="py-8 text-center space-y-5 animate-scale-in">
-                <div className="w-16 h-16 rounded-full bg-status-success text-accent-green flex items-center justify-center mx-auto border border-accent-green/30">
+                <div className="w-16 h-16 rounded-full bg-status-success text-ink flex items-center justify-center mx-auto border border-status-success-accent">
                   <CheckCircle2 size={36} />
                 </div>
 
@@ -157,7 +157,7 @@ export default function ContactPage() {
                 </div>
 
                 <div className="p-4 bg-canvas rounded-2xl border border-border-light max-w-md mx-auto text-xs text-text-tertiary">
-                  Status: <strong className="text-accent-green font-bold">Received (Code: 201)</strong> • Registered in club CRM queue
+                  Status: <strong className="text-ink font-bold">Received (Code: 201)</strong> • Registered in club CRM queue
                 </div>
 
                 <div className="pt-2">
@@ -296,7 +296,7 @@ export default function ContactPage() {
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between text-xs font-bold text-text-secondary">
                     <span>Message / Specific Request</span>
-                    <span className={`text-[10px] ${message.length > 900 ? 'text-accent-red font-bold' : 'text-text-tertiary font-normal'}`}>
+                    <span className={`text-[10px] ${message.length > 900 ? 'text-ink font-bold' : 'text-text-tertiary font-normal'}`}>
                       {message.length} / 1000
                     </span>
                   </div>

@@ -301,7 +301,7 @@ export default function StaffSocial() {
               </p>
             </div>
             {rosterError ? (
-              <p className="text-xs text-accent-red">{describeError(rosterError)}</p>
+              <p className="p-3 rounded-xl bg-status-error border border-status-error-accent text-xs text-ink font-semibold">{describeError(rosterError)}</p>
             ) : rosterLoading ? (
               <p className="text-xs text-text-tertiary">Loading players...</p>
             ) : joined.length === 0 ? (
@@ -438,7 +438,7 @@ export default function StaffSocial() {
             Cancel <span className="font-bold text-text-primary">{cancelTarget?.title}</span>? Its court slots are
             released for bookings and every player who paid is refunded. This cannot be undone.
           </p>
-          {cancelError && <p className="text-xs text-accent-red">{cancelError}</p>}
+          {cancelError && <p className="p-3 rounded-xl bg-status-error border border-status-error-accent text-xs text-ink font-semibold">{cancelError}</p>}
           <div className="flex items-center justify-end gap-3 pt-3 border-t border-border-light">
             <Button type="button" variant="ghost" onClick={() => setCancelTarget(null)}>
               Keep session
