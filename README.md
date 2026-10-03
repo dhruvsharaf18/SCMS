@@ -105,5 +105,29 @@ reports/  build reports and prompts
 
 ## Demo logins
 
-Seeded by `backend/seed.py` (not yet populated — see `tasks.md`). All demo users share the password
+Seeded by `backend/seed.py`. All demo users share the password
 in `SEED_PASSWORD`, default `Club@12345`. **Demo only; change it for any real deployment.**
+
+- `owner@club.test` (Role: OWNER)
+- `manager@club.test` (Role: MANAGER)
+- `desk@club.test` (Role: FRONT_DESK)
+- `bar@club.test` (Role: BAR_STAFF)
+- `member1@club.test`, `member2@club.test`, `member3@club.test` (Role: MEMBER)
+
+---
+
+## Demo data (Part C)
+
+To populate the extended demo dataset (~590 business records including 100 members, 102 bookings, 50 shop orders, 46 bar orders, 20 leads, 16 table reservations, 7 social sessions, 8 staff employees with shifts & payroll) for the hackathon jury:
+
+```bash
+# Run demo seed inside the API container:
+docker compose exec api python -m app.seed_demo
+```
+
+The script is completely idempotent (safe to run multiple times without duplicating records).
+To completely reset the database and re-seed:
+```bash
+./reset_db.sh
+docker compose exec api python -m app.seed_demo
+```

@@ -191,11 +191,12 @@ def _seed_extra_bookings(
     courts: list[Court],
     members: list[Member],
 ) -> None:
-    existing_count = session.execute(select(func.count(Booking.id))).scalar_one()
-    # Base seed already adds ~41; we want at least 41 + _EXTRA_BOOKINGS total.
-    target = existing_count + _EXTRA_BOOKINGS
-    # If close enough, skip.
-    if existing_count >= target - 5:
+    demo_booking_count = session.execute(
+        select(func.count(Booking.id)).join(Member, Booking.member_id == Member.id, isouter=True).where(
+            (Member.member_code.like(f"{_DEMO_CODE_PREFIX}%")) | (Booking.guest_name.like("Demo Guest %"))
+        )
+    ).scalar_one()
+    if demo_booking_count >= _EXTRA_BOOKINGS - 5:
         return
 
     today = _today()
@@ -594,3 +595,14 @@ def run_demo_seed(session: Session) -> None:
 
     # 8. Employees (+ shifts + payroll).
     _seed_employees(session)
+
+
+if __name__ == "__main__":
+    from app.db import SessionLocal
+    with SessionLocal() as s:
+        run_demo_seed(s)
+        print("--- Demo Seed Table Counts ---")
+        for model in (Member, Booking, CourtSlot, Payment, Lead, Employee, Shift, Payroll):
+            c = s.execute(select(func.count(model.id))).scalar_one()
+            print(f"{model.__name__}: {c}")
+    print("Demo seed completed successfully.")

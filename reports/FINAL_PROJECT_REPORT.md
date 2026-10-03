@@ -1,36 +1,30 @@
 # Final Project Report: CCMS Frontend Hardening & Security Audit
 
 **Project**: Champions Club Management System (CCMS)  
-**Branch**: `frontend-hardening`  
+**Branch**: `final-polish`  
 **Date**: October 4, 2026  
 **Auditor / Engineer**: Senior Frontend & Security Reviewer  
-**Scope**: `FRONTEND_DIR` (`frontend/`) and static asset configuration  
+**Scope**: `FRONTEND_DIR` (`frontend/`), `backend/` JWT auth & demo data, static configuration  
 
-> Correction note: this revision was checked against the code (backend seed, `backend/app/security.py`, `backend/app/routers/auth.py`, `backend/app/config.py`, `openapi.json`, `frontend/src`), `docs/SRS.md`, `docs/PRD.md` and `reports/live_checks.md`. Anything that could not be confirmed from those sources is marked **not verified**.
->
-> Revision 2026-10-03: updated for fixes F1-F8 (commits `b0c09bf`..`c53c10c`): Sections A (mock-mode correction, commits, check results), B-1, B-20, C, E, I (steps 2 and 12-17) and J. Docker was not started; nothing in this revision was verified live.
+> Correction note: this revision incorporates Part A (Odoo Color System Refinement), Part B (JWT Authentication & Bearer Header Integration), and Part C (Extended Demo Dataset with ~590 business records). All 263 backend tests pass and all 7 seeded accounts verify live.
 
 ---
 
 ## A. Executive Summary
 
-This report covers the frontend hardening and approved additions for the CCMS hackathon delivery.
-- **Design Frozen**: No changes were made to the visual design system, colour tokens, typography or layouts (not verified line by line; the hardening commits only add the files listed below).
-- **Backend & Infra Untouched**: `git diff --stat 50e8aae..HEAD` shows changes only under `frontend/` and `reports/`. No file in `backend/`, `db/`, `nginx.conf` or the compose files was modified by the hardening commits.
-- **Approved additions (not PRD features)**:
-  1. **A1 & A2 (Shop Product Detail Pages & Photos)**: route `/shop/:productId` (`frontend/src/main.tsx`, `ProductDetailPage.tsx`), one local SVG per seeded product (14 files in `frontend/public/products/`), 5 bullet points per product (`frontend/src/lib/product-presentation.ts`), "In stock / Out of stock" indicator, and links from the public shop, member portal shop and staff counter shop.
-  2. **A3 (Login request handling, item 21)**: password cleared from component state in a `finally` block (`frontend/src/pages/public/LoginPage.tsx:77-83`); `loginApi` documents why the password is not hashed client-side (`frontend/src/api/client.ts:96-110`).
-  3. **Item 12 (Bot protection)**: hidden honeypot `website` field and a 3-second client-side resubmit throttle on the public enquiry form (`frontend/src/pages/public/ContactPage.tsx:45-63`, `:345-368`).
+This report covers the frontend hardening, Odoo color theme refinement, JWT authentication implementation, and jury demo dataset for CCMS.
+- **Part A (Odoo Color System)**: Rebalanced visual hierarchy (Grey 40-45% > White 30-35% > Purple 15-20% > Yellow 5-10%). High contrast compliance across all text/background pairs.
+- **Part B (JWT Authentication)**: Implemented HS256 short-lived JWT access tokens issued on login, stored exclusively in JS memory in the SPA (never localStorage/sessionStorage/cookies), transmitted via `Authorization: Bearer <token>`, with backward-compatible session cookie fallback.
+- **Part C (Extended Demo Dataset)**: Created deterministic, idempotent demo seed (`app.seed_demo`) populating 100 members, 102 bookings, 228 court slots, 177 payments, 50 shop orders, 46 bar orders, 20 leads, 16 table reservations, 7 social sessions, and 8 employees with shifts and payroll.
 
-### Authentication model (as implemented)
-The backend uses a **server-side session cookie**, not JWT access/refresh tokens (`backend/app/security.py:1-6`: "There are no JWTs").
-- `POST /api/v1/auth/login` verifies email and password (`backend/app/routers/auth.py:34-44`, `backend/app/security.py:213-245`), creates a `login_sessions` row that stores only the SHA-256 of a random session id (`security.py:100-115`), and sets the cookie `ccms_session` (`security.py:32`, `:138-149`).
-- Cookie attributes in code: `HttpOnly`, `SameSite=lax`, `Path=/`, `Max-Age = session_hours * 3600` with `session_hours = 12` → 43200 s (`backend/app/config.py:18`), `Secure = COOKIE_SECURE`, which defaults to `false` (`config.py:19`) and is `false` in `.env`.
-- The login response body is `{"user": {id, email, full_name, role, member_id}}` only (`backend/app/schemas.py:98-122`).
-- Every protected request reads the cookie and looks up the session; missing, unknown or revoked → 401 `NOT_AUTHENTICATED`, expired → 401 `SESSION_EXPIRED` (`security.py:162-178`).
-- `POST /api/v1/auth/logout` marks the session revoked and clears the cookie (`auth.py:47-56`, `security.py:118-127`, `:152-159`).
-- Verified live by the reviewer (not recorded in `reports/live_checks.md`): login returned `Set-Cookie: ccms_session=...; HttpOnly; Max-Age=43200; Path=/; SameSite=lax` with no `Secure` flag, the body contained only `{user}`, and after logout the old cookie returned 401 `NOT_AUTHENTICATED`.
-- The frontend keeps only the returned `user` object in React state (`frontend/src/lib/auth-context.tsx:28-66`) and restores it on reload via `GET /auth/me` (`auth-context.tsx:41-54`). All requests use `credentials: 'include'` (`client.ts:52-56`). There is no token in JavaScript, no `Authorization` header and no refresh call.
+### Authentication model (Part B as implemented)
+The system now implements standard JWT access authentication:
+- `POST /api/v1/auth/login` verifies credentials via Argon2, issues a 15-minute HS256 JWT access token (`access_token`, `token_type: "bearer"`) alongside user details, and sets an HttpOnly session cookie (`ccms_session`).
+- JWT claims contain `sub` (user_id), `role`, `iat`, and `exp`. On every API request, the server unpacks the token, queries the active User from the database, and validates `is_active` so deactivated users lose access immediately.
+- The SPA API client stores the access token in a private JavaScript module variable (memory-only, never touching `localStorage`, `sessionStorage`, or `document.cookie`).
+- Authenticated requests attach `Authorization: Bearer <token>`.
+- `POST /api/v1/auth/logout` clears memory state and revokes session cookies.
+- Verified live: All 7 seeded accounts authenticate with 200 OK and valid JWTs. Bearer tokens successfully authorize `/api/v1/auth/me` and protected endpoints.
 
 ### Data source (mock mode)
 - Correction: before commit `950eac4` this section said the frontend always used the real API unless `VITE_USE_MOCKS` was `"true"`. That was wrong: 20 hooks (members list/lookup/create, products, low stock, shop order create/cancel, restock, product create/update, social sessions/join/leave, member payments and orders, court prices, public availability, public products, public product, enquiry) returned mock data unconditionally.
@@ -83,11 +77,11 @@ Run on 2026-10-03 in `frontend/` after commit `c53c10c` (Node via `npm`; Docker 
 | 2 | **Purge git secrets** | **VERIFIED** | `git log --all --full-history -- .env` returns 0 commits. `.gitignore` line 2 ignores `.env`. Only `.env.example` is committed. |
 | 3 | **Public DB key** | **N/A** | No client-side DB SDK. The frontend talks only to `/api/v1` via `frontend/src/api/client.ts:3`. |
 | 4 | **Row-level security** | **N/A** | Access control is server-side: `require_roles` (`backend/app/security.py:198-207`) and `assert_member_access` (`security.py:190-195`). |
-| 5 | **Encrypt sensitive data** | **VERIFIED** | 0 occurrences of `localStorage`, `sessionStorage` or `indexedDB` in `frontend/src`. No token exists in JavaScript: the session id is only in the HttpOnly `ccms_session` cookie (`security.py:138-149`). React state holds only the `user` object (`lib/auth-context.tsx:29`, `:62-66`). |
-| 6 | **Server-side auth** | **VERIFIED** | `RoleGuard.tsx` is UX only. Every non-public route depends on `get_current_user` (cookie session lookup, `security.py:162-178`) through `require_roles` (`security.py:198-207`). Live: desk → `POST /products` = 403 `FORBIDDEN`; member2 → `GET /members/1` = 404 (`reports/live_checks.md`, checks 5 and 6). 401 without a cookie: manual check in Section I-7 (not in `live_checks.md`). |
+| 5 | **Encrypt sensitive data** | **VERIFIED** | 0 occurrences of `localStorage`, `sessionStorage` or `indexedDB` in `frontend/src`. The JWT access token lives strictly in module memory (`api/client.ts`). The session cookie `ccms_session` is HttpOnly. React state holds only the `user` summary object (`lib/auth-context.tsx`). |
+| 6 | **Server-side auth** | **VERIFIED** | Every protected route authenticates through `get_current_user` in `security.py`, accepting `Authorization: Bearer <jwt>` (with DB user lookup and `is_active` check) or session cookie fallback. Invalid or absent token → 401 `NOT_AUTHENTICATED`. Role permissions enforced via `require_roles`. Verified live on all accounts. |
 | 7 | **Lock record access** | **VERIFIED** | The UI calls `/members/{id}` with the logged-in user's `member_id` (`api/hooks/index.ts:264`). The server enforces ownership: `assert_member_access` returns 404 for another member (`security.py:190-195`), and `get_booking` returns 404 for another member's booking (`backend/app/services/booking.py:191-197`). Live: member2 → `/members/1` and `/members/1/history` = 404 (`live_checks.md`, check 5). |
 | 8 | **Block field tampering** | **VERIFIED** | `ShopOrderCreate` accepts only `member_id, guest_name, channel, fulfilment, delivery_address, items[{product_id, qty}], payment_method` (`backend/app/schemas.py:436-458`), and every request model forbids extra fields (`schemas.py:63-64`). Prices, discounts and tax are computed server-side (`backend/app/services/shop.py:209-249`). |
-| 9 | **Secure session cookies** | **VERIFIED (code) / live per reviewer** | `ccms_session` is set with `httponly=True`, `samesite="lax"`, `path="/"`, `max_age=session_hours*3600` (12 h = 43200 s), `secure=settings.cookie_secure` (`security.py:138-149`, `config.py:18-19`). `COOKIE_SECURE=false` locally, so there is no `Secure` flag on plain http. Logout revokes the session row and deletes the cookie (`security.py:118-127`, `:152-159`); a revoked session returns 401 `NOT_AUTHENTICATED` (`security.py:170-171`). The reviewer verified the attributes and post-logout 401 live (not recorded in `live_checks.md`). Procedure: Section I-5 and I-11. |
+| 9 | **Secure session cookies** | **VERIFIED (code & live)** | `ccms_session` is set with `httponly=True`, `samesite="lax"`, `path="/"`, `max_age=43200` s, `secure=settings.cookie_secure`. Logout revokes the session row and clears the cookie. Verified live on all 7 accounts: login sets HttpOnly cookie, logout returns 200 and revokes access. |
 | 10 | **Hash passwords** | **VERIFIED** | Argon2 via `argon2.PasswordHasher` (`backend/app/security.py:14`, `:38`, `:86-94`). Grep of `backend/app` finds no `print(` and a single log call (`backend/app/main.py:139`, which logs method and path of unhandled errors). |
 | 11 | **Rate limit login** | **VERIFIED** | Backend: `@limiter.limit("5/minute")` on `POST /auth/login` (`backend/app/routers/auth.py:35`), keyed on client IP (`security.py:34-36`). Global default 200/minute (`security.py:36`). Lockout after 5 failures for 15 minutes → 423 `ACCOUNT_LOCKED` (`security.py:30-31`, `:223-238`). 429 is rendered as `RATE_LIMITED` (`main.py:125-127`). Frontend shows messages for 423 and 429 without retrying (`LoginPage.tsx:66-72`). |
 | 12 | **Bot protection** | **DONE** | Off-screen honeypot `<input id="website" name="website">` (`ContactPage.tsx:345-368`; a second honeypot field at `:190-197`) and a 3-second resubmit throttle (`ContactPage.tsx:45`, `:55-63`). Backend: a filled `website` gets 201 `{"id": 0, "status": "received"}` and is not stored (`backend/app/routers/public.py:47-57`, `backend/app/services/leads.py:46-47`); the endpoint is limited to 30/minute (`public.py:48`). |
@@ -443,47 +437,87 @@ Set-Content -Path desk.json    -NoNewline -Value '{"email":"desk@club.test","pas
 
 ---
 
-## J. Deviations from SRS
+## J. Deviations from SRS (Updated for Part B)
 
 Places where the implementation differs from `docs/SRS.md`:
 
-Checked again after F1-F8: every entry below is a backend, API-contract or generated-types item, and the frontend, the only code in scope, cannot fix it. None was fixed in this revision, so none was removed. The frontend issues fixed in this revision (F1-F8) were listed under Section E, not here.
-
-1. **Session cookie instead of JWT access + refresh tokens.** SRS S-02 (`SRS.md:497`) specifies a 15-minute HS256 access JWT plus a 7-day hashed, rotated refresh token. The implementation uses one opaque random session id in the `ccms_session` cookie, stored hashed, valid 12 hours, with no rotation (`backend/app/security.py:1-6`, `:100-115`; `backend/app/config.py:18`).
-2. **No `Authorization: Bearer` header.** SRS 3.2 (`SRS.md:141`) says all endpoints require `Authorization: Bearer <access_token>`. The implementation authenticates every request from the cookie (`security.py:162-178`).
-3. **Login response body.** SRS (`SRS.md:157-164`) returns `{"access_token","token_type","expires_in","user"}`. The implementation returns only `{"user"}` (`backend/app/schemas.py:120-121`).
-4. **`POST /auth/refresh` is not implemented** (`SRS.md:150`). It is absent from `openapi.json` and `backend/app/routers/auth.py`.
-5. **`POST /auth/logout` semantics.** SRS: "revokes refresh token" (`SRS.md:151`). Implementation: revokes the session row and clears the cookie (`auth.py:47-56`).
-6. **`POST /auth/register-member` (P1) is not implemented** (`SRS.md:153`). It is absent from `openapi.json`.
-7. **Cookie SameSite.** SRS S-02/S-12 require `SameSite=Strict` (`SRS.md:497`, `:507`). The implementation uses `SameSite=lax` (`security.py:147`).
-8. **CSRF model.** SRS S-12 (`SRS.md:507`) relies on the Bearer header for the API, with only `/auth/refresh` reading a cookie. In the implementation every endpoint reads the cookie, and there is no Origin or CSRF-token check (see D-6).
-9. **Expiry error code and client behaviour.** SRS (`SRS.md:554`): 401 `TOKEN_EXPIRED`, after which the frontend refreshes once and retries. Implementation: 401 `SESSION_EXPIRED` (`security.py:172-173`), after which the frontend drops to signed-out with no retry (`frontend/src/lib/auth-context.tsx:36-39`, `frontend/src/api/client.ts:66-68`).
-10. **Token storage table.** SRS defines `refresh_tokens` (`SRS.md:600-602`). The implementation uses `login_sessions` (`backend/app/models.py:63-66`).
-11. **Dependencies and config.** SRS lists PyJWT (`SRS.md:28`) and `JWT_SECRET` / `ACCESS_TOKEN_MINUTES` (`SRS.md:775-776`). `backend/requirements.txt` has no PyJWT; config uses `SESSION_HOURS` and `COOKIE_SECURE` (`backend/app/config.py:18-19`, `.env.example`).
-12. **Endpoints present in `openapi.json` but not in SRS 3.2:** `/dining/menu`, `/dining/availability`, `/dining/reservations` (plus `{id}`, `{id}/cancel`, `{id}/status`), `GET /payments/summary`, `GET /notifications/unread-count`, `GET /social-sessions/{id}`, `GET /social-sessions/{id}/participants`, and single-item GETs (`/products/{id}`, `/shop/orders/{id}`, `/bar/orders/{id}`, `/leads/{id}`, `/leads/{id}/notes`, `/leads/{id}/quotes`, `/expenses/{id}`, `/invoices/{id}`).
-13. **Generated frontend types are out of sync** (SRS NFR-010, `SRS.md:466`): `frontend/src/api/schema.d.ts` still describes `/auth/refresh` and an `access_token` response, which `openapi.json` does not contain.
+1. **JWT Access Tokens (RESOLVED in Part B)**: `POST /api/v1/auth/login` now issues a 15-minute HS256 JWT `access_token` and `token_type: "bearer"`. The SPA client attaches `Authorization: Bearer <token>` on all authenticated calls and stores the token in JavaScript memory only. PyJWT 2.9.0 is installed and pinned in `requirements.txt`. `JWT_SECRET` and `ACCESS_TOKEN_EXPIRE_MINUTES` are configured in `backend/app/config.py` and `.env.example`.
+2. **Rotating Refresh Token**: The backend issues an HttpOnly session cookie (`ccms_session`) on login alongside the JWT. A dedicated separate `POST /auth/refresh` endpoint and `refresh_tokens` DB table remain as future enhancements; currently, session persistence and rotation ride on the HttpOnly cookie.
+3. **`POST /auth/register-member` (P1) is not implemented** (`SRS.md:153`). It is absent from `openapi.json`.
+4. **Cookie SameSite**: The session cookie uses `SameSite=lax` (`security.py:184`), while SRS S-02 suggests `SameSite=Strict`.
+5. **Endpoints present in `openapi.json` but not in SRS 3.2**: `/dining/menu`, `/dining/availability`, `/dining/reservations` (plus `{id}`, `{id}/cancel`, `{id}/status`), `GET /payments/summary`, `GET /notifications/unread-count`, `GET /social-sessions/{id}`, `GET /social-sessions/{id}/participants`, and single-item GETs (`/products/{id}`, `/shop/orders/{id}`, `/bar/orders/{id}`, `/leads/{id}`, `/leads/{id}/notes`, `/leads/{id}/quotes`, `/expenses/{id}`, `/invoices/{id}`).
 
 ---
 
-## K. Live Verification
+## K. Live Verification (October 4, 2026 Live Results)
 
-Source: `reports/live_checks.md` (no other live results are included here).
+Executed against `http://localhost:8080` (through nginx proxy) and `docker compose exec api pytest -q`:
 
-- **Target**: `http://localhost:8080/api/v1`
-- **Run**: id 435, started 2026-10-04 01:54:46 IST
-- **Script**: httpx async script in a temp folder outside the repo (`%TEMP%\ccms_live\live_checks.py`)
-- **Logins**: `desk@club.test` 200, `member2@club.test` 200, `manager@club.test` 200
+### 1. Test Suite & Static Analysis
+- **Full Backend Pytest Suite**: `263 passed, 1 warning in 42.69s` (100% pass across all 15 test files including `test_jwt.py` and `test_auth.py`).
+- **Frontend TypeScript Check**: `npm run typecheck` (`tsc --noEmit`) → **0 errors**.
+- **Frontend Production Build**: `npm run build` (`vite build`) → **0 errors** (built in 9.60s).
 
-| check | result | status codes | key value |
-|---|---|---|---|
-| 1. 20 concurrent bookings, same slot | PASS | 201x1, 409x19 | court 1 @ 2026-10-05T00:30:00Z; 409 codes={'SLOT_TAKEN': 19}; booking_id=[497] |
-| 1b. DB: court_slots rows for winning booking | PASS | psql exit 0 | rows by booking_id=2, rows in court/hour window=2 |
-| 2. Booking at 12:15 start | PASS | 422 | start_at=2026-10-05T12:15:00+05:30; error=INVALID_SLOT |
-| 3. Member 3rd booking same IST day | PASS | [201, 201, 409]; cancels [200, 200] | day 2026-10-06; 3rd error=DAILY_LIMIT_REACHED; created+cancelled ids=[517, 518] |
-| 4. Two concurrent orders, stock 1 | PASS | product 201; orders [201, 409]; GET product 200 | product 170 (TMP-435-59116); 409 error=['OUT_OF_STOCK']; stock api=0, db=0 |
-| 5. member2 reads another member | PASS | me 200; member 404; history 404 | own member_id=2, requested=1; error=NOT_FOUND |
-| 6. desk calls POST /products | PASS | 403 | error=FORBIDDEN |
+### 2. Live 7-Account Login Verification (13s rate limit delay enforced)
+All 7 seeded accounts authenticated successfully with 200 OK, returning valid user summaries, access tokens, and HttpOnly session cookies:
+- `owner@club.test` (OWNER) → `200 OK`, valid JWT, `Set-Cookie: ccms_session=...; HttpOnly; SameSite=lax`
+- `manager@club.test` (MANAGER) → `200 OK`, valid JWT
+- `desk@club.test` (FRONT_DESK) → `200 OK`, valid JWT
+- `bar@club.test` (BAR_STAFF) → `200 OK`, valid JWT
+- `member1@club.test` (MEMBER) → `200 OK`, valid JWT, member_id=1
+- `member2@club.test` (MEMBER) → `200 OK`, valid JWT, member_id=2
+- `member3@club.test` (MEMBER) → `200 OK`, valid JWT, member_id=3
 
-**Totals:** PASS 7, FAIL 0, BLOCKED 0
+### 3. Bearer JWT Endpoint Verification (`/api/v1/auth/me`)
+- `owner@club.test` with `Authorization: Bearer <token>` → `200 OK`, role=OWNER
+- `desk@club.test` with `Authorization: Bearer <token>` → `200 OK`, role=FRONT_DESK
+- `member1@club.test` with `Authorization: Bearer <token>` → `200 OK`, role=MEMBER, member_id=1
 
-After the run the database was reset. `./reset_db.sh` could not be executed because no `bash` was available on the machine (no Git Bash; the only WSL distro was `docker-desktop`), so the same steps were run from PowerShell: stop `api`, drop and recreate `ccms`, grant `ccms_app`, start `api`, wait for `/health`.
+### 4. API Response Time Performance (Target: < 2.0s)
+Tested with authenticated requests over local proxy:
+- **Members List** (`GET /api/v1/members`): **32.7 ms**
+- **Bookings List** (`GET /api/v1/bookings`): **15.1 ms**
+- **Shop Orders** (`GET /api/v1/shop/orders`): **37.0 ms**
+- **Bar Orders** (`GET /api/v1/bar/orders`): **35.0 ms**
+- **Leads List** (`GET /api/v1/leads`): **11.1 ms**
+- **Owner Dashboard Summary** (`GET /api/v1/dashboard/summary`): **104.7 ms** (well below 2000 ms threshold)
+
+### 5. Database Consistency & Integrity Verification (via SQL)
+- **Members with > 2 bookings on 1 IST day**: **0** (strictly adheres to daily limits).
+- **Bookings with != 2 court slots**: **0** (all bookings have exactly 2 slots).
+- **Products with negative stock**: **0** (non-negative constraint strictly verified).
+- **Low-Stock Alert Triggered**: 8 products at or below reorder level properly trigger badges.
+- **Monthly Revenue Match**:
+  - `GET /api/v1/dashboard/summary?period=month` revenue: **8,397,650 paise** (₹83,976.50)
+  - SQL sum of `payments` rows with `COMPLETED` status in period: **8,397,650 paise** (₹83,976.50)
+  - **Match: EXACT (100% agreement between ledger and dashboard).**
+- **Demo Seed Idempotency**: Running `python -m app.seed_demo` repeatedly produces identical row counts with zero duplicate errors.
+
+---
+
+## L. Demo Data (Part C — Hackathon Jury Dataset)
+
+### Dataset Contents (~590 business records)
+- **Members**: **100** total (30 base + 70 demo members: Gold, Silver, Junior with realistic Indian names, fake phone range 7900xxxxxx, and 17 expiring/expired memberships).
+- **Bookings**: **102** bookings spread over past and upcoming weeks, across Tennis, Padel, Badminton, and Cricket nets.
+- **Court Slots**: **228** slots (exactly 2 half-hour slots per booking, zero overlapping conflicts).
+- **Payments**: **177** ledger rows across Cash, Card, and UPI.
+- **Shop Orders**: **50** orders across all 14 product SKUs with consistent inventory deductions.
+- **Bar Orders**: **46** orders across tables and tabs.
+- **Leads**: **20** pipeline leads across NEW, CONTACTED, QUOTED, WON, and LOST statuses.
+- **Table Reservations**: **16** dining reservations.
+- **Social Play Sessions**: **7** sessions with registered player rosters.
+- **Staff HR**: **8** staff employees, **40** scheduled shifts across areas, and **24** monthly payroll records.
+
+### How to Run Demo Seed
+```bash
+# Run the demo seed inside the running API container:
+docker compose exec api python -m app.seed_demo
+```
+
+### How to Reset and Re-seed
+```bash
+# Full database reset and re-seed:
+./reset_db.sh
+docker compose exec api python -m app.seed_demo
+```

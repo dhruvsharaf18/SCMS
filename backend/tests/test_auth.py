@@ -41,15 +41,14 @@ def test_login_returns_srs_shape_and_me_agrees(client: TestClient, make_user) ->
     assert response.status_code == 200, response.text
 
     body = response.json()
-    assert body == {
-        "user": {
-            "id": user.id,
-            "email": user.email,
-            "full_name": user.full_name,
-            "role": "MANAGER",
-            "member_id": None,
-        }
+    assert body["user"] == {
+        "id": user.id,
+        "email": user.email,
+        "full_name": user.full_name,
+        "role": "MANAGER",
+        "member_id": None,
     }
+    assert "access_token" in body
 
     # The cookie the browser keeps is all /auth/me needs; no token travels in the body.
     me = client.get(f"{API}/auth/me")
