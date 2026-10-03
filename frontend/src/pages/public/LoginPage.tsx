@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate, useSearchParams, Link } from 'react-router-dom'
 import {
   Trophy,
   LogIn,
@@ -14,6 +14,7 @@ import {
 } from 'lucide-react'
 import { Button, Card } from '../../components/ui'
 import { useAuth } from '../../hooks/useAuth'
+import { safeNextPath } from '../../lib/utils'
 
 const DEMO_PERSONAS = [
   { label: 'Member (Karan)', email: 'member1@club.test', role: 'MEMBER' },
@@ -26,6 +27,8 @@ const DEMO_PERSONAS = [
 export default function LoginPage() {
   const { login, user } = useAuth()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const nextPath = safeNextPath(searchParams.get('next'))
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -37,9 +40,9 @@ export default function LoginPage() {
   // Redirect if already authenticated
   React.useEffect(() => {
     if (user) {
-      navigate(user.role === 'MEMBER' ? '/portal' : '/staff', { replace: true })
+      navigate(nextPath ?? (user.role === 'MEMBER' ? '/portal' : '/staff'), { replace: true })
     }
-  }, [user, navigate])
+  }, [user, navigate, nextPath])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -56,12 +59,8 @@ export default function LoginPage() {
     try {
       const user = await login(email.trim(), password)
 
-      // Post-login redirect based on returned user role (SRS §2.4 & §3.1)
-      if (user.role === 'MEMBER') {
-        navigate('/portal', { replace: true })
-      } else {
-        navigate('/staff', { replace: true })
-      }
+      // Post-login redirect: a safe ?next= path first, otherwise the role landing page (SRS §2.4 & §3.1)
+      navigate(nextPath ?? (user.role === 'MEMBER' ? '/portal' : '/staff'), { replace: true })
     } catch (err: any) {
       if (err?.status === 423 || err?.code === 'ACCOUNT_LOCKED') {
         setIsLockedOut(true)
