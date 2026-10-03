@@ -15,12 +15,12 @@ export function IconRail() {
   return (
     <nav
       aria-label="Main navigation"
-      className="hidden md:flex flex-col items-center gap-1 w-rail py-4 bg-surface rounded-full shadow-rail border border-surface-dark"
+      className="hidden md:flex flex-col items-center gap-1 w-rail py-4 bg-odoo-grey rounded-full shadow-rail border border-border-light text-ink"
     >
       {/* Logo / home */}
       <button
         onClick={() => navigate(user?.role === 'MEMBER' ? '/portal' : '/staff')}
-        className="flex items-center justify-center w-10 h-10 rounded-xl mb-2 bg-primary-500 text-ink font-bold text-sm border border-ink"
+        className="flex items-center justify-center w-10 h-10 rounded-xl mb-2 bg-odoo-purple text-white font-bold text-sm border border-border-light shadow-pill"
         aria-label="Home"
       >
         CC
@@ -52,7 +52,7 @@ export function BottomTabBar() {
   return (
     <nav
       aria-label="Main navigation"
-      className="md:hidden fixed bottom-0 left-0 right-0 z-40 flex items-center justify-around bg-surface border-t border-surface-dark h-bottombar px-2 safe-area-pb"
+      className="md:hidden fixed bottom-0 left-0 right-0 z-40 flex items-center justify-around bg-odoo-grey border-t border-border-light h-bottombar px-2 safe-area-pb text-ink"
     >
       {navItems.slice(0, 5).map((item) => {
         const active = isActive(item.path, location.pathname)
@@ -63,7 +63,7 @@ export function BottomTabBar() {
             onClick={() => navigate(item.path)}
             className={cn(
               'flex flex-col items-center justify-center gap-0.5 flex-1 py-1 touch-target transition-colors',
-              active ? 'text-ink font-bold' : 'text-ink',
+              active ? 'text-odoo-purple font-bold' : 'text-ink',
             )}
           >
             <Icon size={20} strokeWidth={active ? 2.2 : 1.8} />

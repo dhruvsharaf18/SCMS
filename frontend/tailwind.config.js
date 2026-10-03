@@ -7,38 +7,40 @@ export default {
         sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
       },
       colors: {
-        // Base Odoo palette tokens
-        'brand-purple': '#875A7B',
-        'surface-grey': '#8E8E8E',
+        // Base Odoo rebalanced tokens
+        'odoo-grey': '#8E8E8E',
+        'grey-tint': '#E6E6E6',
+        white: '#FFFFFF',
+        'odoo-purple': '#875A7B',
         'accent-yellow': '#EAB14D',
         ink: '#141B2D',
+
+        // Brand and surface aliases
+        'brand-purple': '#875A7B',
+        'surface-grey': '#8E8E8E',
+        'surface-light': '#E6E6E6',
+        'surface-dark': '#8E8E8E',
+        'surface-input': '#FFFFFF',
         'on-purple': '#FFFFFF',
 
-        // Derived shades
-        'brand-purple-dark': '#714B67',
-        'brand-purple-light': '#9C6E90',
-        'surface-light': '#9E9E9E',
-        'surface-dark': '#7E7E7E',
-        'surface-input': '#FFFFFF',
-
         // Semantic surface mappings
-        canvas: '#875A7B',     // Page background: brand-purple
-        surface: '#8E8E8E',    // Cards, panels, tables, modals: surface-grey
+        canvas: '#E6E6E6',     // Page background: grey-tint
+        surface: '#FFFFFF',    // Cards, panels, tables, modals, containers: white
 
         primary: {
-          DEFAULT: '#EAB14D',  // accent-yellow
+          DEFAULT: '#EAB14D',  // accent-yellow: primary action button fill
           hover: '#D99B35',
           light: '#FDF3DF',
-          50: '#FDF3DF',
-          100: '#FCE8C0',
-          200: '#F9D68F',
-          300: '#F6C45E',
-          400: '#F0B849',
+          50: '#F5EFF3',
+          100: '#EBDDE7',
+          200: '#D7BDD0',
+          300: '#C29DB8',
+          400: '#9C6E90',
           500: '#EAB14D',      // primary button & key highlight
-          600: '#D99B35',      // hover
-          700: '#B87B1F',      // active/pressed
-          800: '#8C5913',
-          900: '#5A380A',
+          600: '#875A7B',      // odoo-purple (links on white, small icons, accents)
+          700: '#714B67',
+          800: '#5A380A',
+          900: '#141B2D',
         },
         accent: {
           purple: '#875A7B',
@@ -50,9 +52,9 @@ export default {
           pink: '#C026D3',
         },
         text: {
-          primary: '#141B2D',   // ink on grey surface
-          secondary: '#141B2D', // ink (hierarchy via font weight/size)
-          tertiary: '#141B2D',  // ink (darkened to meet contrast)
+          primary: '#141B2D',   // ink on white and grey
+          secondary: '#141B2D', // ink
+          tertiary: '#141B2D',  // ink
           muted: '#141B2D',
           inverse: '#FFFFFF',
           'on-purple': '#FFFFFF',
@@ -60,24 +62,28 @@ export default {
           'on-yellow': '#141B2D',
         },
         border: {
-          light: '#7E7E7E',     // visible border on surface-grey
-          DEFAULT: '#7E7E7E',
+          light: '#8E8E8E',     // odoo-grey
+          DEFAULT: '#8E8E8E',
           dark: '#141B2D',
-          focus: '#FFFFFF',
+          focus: '#141B2D',
         },
         status: {
           success: '#ECFDF3',
           'success-text': '#141B2D',
           'success-icon': '#027A48',
+          'success-accent': '#027A48',
           warning: '#FFF7E6',
           'warning-text': '#141B2D',
           'warning-icon': '#B54708',
+          'warning-accent': '#B54708',
           error: '#FFF5F5',
           'error-text': '#141B2D',
           'error-icon': '#D92D20',
+          'error-accent': '#D92D20',
           info: '#F0F7FF',
           'info-text': '#141B2D',
           'info-icon': '#026AA2',
+          'info-accent': '#026AA2',
           pending: '#F9F5FF',
           'pending-text': '#141B2D',
         },

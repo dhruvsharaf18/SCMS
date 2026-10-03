@@ -19,8 +19,8 @@ export function StatCard({
   value,
   delta,
   icon: Icon,
-  iconBg = 'bg-primary-500',
-  iconColor = 'text-ink',
+  iconBg = 'bg-odoo-purple',
+  iconColor = 'text-white',
   className,
 }: StatCardProps) {
   const DeltaIcon = delta === undefined || delta === 0
@@ -45,7 +45,7 @@ export function StatCard({
       <div className="flex items-center justify-between">
         <span className="text-sm text-ink font-semibold">{label}</span>
         {Icon && (
-          <span className={cn('flex items-center justify-center w-9 h-9 rounded-xl border border-ink', iconBg)}>
+          <span className={cn('flex items-center justify-center w-9 h-9 rounded-xl border border-border-light shadow-pill', iconBg)}>
             <Icon size={18} className={iconColor} />
           </span>
         )}

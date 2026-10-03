@@ -18,7 +18,7 @@ export function PillTabs({ tabs, activeId, onChange, className, size = 'md' }: P
     <div
       role="tablist"
       className={cn(
-        'inline-flex items-center gap-1 rounded-full bg-surface-dark p-1 border border-border-light',
+        'inline-flex items-center gap-1 rounded-full bg-grey-tint p-1 border border-border-light',
         className,
       )}
     >
@@ -34,8 +34,8 @@ export function PillTabs({ tabs, activeId, onChange, className, size = 'md' }: P
               'rounded-full font-medium transition-all duration-200 whitespace-nowrap',
               size === 'sm' ? 'px-3 py-1 text-xs' : 'px-4 py-1.5 text-sm',
               active
-                ? 'bg-primary-500 text-ink shadow-pill font-bold'
-                : 'text-ink hover:bg-surface-light',
+                ? 'bg-odoo-purple text-white shadow-pill font-bold'
+                : 'text-ink hover:bg-white',
             )}
           >
             {tab.label}

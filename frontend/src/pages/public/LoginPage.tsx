@@ -106,7 +106,7 @@ export default function LoginPage() {
       <Card className="p-6 sm:p-8 rounded-3xl border border-border-light shadow-card space-y-6">
         {/* Header */}
         <div className="text-center space-y-2">
-          <div className="w-12 h-12 rounded-2xl bg-primary-500 text-ink border border-ink flex items-center justify-center mx-auto shadow-pill">
+          <div className="w-12 h-12 rounded-2xl bg-odoo-purple text-white border border-border-light flex items-center justify-center mx-auto shadow-pill">
             <Trophy size={24} className="stroke-[2.2]" />
           </div>
           <h1 className="text-2xl font-extrabold text-text-primary tracking-tight">
@@ -156,7 +156,7 @@ export default function LoginPage() {
                 placeholder="name@club.test"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full pl-10 pr-3.5 py-2.5 bg-surface border border-border-light rounded-xl text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-primary-500 transition-colors"
+                className="w-full pl-10 pr-3.5 py-2.5 bg-surface border border-border-light rounded-xl text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-odoo-purple transition-colors"
               />
             </div>
           </div>
@@ -181,7 +181,7 @@ export default function LoginPage() {
                 placeholder="Enter password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full pl-10 pr-10 py-2.5 bg-surface border border-border-light rounded-xl text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-primary-500 transition-colors"
+                className="w-full pl-10 pr-10 py-2.5 bg-surface border border-border-light rounded-xl text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-odoo-purple transition-colors"
               />
               <button
                 type="button"
@@ -208,7 +208,7 @@ export default function LoginPage() {
 
         <div className="pt-2 text-center text-xs text-text-secondary">
           <span>Don&apos;t have a membership yet? </span>
-          <Link to="/contact" className="font-bold text-primary-600 hover:underline">
+          <Link to="/contact" className="font-bold text-odoo-purple hover:underline">
             Enquire for Access
           </Link>
         </div>
@@ -216,9 +216,9 @@ export default function LoginPage() {
 
       {/* ── Demo Quick-Fill Persona Selector (DEV Only) ─────────────────── */}
       {import.meta.env.DEV && (
-        <Card className="p-4 rounded-2xl border border-dashed border-primary-200 bg-primary-50/50 space-y-2.5 text-xs">
-          <div className="flex items-center gap-1.5 font-bold text-primary-700">
-            <Sparkles size={14} />
+        <Card className="p-4 rounded-2xl border border-border-light bg-surface space-y-2.5 text-xs">
+          <div className="flex items-center gap-1.5 font-bold text-ink">
+            <Sparkles size={14} className="text-odoo-purple" />
             <span>Demo Quick-Fill Accounts (SRS §10.1)</span>
           </div>
           <p className="text-[11px] text-text-secondary">
@@ -231,7 +231,7 @@ export default function LoginPage() {
                 key={p.email}
                 type="button"
                 onClick={() => handleQuickFill(p.email)}
-                className="px-2.5 py-1 rounded-lg bg-surface border border-border-light text-[11px] font-semibold text-text-primary hover:bg-canvas hover:border-primary-300 transition-colors touch-manipulation"
+                className="px-2.5 py-1 rounded-lg bg-grey-tint border border-border-light text-[11px] font-semibold text-ink hover:bg-odoo-grey transition-colors touch-manipulation"
               >
                 {p.label}
               </button>

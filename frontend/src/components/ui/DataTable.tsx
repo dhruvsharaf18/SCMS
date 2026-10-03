@@ -75,22 +75,22 @@ export function DataTable<T>({
     <div className={cn('overflow-x-auto rounded-2xl', className)}>
       <table className="w-full text-sm">
         <thead>
-          <tr className="border-b border-border-light">
+          <tr className="border-b border-border-light bg-odoo-grey text-ink">
             {columns.map((col) => (
               <th
                 key={col.key}
                 className={cn(
-                  'text-left font-medium text-text-secondary px-4 py-3 whitespace-nowrap',
+                  'text-left font-bold text-ink px-4 py-3 whitespace-nowrap',
                   col.width,
                   col.hideOnMobile && 'hidden md:table-cell',
-                  col.sortable && 'cursor-pointer select-none hover:text-text-primary',
+                  col.sortable && 'cursor-pointer select-none hover:text-ink',
                 )}
                 onClick={col.sortable ? () => handleSort(col.key) : undefined}
               >
                 <span className="inline-flex items-center gap-1">
                   {col.header}
                   {col.sortable && (
-                    <span className="text-text-tertiary">
+                    <span className="text-ink">
                       {sortKey === col.key && sortDir === 'asc' ? (
                         <ArrowUp size={14} />
                       ) : sortKey === col.key && sortDir === 'desc' ? (
@@ -105,14 +105,14 @@ export function DataTable<T>({
             ))}
           </tr>
         </thead>
-        <tbody>
+        <tbody className="bg-white text-ink">
           {sorted.map((row) => (
             <tr
               key={keyExtractor(row)}
               onClick={onRowClick ? () => onRowClick(row) : undefined}
               className={cn(
                 'border-b border-border-light/50 last:border-0 transition-colors',
-                onRowClick && 'cursor-pointer hover:bg-canvas/60',
+                onRowClick && 'cursor-pointer hover:bg-grey-tint',
               )}
             >
               {columns.map((col) => (

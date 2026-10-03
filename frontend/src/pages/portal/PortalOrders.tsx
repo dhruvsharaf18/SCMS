@@ -381,9 +381,9 @@ export default function PortalOrders() {
             </div>
 
             {/* Refund & Inventory notice */}
-            <div className="p-3 bg-accent-yellow/10 border border-accent-yellow/20 rounded-xl space-y-1.5 text-xs text-accent-yellow">
-              <div className="font-bold flex items-center gap-1.5">
-                <Info size={15} />
+            <div className="p-3 bg-status-info border border-status-info-accent rounded-xl space-y-1.5 text-xs text-ink">
+              <div className="font-bold flex items-center gap-1.5 text-ink">
+                <Info size={15} className="text-status-info-icon" />
                 <span>Cancellation & Refund Policy</span>
               </div>
               <p>
@@ -408,20 +408,20 @@ export default function PortalOrders() {
                 placeholder="E.g., Ordered wrong racket model, changed my mind..."
                 value={cancelReason}
                 onChange={(e) => setCancelReason(e.target.value)}
-                className="w-full px-3 py-2 text-xs bg-canvas border border-border-light rounded-xl text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-primary-500"
+                className="w-full px-3 py-2 text-xs bg-canvas border border-border-light rounded-xl text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-odoo-purple"
               />
             </div>
 
             {/* Dev Simulated Error Active Indicator */}
             {currentError && (
-              <div className="p-2.5 bg-accent-yellow/10 border border-accent-yellow/30 rounded-xl flex items-center justify-between text-xs">
-                <div className="flex items-center gap-1.5 text-accent-yellow font-medium">
-                  <AlertTriangle size={14} />
+              <div className="p-2.5 bg-status-warning border border-status-warning-accent rounded-xl flex items-center justify-between text-xs">
+                <div className="flex items-center gap-1.5 text-ink font-medium">
+                  <AlertTriangle size={14} className="text-status-warning-icon" />
                   <span>Dev Mock Error: {currentError}</span>
                 </div>
                 <button
                   onClick={() => setSimulatedError(null)}
-                  className="text-accent-yellow hover:underline font-bold text-[10px]"
+                  className="text-ink hover:underline font-bold text-[10px]"
                 >
                   Clear
                 </button>

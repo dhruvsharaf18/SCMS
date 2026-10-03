@@ -81,7 +81,7 @@ function OwnerManagerDashboard() {
         { name: 'Court Bookings', value: Math.round(summary.revenue.by_source.BOOKING / 100), color: '#875A7B' },
         { name: 'Pro Shop', value: Math.round(summary.revenue.by_source.SHOP_ORDER / 100), color: '#EAB14D' },
         { name: 'Bar & Cafe', value: Math.round(summary.revenue.by_source.BAR_ORDER / 100), color: '#141B2D' },
-        { name: 'Memberships', value: Math.round(summary.revenue.by_source.MEMBERSHIP / 100), color: '#5E3D56' },
+        { name: 'Memberships', value: Math.round(summary.revenue.by_source.MEMBERSHIP / 100), color: '#8E8E8E' },
       ].filter((d) => d.value > 0)
     : []
 
@@ -90,7 +90,7 @@ function OwnerManagerDashboard() {
         { name: 'Cash', value: Math.round(summary.revenue.by_method.CASH / 100), color: '#141B2D' },
         { name: 'Card', value: Math.round(summary.revenue.by_method.CARD / 100), color: '#875A7B' },
         { name: 'UPI', value: Math.round(summary.revenue.by_method.UPI / 100), color: '#EAB14D' },
-        { name: 'Online', value: Math.round(summary.revenue.by_method.ONLINE_MOCK / 100), color: '#5E3D56' },
+        { name: 'Online', value: Math.round(summary.revenue.by_method.ONLINE_MOCK / 100), color: '#8E8E8E' },
       ].filter((d) => d.value > 0)
     : []
 

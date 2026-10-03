@@ -37,31 +37,31 @@ export function PublicLayout() {
   const location = useLocation()
 
   return (
-    <div className="min-h-screen bg-canvas flex flex-col text-on-purple antialiased">
+    <div className="min-h-screen bg-canvas flex flex-col text-ink antialiased">
       {/* ── Sticky Top Navigation ────────────────────────────────────────── */}
-      <header className="sticky top-0 z-50 bg-surface border-b border-border-light shadow-soft transition-all">
+      <header className="sticky top-0 z-50 bg-odoo-grey border-b border-border-light shadow-soft transition-all text-ink">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
           {/* Brand Logo */}
           <Link
             to="/"
-            className="flex items-center gap-2.5 group focus:outline-none focus:ring-2 focus:ring-white rounded-xl"
+            className="flex items-center gap-2.5 group focus:outline-none focus:ring-2 focus:ring-ink rounded-xl"
             aria-label="Champions Club Home"
           >
-            <div className="w-10 h-10 rounded-2xl bg-primary-500 text-ink flex items-center justify-center shadow-pill group-hover:scale-105 transition-transform border border-ink">
+            <div className="w-10 h-10 rounded-2xl bg-odoo-purple text-white flex items-center justify-center shadow-pill group-hover:scale-105 transition-transform border border-border-light">
               <Trophy size={20} className="stroke-[2.2]" />
             </div>
             <div>
               <span className="font-extrabold text-base sm:text-lg tracking-tight text-ink block leading-tight">
-                Champions<span className="text-ink underline decoration-primary-500 decoration-2">Club</span>
+                Champions<span className="text-ink underline decoration-odoo-purple decoration-2">Club</span>
               </span>
-              <span className="text-[10px] font-bold tracking-wider uppercase text-ink/80 block leading-none">
+              <span className="text-[10px] font-bold tracking-wider uppercase text-ink block leading-none">
                 Sports & Racquet Club
               </span>
             </div>
           </Link>
 
           {/* Desktop Nav Links */}
-          <nav className="hidden md:flex items-center gap-1 bg-surface-dark p-1 rounded-full border border-border-light shadow-inner-soft">
+          <nav className="hidden md:flex items-center gap-1 bg-grey-tint p-1 rounded-full border border-border-light shadow-inner-soft">
             {NAV_ITEMS.map((item) => {
               const isActive = location.pathname === item.path
               return (
@@ -70,8 +70,8 @@ export function PublicLayout() {
                   to={item.path}
                   className={`px-4 py-2 rounded-full text-xs font-bold transition-all duration-200 min-h-[38px] flex items-center gap-1.5 ${
                     isActive
-                      ? 'bg-primary-500 text-ink shadow-pill'
-                      : 'text-ink hover:text-ink hover:bg-surface'
+                      ? 'bg-odoo-purple text-white shadow-pill'
+                      : 'text-ink hover:text-ink hover:bg-white'
                   }`}
                 >
                   <item.icon size={14} />
@@ -100,7 +100,7 @@ export function PublicLayout() {
           <div className="flex md:hidden items-center gap-2">
             <Link to="/login" className="sm:hidden">
               <button
-                className="w-10 h-10 rounded-xl bg-surface border border-border-light text-ink flex items-center justify-center touch-manipulation hover:bg-surface-dark"
+                className="w-10 h-10 rounded-xl bg-odoo-grey border border-border-light text-ink flex items-center justify-center touch-manipulation hover:bg-grey-tint"
                 aria-label="Member Login"
               >
                 <LogIn size={18} />
@@ -108,7 +108,7 @@ export function PublicLayout() {
             </Link>
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="w-11 h-11 rounded-xl bg-surface border border-border-light text-ink flex items-center justify-center touch-manipulation hover:bg-surface-dark transition-colors focus:outline-none focus:ring-2 focus:ring-white"
+              className="w-11 h-11 rounded-xl bg-odoo-grey border border-border-light text-ink flex items-center justify-center touch-manipulation hover:bg-grey-tint transition-colors focus:outline-none focus:ring-2 focus:ring-ink"
               aria-label={mobileMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
               aria-expanded={mobileMenuOpen}
             >
@@ -119,7 +119,7 @@ export function PublicLayout() {
 
         {/* Mobile Dropdown Menu */}
         {mobileMenuOpen && (
-          <div className="md:hidden border-t border-border-light bg-surface px-4 py-4 space-y-1.5 animate-slide-up shadow-card">
+          <div className="md:hidden border-t border-border-light bg-odoo-grey px-4 py-4 space-y-1.5 animate-slide-up shadow-card text-ink">
             {NAV_ITEMS.map((item) => {
               const isActive = location.pathname === item.path
               return (
@@ -129,8 +129,8 @@ export function PublicLayout() {
                   onClick={() => setMobileMenuOpen(false)}
                   className={`flex items-center justify-between px-4 py-3 rounded-2xl text-sm font-bold transition-all min-h-[44px] touch-manipulation ${
                     isActive
-                      ? 'bg-primary-500 text-ink border border-ink'
-                      : 'text-ink hover:bg-surface-dark'
+                      ? 'bg-odoo-purple text-white border border-border-light'
+                      : 'text-ink hover:bg-grey-tint'
                   }`}
                 >
                   <div className="flex items-center gap-3">
@@ -161,17 +161,17 @@ export function PublicLayout() {
       </main>
 
       {/* ── Footer ──────────────────────────────────────────────────────── */}
-      <footer className="bg-surface border-t border-border-light mt-auto text-ink">
+      <footer className="bg-odoo-grey border-t border-border-light mt-auto text-ink">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-10 md:py-14">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-10">
             {/* Club Brand Summary */}
             <div className="space-y-3">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-primary-500 text-ink flex items-center justify-center border border-ink">
+                <div className="w-8 h-8 rounded-xl bg-odoo-purple text-white flex items-center justify-center border border-border-light">
                   <Trophy size={16} />
                 </div>
                 <span className="font-extrabold text-base tracking-tight text-ink">
-                  Champions<span className="text-ink underline decoration-primary-500">Club</span>
+                  Champions<span className="text-ink underline decoration-odoo-purple">Club</span>
                 </span>
               </div>
               <p className="text-xs text-ink leading-relaxed">

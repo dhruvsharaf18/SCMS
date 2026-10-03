@@ -73,13 +73,13 @@ export function TopBar({ className }: TopBarProps) {
     <>
       <header
         className={cn(
-          'flex items-center gap-3 h-topbar px-4 lg:px-6',
+          'flex items-center gap-3 h-topbar px-4 lg:px-6 bg-odoo-grey border-b border-border-light text-ink',
           className,
         )}
       >
         {/* Mobile: hamburger */}
         <button
-          className="md:hidden flex items-center justify-center w-9 h-9 rounded-xl text-text-secondary hover:bg-surface transition-colors touch-target"
+          className="md:hidden flex items-center justify-center w-9 h-9 rounded-xl text-ink hover:bg-grey-tint transition-colors touch-target"
           onClick={() => setDrawerOpen(true)}
           aria-label="Open menu"
         >
@@ -107,7 +107,7 @@ export function TopBar({ className }: TopBarProps) {
         <div className="flex items-center gap-2">
           {/* Search */}
           <button
-            className="flex items-center justify-center w-9 h-9 rounded-xl text-text-secondary hover:bg-surface hover:text-text-primary transition-colors"
+            className="flex items-center justify-center w-9 h-9 rounded-xl text-ink hover:bg-grey-tint transition-colors"
             aria-label="Search"
           >
             <Search size={18} />
@@ -116,7 +116,7 @@ export function TopBar({ className }: TopBarProps) {
           {/* Notifications */}
           <div className="relative">
             <button
-              className="relative flex items-center justify-center w-9 h-9 rounded-xl text-text-secondary hover:bg-surface hover:text-text-primary transition-colors"
+              className="relative flex items-center justify-center w-9 h-9 rounded-xl text-ink hover:bg-grey-tint transition-colors"
               aria-label="Notifications"
               onClick={() => {
                 if (!isForbiddenOrNotFound) {

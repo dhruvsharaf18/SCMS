@@ -18,8 +18,8 @@ export function IconRailItem({ icon: Icon, label, active, onClick, badge }: Icon
       className={cn(
         'relative flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-200 touch-target',
         active
-          ? 'bg-primary-500 text-ink shadow-pill'
-          : 'text-ink hover:text-ink hover:bg-surface-light',
+          ? 'bg-odoo-purple text-white shadow-pill'
+          : 'text-ink hover:text-ink hover:bg-grey-tint',
       )}
     >
       <Icon size={20} strokeWidth={active ? 2.2 : 1.8} />

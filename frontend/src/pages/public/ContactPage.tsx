@@ -327,15 +327,15 @@ export default function ContactPage() {
 
                 {/* Dev Simulated Error Active Indicator */}
                 {currentError && (
-                  <div className="p-2.5 bg-accent-yellow/10 border border-accent-yellow/30 rounded-xl flex items-center justify-between text-xs">
-                    <div className="flex items-center gap-1.5 text-accent-yellow font-medium">
-                      <AlertTriangle size={14} />
+                  <div className="p-2.5 bg-status-warning border border-status-warning-accent rounded-xl flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-1.5 text-ink font-medium">
+                      <AlertTriangle size={14} className="text-status-warning-icon" />
                       <span>Mock Error Active: {currentError}</span>
                     </div>
                     <button
                       type="button"
                       onClick={() => setSimulatedError(null)}
-                      className="text-accent-yellow hover:underline font-bold text-[10px]"
+                      className="text-ink hover:underline font-bold text-[10px]"
                     >
                       Clear
                     </button>

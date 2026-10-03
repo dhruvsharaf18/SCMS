@@ -22,7 +22,7 @@ const variantStyles: Record<ChipVariant, string> = {
   error: 'bg-status-error text-ink border border-accent-red font-bold',
   info: 'bg-status-info text-ink border border-accent-teal font-bold',
   pending: 'bg-status-pending text-ink border border-accent-purple font-bold',
-  neutral: 'bg-surface-dark text-ink border border-ink font-bold',
+  neutral: 'bg-odoo-grey text-ink border border-border-light font-bold',
 }
 
 export function StatusChip({ label, variant = 'neutral', className, dot }: StatusChipProps) {

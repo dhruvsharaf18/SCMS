@@ -3,8 +3,8 @@
   "short_name": "Champions Club",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#875A7B",
-  "theme_color": "#875A7B",
+  "background_color": "#E6E6E6",
+  "theme_color": "#8E8E8E",
   "icons": [
     { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
     { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" }
