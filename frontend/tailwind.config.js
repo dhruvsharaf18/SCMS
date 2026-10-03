@@ -7,52 +7,79 @@ export default {
         sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
       },
       colors: {
-        canvas: '#E8ECF3',
-        surface: '#FFFFFF',
+        // Base Odoo palette tokens
+        'brand-purple': '#875A7B',
+        'surface-grey': '#8E8E8E',
+        'accent-yellow': '#EAB14D',
+        ink: '#141B2D',
+        'on-purple': '#FFFFFF',
+
+        // Derived shades
+        'brand-purple-dark': '#714B67',
+        'brand-purple-light': '#9C6E90',
+        'surface-light': '#9E9E9E',
+        'surface-dark': '#7E7E7E',
+        'surface-input': '#FFFFFF',
+
+        // Semantic surface mappings
+        canvas: '#875A7B',     // Page background: brand-purple
+        surface: '#8E8E8E',    // Cards, panels, tables, modals: surface-grey
+
         primary: {
-          DEFAULT: '#3B82F6',
-          50: '#EFF6FF',
-          100: '#DBEAFE',
-          200: '#BFDBFE',
-          300: '#93C5FD',
-          400: '#60A5FA',
-          500: '#3B82F6',
-          600: '#2563EB',
-          700: '#1D4ED8',
-          800: '#1E40AF',
-          900: '#1E3A8A',
+          DEFAULT: '#EAB14D',  // accent-yellow
+          hover: '#D99B35',
+          light: '#FDF3DF',
+          50: '#FDF3DF',
+          100: '#FCE8C0',
+          200: '#F9D68F',
+          300: '#F6C45E',
+          400: '#F0B849',
+          500: '#EAB14D',      // primary button & key highlight
+          600: '#D99B35',      // hover
+          700: '#B87B1F',      // active/pressed
+          800: '#8C5913',
+          900: '#5A380A',
         },
         accent: {
-          purple: '#8B5CF6',
-          green: '#22C55E',
-          yellow: '#F59E0B',
-          red: '#EF4444',
-          teal: '#14B8A6',
-          orange: '#F97316',
-          pink: '#EC4899',
+          purple: '#875A7B',
+          yellow: '#EAB14D',
+          green: '#027A48',
+          red: '#D92D20',
+          teal: '#0E7490',
+          orange: '#B54708',
+          pink: '#C026D3',
         },
         text: {
-          primary: '#0F172A',
-          secondary: '#64748B',
-          tertiary: '#94A3B8',
+          primary: '#141B2D',   // ink on grey surface
+          secondary: '#141B2D', // ink (hierarchy via font weight/size)
+          tertiary: '#141B2D',  // ink (darkened to meet contrast)
+          muted: '#141B2D',
           inverse: '#FFFFFF',
+          'on-purple': '#FFFFFF',
+          'on-grey': '#141B2D',
+          'on-yellow': '#141B2D',
         },
         border: {
-          light: '#E2E8F0',
-          DEFAULT: '#CBD5E1',
-          focus: '#3B82F6',
+          light: '#7E7E7E',     // visible border on surface-grey
+          DEFAULT: '#7E7E7E',
+          dark: '#141B2D',
+          focus: '#FFFFFF',
         },
         status: {
-          success: '#DCFCE7',
-          'success-text': '#166534',
-          warning: '#FEF9C3',
-          'warning-text': '#854D0E',
-          error: '#FEE2E2',
-          'error-text': '#991B1B',
-          info: '#DBEAFE',
-          'info-text': '#1E40AF',
-          pending: '#F3E8FF',
-          'pending-text': '#6B21A8',
+          success: '#ECFDF3',
+          'success-text': '#141B2D',
+          'success-icon': '#027A48',
+          warning: '#FFF7E6',
+          'warning-text': '#141B2D',
+          'warning-icon': '#B54708',
+          error: '#FFF5F5',
+          'error-text': '#141B2D',
+          'error-icon': '#D92D20',
+          info: '#F0F7FF',
+          'info-text': '#141B2D',
+          'info-icon': '#026AA2',
+          pending: '#F9F5FF',
+          'pending-text': '#141B2D',
         },
       },
       borderRadius: {
