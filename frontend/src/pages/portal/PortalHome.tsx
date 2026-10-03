@@ -386,7 +386,7 @@ export default function PortalHome() {
                     </p>
                     <StatusChip
                       label={p.status}
-                      variant={p.status === 'COMPLETED' ? 'success' : 'error'}
+                      variant={p.status === 'PAID' ? 'success' : 'error'}
                     />
                   </div>
                 </div>

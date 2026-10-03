@@ -52,8 +52,6 @@ const memberManagement: NavItem[] = [
 
 const courtBooking: NavItem[] = [
   { id: 'bookings', label: 'Bookings', icon: CalendarDays, path: '/staff/bookings', mobileBar: true },
-  { id: 'courts', label: 'Courts', icon: Dumbbell, path: '/staff/courts' },
-  { id: 'social', label: 'Social Play', icon: Trophy, path: '/staff/social' },
 ]
 
 const shopItems: NavItem[] = [
@@ -72,17 +70,7 @@ const leadItems: NavItem[] = [
 
 const financeItems: NavItem[] = [
   { id: 'payments', label: 'Payments', icon: CreditCard, path: '/staff/payments' },
-  { id: 'invoices', label: 'Invoices', icon: FileText, path: '/staff/invoices' },
-  { id: 'expenses', label: 'Expenses', icon: Receipt, path: '/staff/expenses' },
   { id: 'reports', label: 'Reports', icon: BarChart3, path: '/staff/reports' },
-]
-
-const hrItems: NavItem[] = [
-  { id: 'hr', label: 'Staff / HR', icon: UsersRound, path: '/staff/hr' },
-]
-
-const auditItems: NavItem[] = [
-  { id: 'audit', label: 'Audit Log', icon: ClipboardList, path: '/staff/audit' },
 ]
 
 // ── Role → nav config map (one entry per SRS role: OWNER, MANAGER, FRONT_DESK, BAR_STAFF, MEMBER) ──
@@ -93,7 +81,6 @@ export const NAV_CONFIG: Record<Role, NavSection[]> = {
     { title: 'Commerce', items: [...shopItems, ...barItems] },
     { title: 'Pipeline', items: leadItems },
     { title: 'Finance', items: financeItems },
-    { title: 'Org', items: [...hrItems, ...auditItems] },
   ],
   MANAGER: [
     { items: staffCommon },
@@ -101,7 +88,6 @@ export const NAV_CONFIG: Record<Role, NavSection[]> = {
     { title: 'Commerce', items: [...shopItems, ...barItems] },
     { title: 'Pipeline', items: leadItems },
     { title: 'Finance', items: financeItems.filter((i) => i.id !== 'reports') },
-    { title: 'Org', items: hrItems },
   ],
   FRONT_DESK: [
     { items: staffCommon },
@@ -120,7 +106,6 @@ export const NAV_CONFIG: Record<Role, NavSection[]> = {
         { id: 'portal-book', label: 'Book', icon: Calendar, path: '/portal/book', mobileBar: true },
         { id: 'portal-bookings', label: 'Bookings', icon: CalendarDays, path: '/portal/bookings', mobileBar: true },
         { id: 'portal-shop', label: 'Shop', icon: ShoppingCart, path: '/portal/shop', mobileBar: true },
-        { id: 'portal-social', label: 'Social', icon: Trophy, path: '/portal/social' },
         { id: 'portal-orders', label: 'Orders', icon: Package, path: '/portal/orders' },
         { id: 'portal-profile', label: 'Profile', icon: User, path: '/portal/profile', mobileBar: true },
       ],
@@ -131,7 +116,7 @@ export const NAV_CONFIG: Record<Role, NavSection[]> = {
 /** Get navigation sections for any SRS role */
 export function getNavSections(role?: Role): NavSection[] {
   if (!role) return []
-  return NAV_CONFIG[role] ?? []
+  return (NAV_CONFIG[role] ?? []).filter((s) => s.items.length > 0)
 }
 
 /** Flatten navigation items for any SRS role */

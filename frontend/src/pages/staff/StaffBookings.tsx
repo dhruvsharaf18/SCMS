@@ -172,7 +172,11 @@ export default function StaffBookings() {
       await payBookingMutation.mutateAsync({ id: detailBookingId, method })
       toast(`Payment recorded via ${method}`, 'success')
     } catch (err: any) {
-      toast(err?.error?.message ?? 'Failed to record payment', 'error')
+      if (err?.error?.code === 'ALREADY_PAID' || err?.code === 'ALREADY_PAID' || err?.error?.message?.toLowerCase().includes('already paid')) {
+        toast('Booking is already paid', 'info')
+      } else {
+        toast(err?.error?.message ?? 'Failed to record payment', 'error')
+      }
     }
   }
 
@@ -489,8 +493,13 @@ export default function StaffBookings() {
                   </div>
                   <div className="flex justify-between py-2 border-b border-border-light text-sm">
                     <span className="text-text-secondary">Customer:</span>
-                    <span className="font-bold text-text-primary">
-                      {selectedBooking.member_id ? `Member #${selectedBooking.member_id}` : (selectedBooking.guest_name || 'Walk-in')}
+                    <span className="font-bold text-text-primary text-right">
+                      {selectedBooking.member_name ?? selectedBooking.guest_name ?? 'Walk-in'}
+                      {selectedBooking.member_code && (
+                        <span className="block text-xs font-mono font-normal text-text-tertiary">
+                          ({selectedBooking.member_code})
+                        </span>
+                      )}
                     </span>
                   </div>
                   <div className="flex justify-between py-2 border-b border-border-light text-sm">

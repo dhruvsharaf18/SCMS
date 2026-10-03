@@ -299,3 +299,34 @@ Phase 1: Design System & App Shell (DONE ✅)
 | **Tracking** | `reports/frontend_tasks.md` | Detailed task-by-task execution tracker |
 | | `tasks.md` | Workspace task tracker with Phase 1 section |
 | | `reports/frontend_report.md` | Final comprehensive frontend execution report |
+
+---
+
+## 5. Phase 8 — Dashboard & Payments Ledger Real API Integration
+
+### Summary
+Replaced mock data layer in dashboard and payments module with real REST API endpoints (`GET /dashboard/summary`, `GET /dashboard/revenue-series`, `GET /payments`, `POST /payments/{id}/refund`, `GET /reports/payments.csv`).
+
+### Changes & Type Alignments
+- `PaymentOut`: Removed non-existent `member_name` property to match `openapi.json` `PaymentOut`. Updated `StaffReports.tsx` customer column to `Member #<id>` / `Walk-in Guest`.
+- `DashboardSummary`: Aligned nested schemas (`revenue.by_source`, `revenue.by_method`, `receivables`, `payables`, `bookings`, `members`, `leads`, `low_stock`) to `openapi.json`.
+- `RevenueSeries`: Converted endpoint response to `RevenueSeries` shape (`{ period: string, days: RevenueDay[] }`).
+- `PaginatedPayments`: Added `items`, `total`, `page`, `page_size` pagination handling in `StaffReports.tsx` with `page_size=100` and Next/Prev controls.
+- `Refund`: Enforced RBAC (OWNER and MANAGER roles only) for payment refunds and set automatic query cache invalidation on `['payments']` and `['dashboard']`.
+- `CSV Export`: Integrated `downloadPaymentsCsvApi` helper in `client.ts` using shared client with Bearer Authorization header saving response as Blob download.
+
+---
+
+## 6. Phase 9 — Bar & Kitchen Real API Integration
+
+### Summary
+Replaced mock data layer in Bar & Kitchen module with real REST API endpoints (`GET /menu-items`, `GET /bar/tables`, `GET/POST /bar/orders`, `POST /bar/orders/{id}/items`, `POST /bar/orders/{id}/kitchen-status`, `POST /bar/orders/{id}/pay`, `POST /bar/orders/{id}/tab`, `POST /bar/tabs/settle`, `GET /bar/reports/daily`).
+
+### Changes & Type Alignments
+- `BarOrder`: Removed mock properties `table_label`, `member_name`, `member_code`; made `paid_at: string | null` required and `created_at?: string` optional to match `openapi.json` `BarOrderOut`.
+- `BarTable`: Removed mock `open_order_id`; replaced with required `open_orders: number` and `open_total_paise: number | null` matching `BarTableOut`.
+- `BarDailyReport`: Updated `by_method` to `Record<string, number>` matching `openapi.json`.
+- `TabSettle`: Implemented `POST /bar/tabs/settle` payload (`{ member_id, order_ids, method }`) returning total settled paise amount.
+- `Polling`: Enabled 5000 ms `refetchInterval` polling for kitchen order board updates when `VITE_USE_MOCKS` is false.
+- `Cart`: Labeled cart subtotal as "Estimate" prior to order placement in `StaffBar.tsx`.
+

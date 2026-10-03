@@ -272,6 +272,8 @@ export function createMockBooking(input: BookingCreateInput): Booking {
     id: 200 + bookings.length + 1,
     court_id: input.court_id,
     member_id: input.member_id ?? null,
+    member_name: null,
+    member_code: null,
     guest_name: input.guest_name ?? null,
     start_at: input.start_at,
     end_at: endIso,
@@ -752,7 +754,7 @@ export function settleMockTabs(memberId: number, _method: 'CASH' | 'CARD' | 'UPI
 
 export function getMockBarDailyReport(dateStr?: string): BarDailyReport {
   const targetDate = dateStr ?? getTodayIST()
-  const ordersOnDate = barOrders.filter((o) => o.created_at.startsWith(targetDate))
+  const ordersOnDate = barOrders.filter((o) => (o.created_at ?? '').startsWith(targetDate))
   const revenue = ordersOnDate.filter((o) => o.payment_status === 'PAID').reduce((sum, o) => sum + o.total_paise, 0)
   const tax = calcTaxPaise(revenue, 5)
   const outstandingTabs = barOrders.filter((o) => o.is_tab && o.payment_status === 'UNPAID').reduce((s, o) => s + o.total_paise, 0)

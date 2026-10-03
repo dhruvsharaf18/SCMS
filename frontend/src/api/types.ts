@@ -181,8 +181,8 @@ export interface Booking {
   price_paise: number
   payment_status: PaymentStatus
   source: BookingSource
-  member_name?: string | null
-  member_code?: string | null
+  member_name: string | null
+  member_code: string | null
 }
 
 export interface BookingCreateInput {
@@ -260,8 +260,100 @@ export interface MemberCreateInput {
   email?: string | null
   dob?: string | null
   emergency_contact?: string | null
-  plan_id?: number
-  payment_method?: PaymentMethod
+  plan_id?: number | null
+  payment_method?: PaymentMethod | null
+  lead_id?: number | null
+}
+
+// ── Leads (SRS 3.2.10) ─────────────────────────────────────────────────────
+export type LeadStatus = 'NEW' | 'CONTACTED' | 'QUOTED' | 'WON' | 'LOST'
+
+export interface Lead {
+  id: number
+  name: string
+  email: string | null
+  phone: string | null
+  interest: LeadInterest
+  preferred_plan_id: number | null
+  message: string | null
+  status: LeadStatus
+  assigned_to: number | null
+  created_at: string
+}
+
+export interface PaginatedLeads {
+  items: Lead[]
+  total: number
+  page: number
+  page_size: number
+}
+
+export interface LeadUpdateInput {
+  status?: LeadStatus | null
+  assigned_to?: number | null
+}
+
+export interface LeadNote {
+  id: number
+  lead_id: number
+  author_id: number
+  body: string
+  created_at: string
+}
+
+export interface Quote {
+  id: number
+  lead_id: number
+  amount_paise: number
+  description: string
+  valid_until: string | null
+  status: 'SENT' | 'ACCEPTED' | 'REJECTED'
+}
+
+export interface QuoteCreateInput {
+  amount_paise: number
+  description: string
+  valid_until?: string | null
+}
+
+export interface LeadConvertedResponse {
+  lead_id: number
+  member_prefill: {
+    full_name: string
+    email: string | null
+    phone: string | null
+    plan_id: number | null
+  }
+}
+
+// ── Notifications (SRS 3.2.11) ─────────────────────────────────────────────
+export type NotificationType =
+  | 'NEW_LEAD'
+  | 'LOW_STOCK'
+  | 'MEMBERSHIP_EXPIRING'
+  | 'ONLINE_ORDER'
+  | 'LEAVE_REQUEST'
+  | 'SYSTEM'
+
+export interface Notification {
+  id: number
+  type: NotificationType
+  title: string
+  body: string | null
+  link: string | null
+  read_at: string | null
+  created_at: string
+}
+
+export interface PaginatedNotifications {
+  items: Notification[]
+  total: number
+  page: number
+  page_size: number
+}
+
+export interface UnreadCountResponse {
+  count: number
 }
 
 export interface MemberHistoryItem {
@@ -371,6 +463,8 @@ export interface BarTable {
   id: number
   label: string
   seats: number
+  open_orders: number
+  open_total_paise: number | null
   open_order_id?: number | null
   open_order_total_paise?: number | null
 }
@@ -399,8 +493,8 @@ export interface BarOrder {
   discount_paise: number
   total_paise: number
   tax_paise: number
-  created_at: string
   paid_at?: string | null
+  created_at?: string
   items: BarOrderItem[]
 }
 
@@ -411,12 +505,18 @@ export interface BarOrderCreateInput {
   items: { menu_item_id: number; qty: number; note?: string }[]
 }
 
+export interface TabSettleInput {
+  member_id: number
+  order_ids: number[]
+  method: PaymentMethod
+}
+
 export interface BarDailyReport {
   date: string
   orders: number
   revenue_paise: number
   tax_paise: number
-  by_method: Record<PaymentMethod, number>
+  by_method: Record<string, number>
   by_staff: { user_id: number; name: string; revenue_paise: number }[]
   outstanding_tabs_paise: number
 }
@@ -427,25 +527,31 @@ export interface Payment {
   source_type: SourceType
   source_id: number
   member_id: number | null
-  member_name?: string | null
   amount_paise: number
   tax_paise: number
   method: PaymentMethod
-  status: 'COMPLETED' | 'REFUNDED'
+  status: PaymentStatus
   reference: string | null
+  received_by: number | null
   created_at: string
-  received_by?: number | null
 }
 
-// ── Dashboard Summary (SRS 3.2.9) ──────────────────────────────────────────
+export interface PaginatedPayments {
+  items: Payment[]
+  total: number
+  page: number
+  page_size: number
+}
+
+// ── Dashboard Summary & Reports (SRS 3.2.9) ──────────────────────────────────
 export interface DashboardSummary {
-  period: 'today' | 'week' | 'month'
+  period: string
   from: string
   to: string
   revenue: {
     total_paise: number
-    by_source: Record<SourceType, number>
-    by_method: Record<PaymentMethod, number>
+    by_source: Record<string, number>
+    by_method: Record<string, number>
   }
   receivables: {
     unpaid_tabs_paise: number
@@ -472,6 +578,17 @@ export interface DashboardSummary {
     stock_qty: number
     reorder_level: number
   }[]
+}
+
+export interface RevenueDay {
+  date: string
+  total_paise: number
+  by_source: Record<string, number>
+}
+
+export interface RevenueSeries {
+  period: string
+  days: RevenueDay[]
 }
 
 export interface RevenueSeriesPoint {

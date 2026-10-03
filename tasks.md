@@ -258,6 +258,73 @@ Phase 6 Frontend (Courts & Bookings Real API): **COMPLETE** ✅
 
 ---
 
+## Frontend Phase 7 — Booking Member Info & Pay Body Fix (SRS §3.2.5, openapi.json)
+
+Spec: `docs/SRS.md` §3.2.5, `openapi.json`
+
+### Implementation
+- [x] Updated `Booking` interface in `src/api/types.ts` to include required nullable fields `member_name: string | null` and `member_code: string | null` matching OpenAPI `BookingOut`.
+- [x] Replaced `Member #<id>` fallback in `StaffBookings.tsx`, `StaffDashboard.tsx`, and `CourtScheduleGrid.tsx` with `member_name ?? guest_name ?? "Walk-in"`. Displayed `member_code` secondary label where space allows.
+- [x] Verified member-facing screens (`PortalBookings`, `PortalHome`) do not display `member_name` or `member_code`.
+- [x] Confirmed `usePayBooking` sends `{ payment_method }` body and `StaffBookings.tsx` handles `ALREADY_PAID` inline.
+- [x] Documented type differences remaining between `src/api/types.ts` and `openapi.json`.
+
+### Status
+Phase 7 Frontend (Booking Member Info & Pay Body Fix): **COMPLETE** ✅
+
+---
+
+## Frontend Phase 8 — Dashboard & Payments Ledger Real API Integration (SRS §1.4, §3.2.9, §4.8, §6)
+
+Spec: `docs/SRS.md` §1.4, §3.2.9, §4.8, §6, `openapi.json`
+
+### Implementation
+- [x] Swapped `useDashboardSummary`, `useRevenueSeries`, `usePayments`, and `useRefundPayment` hooks from mocks to real API endpoints (`GET /dashboard/summary`, `GET /dashboard/revenue-series`, `GET /payments`, `POST /payments/{id}/refund`) when `VITE_USE_MOCKS` is false.
+- [x] Aligned `DashboardSummary`, `RevenueSeries`, `RevenueDay`, and `Payment` interfaces in `src/api/types.ts` strictly to `openapi.json` schemas.
+- [x] Implemented paginated ledger in `StaffReports.tsx` requesting `page_size=100`, with page state and Next/Prev controls.
+- [x] Restricted payment refund visibility to OWNER and MANAGER roles and refreshed queries (`['payments']`, `['dashboard']`) on refund mutation success.
+- [x] Added `downloadPaymentsCsvApi` helper in `src/api/client.ts` to fetch `/reports/payments.csv` with Bearer auth token and trigger a Blob download.
+- [x] Documented shape differences between original mock types and real API responses.
+
+### Status
+Phase 8 Frontend (Dashboard & Payments Real API Integration): **COMPLETE** ✅
+
+---
+
+## Frontend Phase 9 — Bar & Kitchen Real API Integration (SRS §3.2.8, §4.6, §6)
+
+Spec: `docs/SRS.md` §3.2.8, §4.6, §6, `openapi.json`
+
+### Implementation
+- [x] Swapped `useMenuItems`, `useBarTables`, `useBarOrders`, `useCreateBarOrder`, `useAddBarOrderItems`, `useSetKitchenStatus`, `usePayBarOrder`, `usePutOnTab`, `useSettleTabs`, and `useBarDailyReport` from mocks to real REST API endpoints (`GET /menu-items`, `GET /bar/tables`, `GET/POST /bar/orders`, `POST /bar/orders/{id}/items`, `POST /bar/orders/{id}/kitchen-status`, `POST /bar/orders/{id}/pay`, `POST /bar/orders/{id}/tab`, `POST /bar/tabs/settle`, `GET /bar/reports/daily`).
+- [x] Aligned `MenuItem`, `BarTable`, `BarOrderItem`, `BarOrder`, `TabSettleInput`, and `BarDailyReport` interfaces in `src/api/types.ts` strictly to `openapi.json` schemas.
+- [x] Configured 5000 ms refetch interval polling for kitchen board order updates in `useBarOrders`.
+- [x] Labeled cart subtotal as "Estimate" prior to order placement in `StaffBar.tsx`.
+- [x] Documented all shape differences between mock types and real API responses.
+
+### Status
+Phase 9 Frontend (Bar & Kitchen Real API Integration): **COMPLETE** ✅
+
+---
+
+## Frontend Phase 10 — Leads & Notification Bell Integration (SRS §3.1, §3.2.10, §3.2.11)
+
+Spec: `docs/SRS.md` §3.1, §3.2.10, §3.2.11, `openapi.json`
+
+### Implementation
+- [x] Built `/staff/leads` page (`StaffLeads.tsx`) gated for `OWNER`, `MANAGER`, and `FRONT_DESK` roles (`BAR_STAFF` and `MEMBER` redirected).
+- [x] Added `DataTable` of `GET /leads` with status filter tabs (`NEW`, `CONTACTED`, `QUOTED`, `WON`, `LOST`), `page_size=100`, and total count header.
+- [x] Implemented Lead detail Drawer with status change (`PATCH /leads/{id}`), notes list & creation (`POST /leads/{id}/notes`), quotes list & creation with integer rupee-to-paise conversion (`POST /leads/{id}/quotes`), and plain text message rendering.
+- [x] Implemented Lead-to-Member conversion workflow (`POST /leads/{id}/convert`) pre-filling the member registration drawer; passing `lead_id` on `POST /members` marks the lead as WON on member creation.
+- [x] Updated Notification Bell in `TopBar.tsx` using `GET /notifications` and `GET /notifications/unread-count` with 30s background polling, unread badge, dropdown list (type, text, IST timestamp), and mark as read action (`POST /notifications/{id}/read`).
+- [x] Gracefully hid bell dropdown behaviour on 403/404 response errors without crashing.
+- [x] Hid placeholder nav items (`/staff/courts`, `/staff/social`, `/staff/invoices`, `/staff/expenses`, `/staff/hr`, `/staff/audit`) from navigation.
+
+### Status
+Phase 10 Frontend (Leads & Notifications Integration): **COMPLETE** ✅
+
+---
+
 ## Deferred to the mobile phase (H21)
 
 - [ ] **Phone test over Wi-Fi.** Open `http://<LAN-IP>:8080` from a phone, then run
@@ -269,5 +336,6 @@ Phase 6 Frontend (Courts & Bookings Real API): **COMPLETE** ✅
 - [ ] Create `frontend/public/icon-192.png` and `frontend/public/icon-512.png`, referenced by
       `manifest.webmanifest`.
 - [ ] Verify "Add to Home Screen" and the viewport / `theme-color` meta tags.
+
 
 

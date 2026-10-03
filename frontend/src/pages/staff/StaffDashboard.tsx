@@ -775,7 +775,12 @@ function FrontDeskDashboard() {
                         </div>
                         <div className="min-w-0">
                           <p className="font-bold text-sm text-text-primary truncate">
-                            {b.member_id ? `Member #${b.member_id}` : (b.guest_name ?? 'Guest')}
+                            {b.member_name ?? b.guest_name ?? 'Walk-in'}
+                            {b.member_code && (
+                              <span className="ml-1.5 text-xs font-mono font-normal text-text-tertiary">
+                                ({b.member_code})
+                              </span>
+                            )}
                           </p>
                           <p className="text-xs text-text-secondary truncate">
                             {court?.name ?? `Court #${b.court_id}`} {court?.sport ? `(${court.sport})` : ''} · {formatTimeIST(b.start_at)}

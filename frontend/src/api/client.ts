@@ -162,3 +162,21 @@ export async function logoutApi(): Promise<{ status: string }> {
 export async function getMeApi(): Promise<AuthUser> {
   return api.get<AuthUser>('/auth/me')
 }
+
+export async function downloadPaymentsCsvApi(from?: string, to?: string): Promise<Blob> {
+  const params = new URLSearchParams()
+  if (from) params.set('from', from)
+  if (to) params.set('to', to)
+  const path = `/reports/payments.csv${params.toString() ? `?${params.toString()}` : ''}`
+  const url = `${API_BASE}${path}`
+  const token = getAccessToken()
+  const headers = new Headers()
+  if (token) headers.set('Authorization', `Bearer ${token}`)
+
+  const res = await fetch(url, { headers, credentials: 'include' })
+  if (!res.ok) {
+    const body = await res.json().catch(() => null)
+    throw new ApiError(res.status, body?.error?.code ?? `HTTP_${res.status}`, body?.error?.message ?? 'CSV export failed')
+  }
+  return res.blob()
+}

@@ -214,7 +214,7 @@ export function CourtScheduleGrid({
                             >
                               <div className="flex items-center justify-between gap-1">
                                 <span className="text-[10px] font-bold text-primary-900 truncate">
-                                  {slot.member_name ?? slot.guest_name ?? 'Booked'}
+                                  {slot.member_name ?? slot.guest_name ?? 'Walk-in'}
                                 </span>
                                 {slot.member_tier && (
                                   <span className="text-[9px] font-semibold text-primary-700 uppercase">
@@ -313,7 +313,14 @@ export function CourtScheduleGrid({
                                 onClick={() => onSelectBooking?.(booking.id)}
                                 className="w-full h-full p-1 rounded-xl bg-primary-100 border border-primary-200 text-left flex flex-col justify-center text-[10px] font-bold text-primary-900 truncate hover:bg-primary-200 transition-colors touch-target"
                               >
-                                {booking.member_id ? `Member #${booking.member_id}` : (booking.guest_name ?? 'Booked')}
+                                <div className="truncate">
+                                  <span>{booking.member_name ?? booking.guest_name ?? 'Walk-in'}</span>
+                                  {booking.member_code && (
+                                    <span className="block text-[8px] font-mono font-normal opacity-75">
+                                      {booking.member_code}
+                                    </span>
+                                  )}
+                                </div>
                               </button>
                             ) : (
                               <button

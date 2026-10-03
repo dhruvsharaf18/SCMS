@@ -29,7 +29,7 @@ export interface DataTableProps<T> {
 
 type SortDir = 'asc' | 'desc' | null
 
-export function DataTable<T extends Record<string, unknown>>({
+export function DataTable<T>({
   columns,
   data,
   keyExtractor,
@@ -53,8 +53,8 @@ export function DataTable<T extends Record<string, unknown>>({
   const sorted = useMemo(() => {
     if (!sortKey || !sortDir) return data
     return [...data].sort((a, b) => {
-      const av = a[sortKey]
-      const bv = b[sortKey]
+      const av = (a as any)[sortKey]
+      const bv = (b as any)[sortKey]
       if (av == null && bv == null) return 0
       if (av == null) return 1
       if (bv == null) return -1
@@ -125,7 +125,7 @@ export function DataTable<T extends Record<string, unknown>>({
                 >
                   {col.render
                     ? col.render(row)
-                    : (row[col.key] as ReactNode)}
+                    : ((row as any)[col.key] as ReactNode)}
                 </td>
               ))}
             </tr>

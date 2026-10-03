@@ -6,6 +6,7 @@ import {
   useErrorSimulation,
 } from '../../api/hooks'
 import { useAuth } from '../../hooks/useAuth'
+import { downloadPaymentsCsvApi } from '../../api/client'
 import { getTodayIST, formatDateIST, formatTimeIST, formatMoney } from '../../lib/format'
 import {
   Card,
@@ -62,14 +63,22 @@ export default function StaffReports() {
   const [selectedSource, setSelectedSource] = useState<SourceType | 'ALL'>('ALL')
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethod | 'ALL'>('ALL')
   const [searchQuery, setSearchQuery] = useState('')
+  const [page, setPage] = useState(1)
+  const pageSize = 100
 
   // Data fetching
-  const { data: payments = [], isLoading } = usePayments({
+  const { data: paginatedPayments, isLoading } = usePayments({
     from: fromDate,
     to: toDate,
     source_type: selectedSource,
     method: selectedMethod,
+    page,
+    page_size: pageSize,
   })
+
+  const payments = paginatedPayments?.items ?? []
+  const totalCount = paginatedPayments?.total ?? payments.length
+  const totalPages = Math.ceil(totalCount / pageSize) || 1
 
   const refundMutation = useRefundPayment()
   const { currentError, setSimulatedError } = useErrorSimulation()
@@ -78,14 +87,16 @@ export default function StaffReports() {
   const [refundTarget, setRefundTarget] = useState<Payment | null>(null)
   const [refundReason, setRefundReason] = useState('')
 
+  const isOwnerOrManager = user?.role === 'OWNER' || user?.role === 'MANAGER'
+
   // Filtered payments
   const filteredPayments = useMemo(() => {
     return payments.filter((p) => {
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase()
         const matchRef = (p.reference ?? '').toLowerCase().includes(q)
-        const matchName = (p.member_name ?? '').toLowerCase().includes(q)
-        if (!matchRef && !matchName) return false
+        const matchMem = p.member_id ? `member #${p.member_id}`.includes(q) : false
+        if (!matchRef && !matchMem) return false
       }
       return true
     })
@@ -98,7 +109,7 @@ export default function StaffReports() {
     let refundCount = 0
 
     for (const p of filteredPayments) {
-      if (p.status === 'COMPLETED') {
+      if (p.status === 'PAID') {
         completedPaise += p.amount_paise
       } else if (p.status === 'REFUNDED') {
         refundedPaise += p.amount_paise
@@ -128,38 +139,24 @@ export default function StaffReports() {
       setRefundTarget(null)
       setRefundReason('')
     } catch (err: any) {
-      toast(err?.error?.message ?? 'Failed to process refund', 'error')
+      toast(err?.error?.message ?? err?.message ?? 'Failed to process refund', 'error')
     }
   }
 
-  const exportCSV = () => {
-    if (filteredPayments.length === 0) {
-      toast('No transaction records to export', 'error')
-      return
+  const exportCSV = async () => {
+    try {
+      const blob = await downloadPaymentsCsvApi(fromDate, toDate)
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.setAttribute('href', url)
+      link.setAttribute('download', `CCMS_Payments_Ledger_${fromDate}_to_${toDate}.csv`)
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      toast('CSV Ledger export downloaded', 'success')
+    } catch (err: any) {
+      toast(err?.error?.message ?? err?.message ?? 'Failed to export CSV', 'error')
     }
-
-    const headers = ['Reference', 'Date_IST', 'Source', 'Customer', 'Method', 'Amount_INR', 'GST_Tax_INR', 'Status']
-    const rows = filteredPayments.map((p) => [
-      p.reference ?? `TXN-${p.id}`,
-      `${formatDateIST(p.created_at)} ${formatTimeIST(p.created_at)}`,
-      p.source_type,
-      `"${p.member_name ?? 'Guest'}"`,
-      p.method,
-      (p.amount_paise / 100).toFixed(2),
-      (p.tax_paise / 100).toFixed(2),
-      p.status,
-    ])
-
-    const csvContent = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n')
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.setAttribute('href', url)
-    link.setAttribute('download', `CCMS_Payments_Ledger_${fromDate}_to_${toDate}.csv`)
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    toast('CSV Ledger export downloaded', 'success')
   }
 
   // Quick preset ranges
@@ -210,7 +207,7 @@ export default function StaffReports() {
       header: 'Customer',
       render: (p: Payment) => (
         <span className="font-medium text-xs text-text-primary">
-          {p.member_name ?? 'Walk-in Guest'}
+          {p.member_id ? `Member #${p.member_id}` : 'Walk-in Guest'}
         </span>
       ),
     },
@@ -253,7 +250,7 @@ export default function StaffReports() {
       render: (p: Payment) => (
         <StatusChip
           label={p.status}
-          variant={p.status === 'COMPLETED' ? 'success' : 'error'}
+          variant={p.status === 'PAID' ? 'success' : 'error'}
         />
       ),
     },
@@ -262,19 +259,21 @@ export default function StaffReports() {
       header: '',
       render: (p: Payment) => (
         <div className="flex items-center justify-end">
-          {p.status === 'COMPLETED' ? (
-            <Button
-              variant="secondary"
-              size="sm"
-              icon={RotateCcw}
-              onClick={() => {
-                setRefundTarget(p)
-                setRefundReason('')
-              }}
-              className="touch-target text-xs text-accent-red hover:bg-rose-50 hover:border-rose-200"
-            >
-              Refund
-            </Button>
+          {p.status === 'PAID' ? (
+            isOwnerOrManager && (
+              <Button
+                variant="secondary"
+                size="sm"
+                icon={RotateCcw}
+                onClick={() => {
+                  setRefundTarget(p)
+                  setRefundReason('')
+                }}
+                className="touch-target text-xs text-accent-red hover:bg-rose-50 hover:border-rose-200"
+              >
+                Refund
+              </Button>
+            )
           ) : (
             <span className="text-xs text-text-tertiary italic">Refunded</span>
           )}
@@ -429,6 +428,31 @@ export default function StaffReports() {
           keyExtractor={(p: any) => p.id}
           emptyMessage="No transaction records match your filters"
         />
+
+        {/* Pagination Bar */}
+        <div className="p-4 flex items-center justify-between border-t border-border-light text-xs text-text-secondary">
+          <span>
+            Page {page} of {totalPages} ({totalCount} total records)
+          </span>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="secondary"
+              size="sm"
+              disabled={page <= 1}
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+            >
+              Previous
+            </Button>
+            <Button
+              variant="secondary"
+              size="sm"
+              disabled={page >= totalPages}
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            >
+              Next
+            </Button>
+          </div>
+        </div>
       </Card>
 
       {/* ── Refund Modal ──────────────────────────────────────────────────── */}
@@ -448,7 +472,7 @@ export default function StaffReports() {
             <div className="flex justify-between">
               <span className="text-text-secondary">Customer:</span>
               <span className="font-bold text-text-primary">
-                {refundTarget?.member_name ?? 'Walk-in Guest'}
+                {refundTarget?.member_id ? `Member #${refundTarget.member_id}` : 'Walk-in Guest'}
               </span>
             </div>
             <div className="flex justify-between">

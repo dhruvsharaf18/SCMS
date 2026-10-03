@@ -597,7 +597,7 @@ export default function StaffBar() {
             {cart.length > 0 && (
               <div className="border-t border-border-light pt-3 space-y-2">
                 <div className="flex justify-between text-sm">
-                  <span className="text-text-secondary">Subtotal</span>
+                  <span className="text-text-secondary">Subtotal (Estimate)</span>
                   <span className="font-bold text-text-primary">{formatMoney(cartSubtotal)}</span>
                 </div>
                 {isMember && lookedUpMember?.membership && (
@@ -723,7 +723,7 @@ export default function StaffBar() {
               )}
               <p className="text-xs text-text-tertiary">
                 <Clock size={12} className="inline mr-1" />
-                {formatTimeIST(viewOrder.created_at)}
+                {formatTimeIST(viewOrder.created_at ?? '')}
               </p>
             </div>
 

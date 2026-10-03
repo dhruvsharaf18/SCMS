@@ -18,10 +18,12 @@ import type {
   BarOrderCreateInput,
   BarDailyReport,
   Payment,
+  PaginatedPayments,
   PaymentRefundResponse,
   SocialSession,
   SocialSessionJoinInput,
   DashboardSummary,
+  RevenueSeries,
   RevenueSeriesPoint,
   KitchenStatus,
   Sport,
@@ -31,6 +33,16 @@ import type {
   PublicProduct,
   PublicEnquiryInput,
   PublicEnquiryResponse,
+  Lead,
+  PaginatedLeads,
+  LeadUpdateInput,
+  LeadNote,
+  Quote,
+  QuoteCreateInput,
+  LeadConvertedResponse,
+  Notification,
+  PaginatedNotifications,
+  UnreadCountResponse,
   ApiError,
 } from '../types'
 import { api } from '../client'
@@ -367,8 +379,11 @@ export function useMenuItems(category?: string) {
   return useQuery<MenuItem[], ApiError>({
     queryKey: ['menu', category],
     queryFn: async () => {
-      await new Promise((r) => setTimeout(r, 60))
-      return getMockMenuItems(category)
+      if (USE_MOCKS) {
+        await new Promise((r) => setTimeout(r, 60))
+        return getMockMenuItems(category)
+      }
+      return api.get<MenuItem[]>(`/menu-items${category && category !== 'ALL' ? `?category=${category}` : ''}`)
     },
   })
 }
@@ -377,18 +392,37 @@ export function useBarTables() {
   return useQuery<BarTable[], ApiError>({
     queryKey: ['bar', 'tables'],
     queryFn: async () => {
-      await new Promise((r) => setTimeout(r, 60))
-      return getMockBarTables()
+      if (USE_MOCKS) {
+        await new Promise((r) => setTimeout(r, 60))
+        return getMockBarTables()
+      }
+      return api.get<BarTable[]>('/bar/tables')
     },
   })
 }
 
-export function useBarOrders(filters?: { kitchen_status?: string; payment_status?: string; table_id?: number }) {
+export function useBarOrders(
+  filters?: { kitchen_status?: string; payment_status?: string; table_id?: number; member_id?: number; page?: number; page_size?: number },
+  options?: { refetchInterval?: number | false }
+) {
   return useQuery<BarOrder[], ApiError>({
     queryKey: ['bar', 'orders', filters],
+    refetchInterval: options?.refetchInterval ?? (USE_MOCKS ? false : 5000),
     queryFn: async () => {
-      await new Promise((r) => setTimeout(r, 60))
-      return getMockBarOrders(filters)
+      if (USE_MOCKS) {
+        await new Promise((r) => setTimeout(r, 60))
+        return getMockBarOrders(filters)
+      }
+      const params = new URLSearchParams()
+      if (filters?.kitchen_status) params.set('kitchen_status', filters.kitchen_status)
+      if (filters?.payment_status) params.set('payment_status', filters.payment_status)
+      if (filters?.table_id) params.set('table_id', String(filters.table_id))
+      if (filters?.member_id) params.set('member_id', String(filters.member_id))
+      params.set('page', String(filters?.page ?? 1))
+      params.set('page_size', String(filters?.page_size ?? 100))
+
+      const page = await api.get<{ items: BarOrder[]; total: number; page: number; page_size: number }>(`/bar/orders?${params.toString()}`)
+      return page.items || []
     },
   })
 }
@@ -397,8 +431,11 @@ export function useCreateBarOrder() {
   const qc = useQueryClient()
   return useMutation<BarOrder, ApiError, BarOrderCreateInput>({
     mutationFn: async (input) => {
-      await new Promise((r) => setTimeout(r, 100))
-      return createMockBarOrder(input)
+      if (USE_MOCKS) {
+        await new Promise((r) => setTimeout(r, 100))
+        return createMockBarOrder(input)
+      }
+      return api.post<BarOrder>('/bar/orders', input)
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['bar', 'orders'] })
@@ -412,8 +449,11 @@ export function useAddBarOrderItems() {
   const qc = useQueryClient()
   return useMutation<BarOrder, ApiError, { orderId: number; items: { menu_item_id: number; qty: number; note?: string }[] }>({
     mutationFn: async ({ orderId, items }) => {
-      await new Promise((r) => setTimeout(r, 80))
-      return addMockBarOrderItems(orderId, items)
+      if (USE_MOCKS) {
+        await new Promise((r) => setTimeout(r, 80))
+        return addMockBarOrderItems(orderId, items)
+      }
+      return api.post<BarOrder>(`/bar/orders/${orderId}/items`, { items })
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['bar', 'orders'] })
@@ -426,8 +466,11 @@ export function useSetKitchenStatus() {
   const qc = useQueryClient()
   return useMutation<BarOrder, ApiError, { orderId: number; status: KitchenStatus }>({
     mutationFn: async ({ orderId, status }) => {
-      await new Promise((r) => setTimeout(r, 80))
-      return setMockKitchenStatus(orderId, status)
+      if (USE_MOCKS) {
+        await new Promise((r) => setTimeout(r, 80))
+        return setMockKitchenStatus(orderId, status)
+      }
+      return api.post<BarOrder>(`/bar/orders/${orderId}/kitchen-status`, { status })
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['bar', 'orders'] })
@@ -439,8 +482,11 @@ export function usePayBarOrder() {
   const qc = useQueryClient()
   return useMutation<BarOrder, ApiError, { orderId: number; method: 'CASH' | 'CARD' | 'UPI' }>({
     mutationFn: async ({ orderId, method }) => {
-      await new Promise((r) => setTimeout(r, 80))
-      return payMockBarOrder(orderId, method)
+      if (USE_MOCKS) {
+        await new Promise((r) => setTimeout(r, 80))
+        return payMockBarOrder(orderId, method)
+      }
+      return api.post<BarOrder>(`/bar/orders/${orderId}/pay`, { method })
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['bar', 'orders'] })
@@ -455,8 +501,11 @@ export function usePutOnTab() {
   const qc = useQueryClient()
   return useMutation<BarOrder, ApiError, { orderId: number }>({
     mutationFn: async ({ orderId }) => {
-      await new Promise((r) => setTimeout(r, 80))
-      return putMockOrderOnTab(orderId)
+      if (USE_MOCKS) {
+        await new Promise((r) => setTimeout(r, 80))
+        return putMockOrderOnTab(orderId)
+      }
+      return api.post<BarOrder>(`/bar/orders/${orderId}/tab`)
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['bar', 'orders'] })
@@ -467,10 +516,25 @@ export function usePutOnTab() {
 
 export function useSettleTabs() {
   const qc = useQueryClient()
-  return useMutation<number, ApiError, { memberId: number; method: 'CASH' | 'CARD' | 'UPI' }>({
-    mutationFn: async ({ memberId, method }) => {
-      await new Promise((r) => setTimeout(r, 100))
-      return settleMockTabs(memberId, method)
+  return useMutation<number, ApiError, { memberId: number; orderIds?: number[]; method: 'CASH' | 'CARD' | 'UPI' }>({
+    mutationFn: async ({ memberId, orderIds, method }) => {
+      if (USE_MOCKS) {
+        await new Promise((r) => setTimeout(r, 100))
+        return settleMockTabs(memberId, method)
+      }
+      let targetOrderIds = orderIds
+      if (!targetOrderIds || targetOrderIds.length === 0) {
+        const page = await api.get<{ items: BarOrder[]; total: number; page: number; page_size: number }>(
+          `/bar/orders?member_id=${memberId}&payment_status=UNPAID&page_size=100`
+        )
+        targetOrderIds = (page.items || []).filter((o) => o.is_tab).map((o) => o.id)
+      }
+      const settledOrders = await api.post<BarOrder[]>('/bar/tabs/settle', {
+        member_id: memberId,
+        order_ids: targetOrderIds,
+        method,
+      })
+      return (settledOrders || []).reduce((sum, o) => sum + o.total_paise, 0)
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['bar', 'orders'] })
@@ -485,8 +549,11 @@ export function useBarDailyReport(date?: string) {
   return useQuery<BarDailyReport, ApiError>({
     queryKey: ['bar', 'reports', 'daily', date],
     queryFn: async () => {
-      await new Promise((r) => setTimeout(r, 60))
-      return getMockBarDailyReport(date)
+      if (USE_MOCKS) {
+        await new Promise((r) => setTimeout(r, 60))
+        return getMockBarDailyReport(date)
+      }
+      return api.get<BarDailyReport>(`/bar/reports/daily${date ? `?date=${date}` : ''}`)
     },
   })
 }
@@ -496,18 +563,32 @@ export function useDashboardSummary(period: 'today' | 'week' | 'month' = 'today'
   return useQuery<DashboardSummary, ApiError>({
     queryKey: ['dashboard', 'summary', period],
     queryFn: async () => {
-      await new Promise((r) => setTimeout(r, 60))
-      return getMockDashboardSummary(period)
+      if (USE_MOCKS) {
+        await new Promise((r) => setTimeout(r, 60))
+        return getMockDashboardSummary(period)
+      }
+      return api.get<DashboardSummary>(`/dashboard/summary?period=${period}`)
     },
   })
 }
 
-export function useRevenueSeries() {
+export function useRevenueSeries(period: 'today' | 'week' | 'month' = 'week') {
   return useQuery<RevenueSeriesPoint[], ApiError>({
-    queryKey: ['dashboard', 'revenue-series'],
+    queryKey: ['dashboard', 'revenue-series', period],
     queryFn: async () => {
-      await new Promise((r) => setTimeout(r, 60))
-      return getMockRevenueSeries()
+      if (USE_MOCKS) {
+        await new Promise((r) => setTimeout(r, 60))
+        return getMockRevenueSeries()
+      }
+      const res = await api.get<RevenueSeries>(`/dashboard/revenue-series?period=${period}`)
+      return (res.days || []).map((d) => ({
+        date: d.date,
+        total_paise: d.total_paise,
+        booking_paise: d.by_source?.BOOKING ?? 0,
+        shop_paise: d.by_source?.SHOP_ORDER ?? 0,
+        bar_paise: d.by_source?.BAR_ORDER ?? 0,
+        membership_paise: d.by_source?.MEMBERSHIP ?? 0,
+      }))
     },
   })
 }
@@ -518,12 +599,31 @@ export function usePayments(filters?: {
   to?: string
   source_type?: string
   method?: string
+  page?: number
+  page_size?: number
 }) {
-  return useQuery<Payment[], ApiError>({
+  return useQuery<PaginatedPayments, ApiError>({
     queryKey: ['payments', filters],
     queryFn: async () => {
-      await new Promise((r) => setTimeout(r, 60))
-      return getMockPayments(filters)
+      if (USE_MOCKS) {
+        await new Promise((r) => setTimeout(r, 60))
+        const items = getMockPayments(filters)
+        return {
+          items,
+          total: items.length,
+          page: filters?.page ?? 1,
+          page_size: filters?.page_size ?? 100,
+        }
+      }
+      const params = new URLSearchParams()
+      if (filters?.from) params.set('from', filters.from)
+      if (filters?.to) params.set('to', filters.to)
+      if (filters?.source_type && filters.source_type !== 'ALL') params.set('source_type', filters.source_type)
+      if (filters?.method && filters.method !== 'ALL') params.set('method', filters.method)
+      params.set('page', String(filters?.page ?? 1))
+      params.set('page_size', String(filters?.page_size ?? 100))
+
+      return api.get<PaginatedPayments>(`/payments?${params.toString()}`)
     },
   })
 }
@@ -532,8 +632,11 @@ export function useRefundPayment() {
   const qc = useQueryClient()
   return useMutation<PaymentRefundResponse, ApiError, { paymentId: number; reason?: string }>({
     mutationFn: async ({ paymentId, reason }) => {
-      await new Promise((r) => setTimeout(r, 100))
-      return refundMockPayment(paymentId, reason)
+      if (USE_MOCKS) {
+        await new Promise((r) => setTimeout(r, 100))
+        return refundMockPayment(paymentId, reason)
+      }
+      return api.post<PaymentRefundResponse>(`/payments/${paymentId}/refund`, reason ? { reason } : undefined)
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['payments'] })
@@ -673,6 +776,144 @@ export function useSubmitEnquiry() {
     mutationFn: async (input) => {
       await new Promise((r) => setTimeout(r, 120))
       return submitMockPublicEnquiry(input)
+    },
+  })
+}
+
+// ── Leads Hooks (SRS 3.2.10) ────────────────────────────────────────────────
+export function useLeads(params?: { status?: string; assigned_to?: number; page?: number; page_size?: number }) {
+  return useQuery<PaginatedLeads, ApiError>({
+    queryKey: ['leads', params],
+    queryFn: async () => {
+      const searchParams = new URLSearchParams()
+      if (params?.status && params.status !== 'ALL') searchParams.set('status', params.status)
+      if (params?.assigned_to) searchParams.set('assigned_to', String(params.assigned_to))
+      searchParams.set('page', String(params?.page ?? 1))
+      searchParams.set('page_size', String(params?.page_size ?? 100))
+
+      return api.get<PaginatedLeads>(`/leads?${searchParams.toString()}`)
+    },
+  })
+}
+
+export function useLead(leadId: number) {
+  return useQuery<Lead, ApiError>({
+    queryKey: ['lead', leadId],
+    queryFn: async () => {
+      return api.get<Lead>(`/leads/${leadId}`)
+    },
+    enabled: !!leadId,
+  })
+}
+
+export function useUpdateLead() {
+  const qc = useQueryClient()
+  return useMutation<Lead, ApiError, { leadId: number; data: LeadUpdateInput }>({
+    mutationFn: async ({ leadId, data }) => {
+      return api.patch<Lead>(`/leads/${leadId}`, data)
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['leads'] })
+      qc.invalidateQueries({ queryKey: ['lead'] })
+    },
+  })
+}
+
+export function useLeadNotes(leadId: number) {
+  return useQuery<LeadNote[], ApiError>({
+    queryKey: ['leads', leadId, 'notes'],
+    queryFn: async () => {
+      return api.get<LeadNote[]>(`/leads/${leadId}/notes`)
+    },
+    enabled: !!leadId,
+  })
+}
+
+export function useAddLeadNote() {
+  const qc = useQueryClient()
+  return useMutation<LeadNote, ApiError, { leadId: number; body: string }>({
+    mutationFn: async ({ leadId, body }) => {
+      return api.post<LeadNote>(`/leads/${leadId}/notes`, { body })
+    },
+    onSuccess: (_, { leadId }) => {
+      qc.invalidateQueries({ queryKey: ['leads', leadId, 'notes'] })
+    },
+  })
+}
+
+export function useLeadQuotes(leadId: number) {
+  return useQuery<Quote[], ApiError>({
+    queryKey: ['leads', leadId, 'quotes'],
+    queryFn: async () => {
+      return api.get<Quote[]>(`/leads/${leadId}/quotes`)
+    },
+    enabled: !!leadId,
+  })
+}
+
+export function useAddLeadQuote() {
+  const qc = useQueryClient()
+  return useMutation<Quote, ApiError, { leadId: number; quote: QuoteCreateInput }>({
+    mutationFn: async ({ leadId, quote }) => {
+      return api.post<Quote>(`/leads/${leadId}/quotes`, quote)
+    },
+    onSuccess: (_, { leadId }) => {
+      qc.invalidateQueries({ queryKey: ['leads', leadId, 'quotes'] })
+      qc.invalidateQueries({ queryKey: ['leads'] })
+    },
+  })
+}
+
+export function useConvertLead() {
+  const qc = useQueryClient()
+  return useMutation<LeadConvertedResponse, ApiError, { leadId: number }>({
+    mutationFn: async ({ leadId }) => {
+      return api.post<LeadConvertedResponse>(`/leads/${leadId}/convert`)
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['leads'] })
+    },
+  })
+}
+
+// ── Notifications Hooks (SRS 3.2.11) ────────────────────────────────────────
+export function useNotifications(
+  params?: { unread_only?: boolean; page?: number; page_size?: number },
+  options?: { refetchInterval?: number | false }
+) {
+  return useQuery<PaginatedNotifications, ApiError>({
+    queryKey: ['notifications', params],
+    refetchInterval: options?.refetchInterval ?? 30000,
+    queryFn: async () => {
+      const searchParams = new URLSearchParams()
+      if (params?.unread_only) searchParams.set('unread_only', 'true')
+      searchParams.set('page', String(params?.page ?? 1))
+      searchParams.set('page_size', String(params?.page_size ?? 50))
+
+      return api.get<PaginatedNotifications>(`/notifications?${searchParams.toString()}`)
+    },
+  })
+}
+
+export function useUnreadNotificationsCount(options?: { refetchInterval?: number | false }) {
+  return useQuery<UnreadCountResponse, ApiError>({
+    queryKey: ['notifications', 'unread-count'],
+    refetchInterval: options?.refetchInterval ?? 30000,
+    queryFn: async () => {
+      return api.get<UnreadCountResponse>('/notifications/unread-count')
+    },
+  })
+}
+
+export function useMarkNotificationRead() {
+  const qc = useQueryClient()
+  return useMutation<{ id: number; read_at: string }, ApiError, { notificationId: number }>({
+    mutationFn: async ({ notificationId }) => {
+      return api.post<{ id: number; read_at: string }>(`/notifications/${notificationId}/read`)
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['notifications'] })
+      qc.invalidateQueries({ queryKey: ['notifications', 'unread-count'] })
     },
   })
 }

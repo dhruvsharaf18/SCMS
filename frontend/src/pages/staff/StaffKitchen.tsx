@@ -108,7 +108,7 @@ export default function StaffKitchen() {
     }
     // Only show served orders from last 2 hours
     const twoHoursAgo = Date.now() - 2 * 60 * 60 * 1000
-    map['SERVED'] = map['SERVED'].filter((o) => new Date(o.created_at).getTime() > twoHoursAgo)
+    map['SERVED'] = map['SERVED'].filter((o) => new Date(o.created_at ?? '').getTime() > twoHoursAgo)
     return map
   }, [allOrders])
 
@@ -220,7 +220,7 @@ export default function StaffKitchen() {
                               <StatusChip label={order.table_label} variant="neutral" />
                             )}
                           </div>
-                          <ElapsedTime createdAt={order.created_at} />
+                          <ElapsedTime createdAt={order.created_at ?? ''} />
                         </div>
 
                         {/* Customer */}

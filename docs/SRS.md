@@ -225,7 +225,7 @@ Member status: `ACTIVE` (end_date ≥ today+8), `EXPIRING` (today ≤ end_date �
 | GET | `/bookings/{id}` | |
 | POST | `/bookings/{id}/cancel` | `{reason}` |
 | POST | `/bookings/{id}/status` | staff: `COMPLETED` / `NO_SHOW` |
-| POST | `/bookings/{id}/pay` | staff records payment for UNPAID booking |
+| POST | `/bookings/{id}/pay` | staff records payment for UNPAID booking; body: `{payment_method}` |
 
 `POST /bookings`
 ```json
@@ -237,10 +237,22 @@ Member status: `ACTIVE` (end_date ≥ today+8), `EXPIRING` (today ≤ end_date �
 ```
 `201`:
 ```json
-{"id":201,"court_id":1,"start_at":"2026-10-09T12:30:00Z","end_at":"2026-10-09T13:30:00Z",
- "status":"CONFIRMED","tier_applied":"SILVER","price_paise":40000,"payment_status":"PAID","source":"FRONT_DESK"}
+{"id":201,"court_id":1,"member_id":11,"guest_name":null,
+ "start_at":"2026-10-09T12:30:00Z","end_at":"2026-10-09T13:30:00Z",
+ "status":"CONFIRMED","tier_applied":"SILVER","price_paise":40000,
+ "payment_status":"PAID","source":"FRONT_DESK",
+ "member_name":"Rahul Sharma","member_code":"MEM-00011"}
 ```
+`member_name` and `member_code`: populated for OWNER / MANAGER / FRONT_DESK; `null` for walk-ins (no `member_id`). MEMBER role responses omit these (always `null`) since a member only sees their own bookings.
+
 Errors: 409 `SLOT_TAKEN`, 409 `DAILY_LIMIT_REACHED`, 422 `INVALID_SLOT` (off-grid / outside hours / past), 422 `GUEST_REQUIRED`, 404 `COURT_NOT_FOUND`, 403.
+
+`POST /bookings/{id}/pay` → 200
+```json
+{"payment_method":"CASH"}   // CASH | CARD | UPI | ONLINE_MOCK (required)
+```
+Records payment for an UNPAID booking. Returns updated `BookingOut`.
+Errors: 409 `ALREADY_PAID`, 404 `NOT_FOUND`, 403.
 
 `POST /bookings/{id}/cancel` → 200
 ```json
