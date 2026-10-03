@@ -17,7 +17,9 @@ import { useAuth } from '../../hooks/useAuth'
 import { safeNextPath } from '../../lib/utils'
 
 const DEMO_PERSONAS = [
-  { label: 'Member (Karan)', email: 'member1@club.test', role: 'MEMBER' },
+  { label: 'Member 1 (Karan)', email: 'member1@club.test', role: 'MEMBER' },
+  { label: 'Member 2 (Pooja)', email: 'member2@club.test', role: 'MEMBER' },
+  { label: 'Member 3 (Rahul)', email: 'member3@club.test', role: 'MEMBER' },
   { label: 'Front Desk (Arjun)', email: 'desk@club.test', role: 'FRONT_DESK' },
   { label: 'Bar Staff (Sana)', email: 'bar@club.test', role: 'BAR_STAFF' },
   { label: 'Manager (Ravi)', email: 'manager@club.test', role: 'MANAGER' },
@@ -62,15 +64,24 @@ export default function LoginPage() {
       // Post-login redirect: a safe ?next= path first, otherwise the role landing page (SRS §2.4 & §3.1)
       navigate(nextPath ?? (user.role === 'MEMBER' ? '/portal' : '/staff'), { replace: true })
     } catch (err: any) {
-      if (err?.status === 423 || err?.code === 'ACCOUNT_LOCKED') {
+      const status = err?.status ?? 0
+      const code = err?.code ?? ''
+
+      if (status === 423 || code === 'ACCOUNT_LOCKED') {
         setIsLockedOut(true)
         setErrorMessage(
           'Account temporarily locked due to too many failed attempts. Please try again in 15 minutes.'
         )
-      } else if (err?.status === 429 || err?.code === 'RATE_LIMITED') {
-        setErrorMessage('Too many requests. Please try again later.')
-      } else {
+      } else if (status === 429 || code === 'RATE_LIMITED') {
+        setErrorMessage('Too many attempts, wait a minute and try again.')
+      } else if (status === 422 || code === 'VALIDATION_ERROR') {
+        setErrorMessage('Please enter a valid email and password.')
+      } else if (status >= 500 || status === 0 || code === 'NETWORK_ERROR') {
+        setErrorMessage('Cannot reach the server. Try again shortly.')
+      } else if (status === 401 || code === 'INVALID_CREDENTIALS') {
         // Generic error text: never reveals whether email or password was wrong (SRS §7, S-05)
+        setErrorMessage('Invalid email or password.')
+      } else {
         setErrorMessage('Invalid email or password.')
       }
     } finally {
