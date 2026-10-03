@@ -95,7 +95,7 @@ export default function LoginPage() {
       <Card className="p-6 sm:p-8 rounded-3xl border border-border-light shadow-card space-y-6">
         {/* Header */}
         <div className="text-center space-y-2">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary-500 to-primary-700 text-white flex items-center justify-center mx-auto shadow-pill">
+          <div className="w-12 h-12 rounded-2xl bg-primary-500 text-ink border border-ink flex items-center justify-center mx-auto shadow-pill">
             <Trophy size={24} className="stroke-[2.2]" />
           </div>
           <h1 className="text-2xl font-extrabold text-text-primary tracking-tight">

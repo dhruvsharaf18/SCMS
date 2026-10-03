@@ -81,9 +81,9 @@ export default function ShopPage() {
       </div>
 
       {/* ── Member Discount Information Banner ───────────────────────────── */}
-      <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-primary-50 to-primary-100/50 border border-primary-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs shadow-soft">
+      <div className="p-4 sm:p-5 rounded-2xl bg-surface border border-border-light flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs shadow-soft text-ink">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-primary-500 text-white flex items-center justify-center shrink-0">
+          <div className="w-9 h-9 rounded-xl bg-primary-500 text-ink border border-ink flex items-center justify-center shrink-0">
             <Sparkles size={18} />
           </div>
           <div>

@@ -64,13 +64,13 @@ export default function PortalHome() {
   const isExpiring = member?.status === 'EXPIRING'
   const isExpired = member?.status === 'EXPIRED'
 
-  const tierGradients: Record<string, string> = {
-    GOLD: 'from-amber-600 via-amber-500 to-yellow-400 text-amber-950',
-    SILVER: 'from-slate-600 via-slate-500 to-zinc-400 text-slate-950',
-    JUNIOR: 'from-blue-600 via-indigo-500 to-sky-400 text-blue-950',
+  const tierCardStyles: Record<string, { bg: string; text: string; sub: string; badge: string }> = {
+    GOLD: { bg: 'bg-primary-500', text: 'text-ink', sub: 'text-ink', badge: 'bg-ink text-primary-500' },
+    SILVER: { bg: 'bg-surface-dark', text: 'text-white', sub: 'text-white/80', badge: 'bg-white text-ink' },
+    JUNIOR: { bg: 'bg-brand-purple', text: 'text-white', sub: 'text-white/80', badge: 'bg-white text-ink' },
   }
 
-  const tierGradient = tierGradients[tier] || tierGradients.GOLD
+  const cardStyle = tierCardStyles[tier] || tierCardStyles.GOLD
 
   return (
     <div className="space-y-6 pb-6">
@@ -90,9 +90,7 @@ export default function PortalHome() {
       </div>
 
       {/* ── Luxury Digital Membership Card ── */}
-      <div className="relative overflow-hidden rounded-3xl p-6 shadow-card transition-all duration-300 bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white border border-white/10">
-        {/* Background glow & subtle watermark */}
-        <div className="absolute -right-12 -bottom-12 w-56 h-56 rounded-full bg-primary-500/20 blur-3xl pointer-events-none" />
+      <div className={`relative overflow-hidden rounded-3xl p-6 shadow-card transition-all duration-300 ${cardStyle.bg} ${cardStyle.text} border border-ink`}>
         <div className="absolute top-0 right-0 p-6 opacity-10 pointer-events-none">
           <Award size={120} />
         </div>
@@ -102,19 +100,19 @@ export default function PortalHome() {
           <div className="flex items-start justify-between">
             <div>
               <div className="flex items-center gap-2">
-                <span className="font-extrabold tracking-wider text-xs uppercase text-primary-300">
+                <span className={`font-extrabold tracking-wider text-xs uppercase ${cardStyle.text}`}>
                   Champions Club
                 </span>
-                <span className="w-1.5 h-1.5 rounded-full bg-primary-400" />
-                <span className="text-xs font-medium text-white/70">Membership Pass</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-ink" />
+                <span className={`text-xs font-bold ${cardStyle.sub}`}>Membership Pass</span>
               </div>
-              <p className="text-2xl font-black tracking-tight mt-1 bg-gradient-to-r from-white via-white to-white/80 bg-clip-text text-transparent">
+              <p className={`text-2xl font-black tracking-tight mt-1 ${cardStyle.text}`}>
                 {member?.full_name ?? user?.full_name ?? 'Club Member'}
               </p>
             </div>
 
             <div className="flex flex-col items-end gap-1.5">
-              <span className="px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-white/10 backdrop-blur-md border border-white/20 text-white shadow-sm">
+              <span className={`px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider ${cardStyle.badge} border border-ink shadow-sm`}>
                 {tier} MEMBER
               </span>
               <StatusChip
@@ -186,9 +184,9 @@ export default function PortalHome() {
         <button
           type="button"
           onClick={() => navigate('/portal/social')}
-          className="p-4 rounded-2xl bg-surface border border-border-light shadow-soft hover:shadow-card hover:border-accent-purple/50 transition-all text-left flex flex-col justify-between group touch-target"
+          className="p-4 rounded-2xl bg-surface border border-border-light shadow-soft hover:shadow-card hover:border-primary-500 transition-all text-left flex flex-col justify-between group touch-target"
         >
-          <div className="w-10 h-10 rounded-xl bg-purple-50 text-accent-purple flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
+          <div className="w-10 h-10 rounded-xl bg-primary-500 text-ink border border-ink flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
             <Users size={20} />
           </div>
           <div>
@@ -200,9 +198,9 @@ export default function PortalHome() {
         <button
           type="button"
           onClick={() => navigate('/portal/shop')}
-          className="p-4 rounded-2xl bg-surface border border-border-light shadow-soft hover:shadow-card hover:border-accent-green/50 transition-all text-left flex flex-col justify-between group touch-target"
+          className="p-4 rounded-2xl bg-surface border border-border-light shadow-soft hover:shadow-card hover:border-primary-500 transition-all text-left flex flex-col justify-between group touch-target"
         >
-          <div className="w-10 h-10 rounded-xl bg-emerald-50 text-accent-green flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
+          <div className="w-10 h-10 rounded-xl bg-primary-500 text-ink border border-ink flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
             <ShoppingBag size={20} />
           </div>
           <div>
@@ -214,9 +212,9 @@ export default function PortalHome() {
         <button
           type="button"
           onClick={() => navigate('/portal/orders')}
-          className="p-4 rounded-2xl bg-surface border border-border-light shadow-soft hover:shadow-card hover:border-amber-300 transition-all text-left flex flex-col justify-between group touch-target"
+          className="p-4 rounded-2xl bg-surface border border-border-light shadow-soft hover:shadow-card hover:border-primary-500 transition-all text-left flex flex-col justify-between group touch-target"
         >
-          <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
+          <div className="w-10 h-10 rounded-xl bg-primary-500 text-ink border border-ink flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
             <Receipt size={20} />
           </div>
           <div>
@@ -228,9 +226,9 @@ export default function PortalHome() {
         <button
           type="button"
           onClick={() => navigate('/portal/dining')}
-          className="col-span-2 sm:col-span-1 p-4 rounded-2xl bg-surface border border-border-light shadow-soft hover:shadow-card hover:border-rose-300 transition-all text-left flex flex-col justify-between group touch-target"
+          className="col-span-2 sm:col-span-1 p-4 rounded-2xl bg-surface border border-border-light shadow-soft hover:shadow-card hover:border-primary-500 transition-all text-left flex flex-col justify-between group touch-target"
         >
-          <div className="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
+          <div className="w-10 h-10 rounded-xl bg-primary-500 text-ink border border-ink flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
             <UtensilsCrossed size={20} />
           </div>
           <div>
@@ -318,8 +316,8 @@ export default function PortalHome() {
             <div>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-accent-purple animate-pulse" />
-                  <span className="text-xs font-bold text-accent-purple uppercase tracking-wider">
+                  <span className="w-2 h-2 rounded-full bg-primary-500 border border-ink animate-pulse" />
+                  <span className="text-xs font-bold text-ink uppercase tracking-wider">
                     Next Social Play
                   </span>
                 </div>

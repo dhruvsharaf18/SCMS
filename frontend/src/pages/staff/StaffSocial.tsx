@@ -207,7 +207,7 @@ export default function StaffSocial() {
                 setCancelError(null)
                 setCancelTarget(s)
               }}
-              className="text-accent-red hover:bg-rose-50 hover:border-rose-200"
+              className="text-ink hover:bg-status-error hover:border-status-error-accent"
             >
               Cancel
             </Button>

@@ -27,29 +27,25 @@ const SPORTS_STRIP = [
     name: 'Tennis',
     tagline: '2 ITF Grade Synthetic Courts',
     description: 'Championship-grade acrylic courts with night floodlights and ball machines.',
-    gradient: 'from-amber-500/10 to-orange-500/10 border-orange-200/60',
-    iconColor: 'text-orange-600',
+    iconColor: 'text-ink',
   },
   {
     name: 'Padel',
     tagline: '1 Panoramic Glass Court',
     description: 'Enclosed professional padel court with textured monofilament turf.',
-    gradient: 'from-blue-500/10 to-indigo-500/10 border-blue-200/60',
-    iconColor: 'text-primary-600',
+    iconColor: 'text-ink',
   },
   {
     name: 'Badminton',
     tagline: '2 BWF Standard Wooden Courts',
     description: 'Teakwood sprung subfloors with anti-glare overhead illumination.',
-    gradient: 'from-emerald-500/10 to-teal-500/10 border-emerald-200/60',
-    iconColor: 'text-emerald-600',
+    iconColor: 'text-ink',
   },
   {
     name: 'Cricket Net',
     tagline: '1 Automated Pitch',
     description: 'Astro-turf batting lane with programmable multi-speed bowling machine.',
-    gradient: 'from-purple-500/10 to-pink-500/10 border-purple-200/60',
-    iconColor: 'text-purple-600',
+    iconColor: 'text-ink',
   },
 ]
 
@@ -123,19 +119,15 @@ export default function HomePage() {
   return (
     <div className="space-y-16 md:space-y-24">
       {/* ── 1. Hero Section ──────────────────────────────────────────────── */}
-      <section className="relative overflow-hidden rounded-3xl bg-surface border border-border-light p-6 sm:p-10 md:p-14 shadow-card">
-        {/* Soft background decorative gradient blocks */}
-        <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-primary-100/60 blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-24 -left-24 w-96 h-96 rounded-full bg-accent-green/10 blur-3xl pointer-events-none" />
-
+      <section className="relative overflow-hidden rounded-3xl bg-surface border border-border-light p-6 sm:p-10 md:p-14 shadow-card text-ink">
         <div className="relative max-w-3xl space-y-6">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-primary-50 border border-primary-200 text-primary-700 text-xs font-bold shadow-soft animate-fade-in">
-            <Trophy size={14} className="text-primary-600" />
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-primary-500 border border-ink text-ink text-xs font-bold shadow-soft animate-fade-in">
+            <Trophy size={14} className="text-ink" />
             <span>Bangalore&apos;s Elite Racquet & Sports Club</span>
           </div>
 
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-text-primary leading-tight">
-            Where Passion Meets <span className="text-primary-600">Peak Performance.</span>
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-ink leading-tight">
+            Where Passion Meets <span className="underline decoration-primary-500">Peak Performance.</span>
           </h1>
 
           <p className="text-sm sm:text-base md:text-lg text-text-secondary leading-relaxed">
@@ -238,7 +230,7 @@ export default function HomePage() {
           {SPORTS_STRIP.map((sport) => (
             <Card
               key={sport.name}
-              className={`p-5 rounded-2xl border bg-gradient-to-b ${sport.gradient} hover:shadow-card-hover transition-all duration-200 flex flex-col justify-between space-y-4`}
+              className="p-5 rounded-2xl border border-border-light bg-surface hover:shadow-card-hover transition-all duration-200 flex flex-col justify-between space-y-4"
             >
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
@@ -399,7 +391,7 @@ export default function HomePage() {
           {TESTIMONIALS.map((t) => (
             <Card key={t.name} className="p-6 rounded-2xl border border-border-light bg-surface space-y-4 flex flex-col justify-between">
               <div className="space-y-3">
-                <div className="flex items-center gap-1 text-amber-500">
+                <div className="flex items-center gap-1 text-primary-500">
                   {[...Array(t.rating)].map((_, i) => (
                     <Star key={i} size={15} fill="currentColor" />
                   ))}
@@ -419,12 +411,12 @@ export default function HomePage() {
       </section>
 
       {/* ── 7. Closing Call-to-Action ────────────────────────────────────── */}
-      <section className="rounded-3xl bg-gradient-to-r from-primary-600 to-primary-800 text-white p-8 sm:p-12 text-center relative overflow-hidden shadow-raised">
+      <section className="rounded-3xl bg-primary-500 text-ink border border-ink p-8 sm:p-12 text-center relative overflow-hidden shadow-raised">
         <div className="relative max-w-2xl mx-auto space-y-5">
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight">
             Ready to Take the Court?
           </h2>
-          <p className="text-xs sm:text-sm text-primary-100 max-w-lg mx-auto leading-relaxed">
+          <p className="text-xs sm:text-sm text-ink max-w-lg mx-auto leading-relaxed">
             Join as a member today or submit an enquiry for a trial session, corporate booking, or private coaching.
           </p>
 
@@ -434,7 +426,7 @@ export default function HomePage() {
                 variant="secondary"
                 size="lg"
                 pill
-                className="w-full sm:w-auto text-xs sm:text-sm font-bold min-h-[46px] px-8 bg-white text-primary-700 hover:bg-primary-50"
+                className="w-full sm:w-auto text-xs sm:text-sm font-bold min-h-[46px] px-8 bg-surface-dark text-white hover:bg-black border border-ink"
               >
                 Send an Enquiry
               </Button>

@@ -167,16 +167,16 @@ export default function PortalBook() {
           <div
             className={`px-3 py-1.5 rounded-2xl border text-xs font-bold flex items-center gap-2 ${
               isDailyLimitReached
-                ? 'bg-rose-50 border-rose-200 text-accent-red'
+                ? 'bg-status-error border-status-error-accent text-ink'
                 : bookingsOnDateCount === 1
-                ? 'bg-amber-50 border-amber-200 text-amber-800'
-                : 'bg-canvas border-border-light text-text-secondary'
+                ? 'bg-status-warning border-status-warning-accent text-ink'
+                : 'bg-surface-dark border-border-light text-white'
             }`}
           >
             <span>Bookings for this date:</span>
             <span
               className={`px-2 py-0.5 rounded-lg text-xs font-mono font-extrabold ${
-                isDailyLimitReached ? 'bg-rose-200 text-rose-900' : 'bg-surface text-text-primary shadow-sm'
+                isDailyLimitReached ? 'bg-ink text-white' : 'bg-white text-ink shadow-sm'
               }`}
             >
               {bookingsOnDateCount} / 2 max
@@ -232,11 +232,11 @@ export default function PortalBook() {
 
       {/* Daily limit notice */}
       {isDailyLimitReached && (
-        <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-xs text-rose-800 flex items-start gap-3">
-          <AlertTriangle size={18} className="text-accent-red flex-shrink-0 mt-0.5" />
+        <div className="p-4 rounded-2xl bg-status-error border border-status-error-accent text-xs text-ink flex items-start gap-3">
+          <AlertTriangle size={18} className="text-ink flex-shrink-0 mt-0.5" />
           <div>
             <p className="font-bold">Daily Booking Limit Reached (2 / 2)</p>
-            <p className="text-[11px] text-rose-700 mt-0.5">
+            <p className="text-[11px] text-ink mt-0.5 font-medium">
               Per Champions Club rules (SRS 4.3), members are limited to a maximum of 2 court bookings on any single day. Please choose another date or cancel an existing booking.
             </p>
           </div>
@@ -298,20 +298,20 @@ export default function PortalBook() {
                       className={`p-3 rounded-2xl border text-center transition-all flex flex-col items-center justify-center touch-target ${
                         isFree
                           ? isDailyLimitReached
-                            ? 'bg-canvas border-border-light/60 opacity-50 cursor-not-allowed'
-                            : 'bg-surface border-primary-200 hover:border-primary-500 hover:bg-primary-50/50 shadow-soft cursor-pointer group'
+                            ? 'bg-surface-dark border-border-light/60 opacity-50 cursor-not-allowed text-white'
+                            : 'bg-surface border-border-light hover:border-primary-500 hover:bg-primary-500/20 shadow-soft cursor-pointer group text-ink'
                           : isSocial
-                          ? 'bg-purple-50/70 border-purple-200 cursor-not-allowed'
-                          : 'bg-canvas border-border-light/60 opacity-60 cursor-not-allowed'
+                          ? 'bg-brand-purple text-white cursor-not-allowed border border-ink'
+                          : 'bg-surface-dark border-border-light/60 opacity-60 cursor-not-allowed text-white'
                       }`}
                     >
                       <span
                         className={`text-xs font-bold ${
                           isFree
-                            ? 'text-text-primary group-hover:text-primary-600'
+                            ? 'text-ink group-hover:text-ink'
                             : isSocial
-                            ? 'text-accent-purple'
-                            : 'text-text-tertiary'
+                            ? 'text-white'
+                            : 'text-white/60'
                         }`}
                       >
                         {startTime}
@@ -320,14 +320,14 @@ export default function PortalBook() {
                       <span className="text-[10px] font-semibold mt-1">
                         {isFree ? (
                           price === 0 ? (
-                            <span className="text-accent-green font-bold">FREE</span>
+                            <span className="text-ink font-bold">FREE</span>
                           ) : (
-                            <span className="text-primary-600 font-bold">{formatMoney(price)}</span>
+                            <span className="text-ink font-bold">{formatMoney(price)}</span>
                           )
                         ) : isSocial ? (
-                          <span className="text-accent-purple">Social</span>
+                          <span className="text-white/90">Social</span>
                         ) : (
-                          <span className="text-text-tertiary">Booked</span>
+                          <span className="text-white/60">Booked</span>
                         )}
                       </span>
                     </button>
@@ -417,14 +417,14 @@ export default function PortalBook() {
 
             {/* Inline Error Message */}
             {inlineError && (
-              <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-xs text-accent-red flex items-center gap-2">
+              <div className="p-3.5 rounded-xl bg-status-error border border-status-error-accent text-xs text-ink font-semibold flex items-center gap-2">
                 <AlertTriangle size={16} className="flex-shrink-0" />
                 <span>{inlineError}</span>
               </div>
             )}
 
-            <div className="p-3 rounded-xl bg-primary-50 text-[11px] text-primary-800 flex items-start gap-2">
-              <Info size={16} className="text-primary-600 flex-shrink-0 mt-0.5" />
+            <div className="p-3 rounded-xl bg-primary-500 text-ink border border-ink text-[11px] font-medium flex items-start gap-2">
+              <Info size={16} className="text-ink flex-shrink-0 mt-0.5" />
               <span>
                 Free cancellation available up to start time. Cancellations automatically refund the paid fee.
               </span>

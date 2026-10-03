@@ -138,7 +138,7 @@ export default function StaffCourts() {
               setToggleError(null)
               setToggleTarget(c)
             }}
-            className={c.is_active ? 'text-accent-red hover:bg-rose-50 hover:border-rose-200' : undefined}
+            className={c.is_active ? 'text-ink hover:bg-status-error hover:border-status-error-accent' : undefined}
           >
             {c.is_active ? 'Deactivate' : 'Reactivate'}
           </Button>

@@ -100,14 +100,14 @@ export default function PortalProfile() {
     <div className="space-y-6 pb-8">
       {/* ── Identity ── */}
       <Card className="p-5 flex items-center gap-4">
-        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary-500 to-indigo-600 text-white flex items-center justify-center text-xl font-black flex-shrink-0">
+        <div className="w-16 h-16 rounded-2xl bg-primary-500 text-ink border border-ink flex items-center justify-center text-xl font-black flex-shrink-0">
           {initials(member?.full_name ?? user?.full_name ?? 'M')}
         </div>
         <div className="min-w-0 flex-1">
           <h1 className="text-xl font-bold text-text-primary truncate">{member?.full_name ?? user?.full_name}</h1>
-          <p className="font-mono text-xs text-primary-600 mt-0.5">{member?.member_code}</p>
+          <p className="font-mono text-xs text-ink font-semibold mt-0.5">{member?.member_code}</p>
           <div className="flex flex-wrap items-center gap-2 mt-2">
-            <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-primary-50 text-primary-700">
+            <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-surface-dark text-white border border-ink">
               {membership?.plan_code ?? 'No plan'}
             </span>
             <StatusChip label={status} variant={STATUS_VARIANTS[status] ?? 'neutral'} />
@@ -141,7 +141,7 @@ export default function PortalProfile() {
                   <div className="h-2 rounded-full bg-canvas overflow-hidden">
                     <div
                       className={`h-full rounded-full ${
-                        status === 'EXPIRED' ? 'bg-accent-red' : status === 'EXPIRING' ? 'bg-amber-500' : 'bg-accent-green'
+                        status === 'EXPIRED' ? 'bg-ink' : status === 'EXPIRING' ? 'bg-brand-purple' : 'bg-primary-500'
                       }`}
                       style={{ width: `${progress}%` }}
                     />
@@ -156,8 +156,8 @@ export default function PortalProfile() {
                 </div>
 
                 {(status === 'EXPIRING' || status === 'EXPIRED') && (
-                  <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-800 flex items-start gap-2">
-                    <AlertTriangle size={14} className="flex-shrink-0 mt-0.5" />
+                  <div className="p-3 rounded-xl bg-status-warning border border-status-warning-accent text-xs text-ink flex items-start gap-2">
+                    <AlertTriangle size={14} className="flex-shrink-0 mt-0.5 text-ink" />
                     <span>
                       {status === 'EXPIRED'
                         ? 'Your membership has ended, so member prices no longer apply.'

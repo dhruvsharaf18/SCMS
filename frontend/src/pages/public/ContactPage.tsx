@@ -443,8 +443,8 @@ export default function ContactPage() {
             </div>
           </Card>
 
-          <Card className="p-6 rounded-3xl border border-border-light bg-gradient-to-br from-canvas to-surface space-y-3">
-            <div className="flex items-center gap-2 text-xs font-bold text-accent-green">
+          <Card className="p-6 rounded-3xl border border-border-light bg-surface space-y-3">
+            <div className="flex items-center gap-2 text-xs font-bold text-ink">
               <ShieldCheck size={18} />
               <span>Safety & Fair Play Protocol</span>
             </div>

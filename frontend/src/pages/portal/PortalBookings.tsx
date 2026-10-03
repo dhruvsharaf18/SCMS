@@ -281,7 +281,7 @@ export default function PortalBookings() {
                       size="sm"
                       icon={RotateCcw}
                       onClick={() => handleOpenCancel(b)}
-                      className="touch-target text-xs text-accent-red hover:bg-rose-50 hover:border-rose-200"
+                      className="touch-target text-xs text-ink hover:bg-status-error hover:border-status-error-accent"
                     >
                       Cancel Booking
                     </Button>
@@ -327,10 +327,10 @@ export default function PortalBookings() {
             <div
               className={`p-3.5 rounded-2xl border text-xs space-y-1 ${
                 refundDetails.isWaived
-                  ? 'bg-primary-50 border-primary-100 text-primary-900'
+                  ? 'bg-primary-500 border-ink text-ink font-bold'
                   : refundDetails.isEligible
-                  ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
-                  : 'bg-amber-50 border-amber-200 text-amber-900'
+                  ? 'bg-status-success border-status-success-accent text-ink font-bold'
+                  : 'bg-status-warning border-status-warning-accent text-ink font-bold'
               }`}
             >
               <div className="flex items-center gap-1.5 font-bold">
@@ -368,7 +368,7 @@ export default function PortalBookings() {
 
             {/* Inline Error Message */}
             {inlineError && (
-              <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs text-accent-red flex items-center gap-2">
+              <div className="p-3 rounded-xl bg-status-error border border-status-error-accent text-xs text-ink font-semibold flex items-center gap-2">
                 <AlertTriangle size={16} className="flex-shrink-0" />
                 <span>{inlineError}</span>
               </div>

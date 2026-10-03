@@ -210,7 +210,7 @@ export default function StaffPayments() {
                 setRefundTarget(p)
                 setRefundReason('')
               }}
-              className="text-accent-red hover:bg-rose-50 hover:border-rose-200"
+              className="text-ink hover:bg-status-error hover:border-status-error-accent"
             >
               Refund
             </Button>
@@ -242,15 +242,15 @@ export default function StaffPayments() {
           label="Payments"
           value={String(totals?.count ?? total)}
           icon={Receipt}
-          iconBg="bg-primary-50"
-          iconColor="text-primary-500"
+          iconBg="bg-primary-500"
+          iconColor="text-ink"
         />
         <StatCard
           label={`Refunded (${totals?.refunded_count ?? 0})`}
           value={formatMoney(totals?.refunded_paise ?? 0)}
           icon={RotateCcw}
-          iconBg="bg-rose-50"
-          iconColor="text-accent-red"
+          iconBg="bg-status-error"
+          iconColor="text-ink"
         />
       </div>
 
