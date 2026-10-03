@@ -13,6 +13,7 @@ from ..security import (
     create_staff_user,
     current_member_id,
     get_current_user,
+    issue_access_token,
     limiter,
     open_session,
     require_roles,
@@ -41,7 +42,10 @@ def login(
 ) -> LoginResponse:
     user = authenticate(session, payload.email, payload.password)
     set_session_cookie(response, open_session(session, user))
-    return LoginResponse(user=_summary(session, user))
+    return LoginResponse(
+        user=_summary(session, user),
+        access_token=issue_access_token(user),
+    )
 
 
 @router.post("/auth/logout")

@@ -8,7 +8,7 @@ import React, {
 } from 'react'
 import type { AuthUser } from '../api/types'
 export type { Role } from '../api/types'
-import { getMeApi, loginApi, logoutApi, setOnAuthFailure } from '../api/client'
+import { getMeApi, loginApi, logoutApi, setOnAuthFailure, setAccessToken } from '../api/client'
 import { Trophy } from 'lucide-react'
 
 // ── Context Types ──────────────────────────────────────────────────────────
@@ -35,6 +35,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // A 401 on any later request means the session ended (logout elsewhere, expiry, deactivation).
     setOnAuthFailure(() => {
+      setAccessToken(null)
       setUser(null)
     })
 
@@ -61,6 +62,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // The role always comes from the server's answer to a real email + password check.
   const login = useCallback(async (email: string, password: string): Promise<User> => {
     const response = await loginApi(email.trim(), password)
+    // Store JWT in memory only — never in storage (security item 5).
+    if (response.access_token) {
+      setAccessToken(response.access_token)
+    }
     setUser(response.user)
     return response.user
   }, [])
@@ -72,6 +77,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch {
       // Ignore network errors on logout
     } finally {
+      setAccessToken(null)
       setUser(null)
     }
   }, [])

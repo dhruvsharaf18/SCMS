@@ -22,6 +22,9 @@ export interface AuthUser {
 
 export interface LoginResponse {
   user: AuthUser
+  /** Part B: short-lived JWT, kept in JS memory only — never in localStorage. */
+  access_token?: string
+  token_type?: string
 }
 
 export interface LoginRequest {

@@ -21,6 +21,10 @@ class Settings(BaseSettings):
     seed: bool = False
     seed_password: str = "Club@12345"
 
+    # JWT access-token settings (Part B)
+    jwt_secret: str = "change_me_use_a_strong_random_32_char_string"
+    access_token_expire_minutes: int = 60
+
     # Tax-inclusive rates in percent (SRS 4.6).
     tax_court: int = 18
     tax_shop: int = 18

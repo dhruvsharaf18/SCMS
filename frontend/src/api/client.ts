@@ -3,9 +3,20 @@ import type { AuthUser, LoginResponse } from './types'
 const API_BASE = '/api/v1'
 
 /**
- * Sign-in is a server-side session. The API sets an HttpOnly `ccms_session` cookie on login
- * and the browser sends it with every same-origin request, so nothing is stored in JS.
+ * In-memory JWT store.  The token is NEVER written to localStorage, sessionStorage,
+ * a cookie, or any other persistent store (SRS S-21 / security item 5).
+ * It is cleared on logout or on a 401 that arrives outside the login flow.
  */
+let _accessToken: string | null = null
+
+export function setAccessToken(token: string | null): void {
+  _accessToken = token
+}
+
+export function getAccessToken(): string | null {
+  return _accessToken
+}
+
 let onAuthFailureCallback: (() => void) | null = null
 
 export function setOnAuthFailure(callback: () => void) {
@@ -36,8 +47,9 @@ export class ApiError extends Error {
 /**
  * Core HTTP request handler.
  * - Same-origin baseUrl: /api/v1 (forwarded by Vite dev proxy / nginx)
- * - Credentials: 'include' so the session cookie travels with the request
- * - A 401 outside login means the session is gone; the app drops back to signed-out
+ * - Sends JWT as Authorization: Bearer when available (Part B).
+ * - Credentials: 'include' so the HttpOnly session cookie also travels (belt-and-suspenders).
+ * - A 401 outside login means the token/session is gone; the app drops back to signed-out.
  */
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const url = `${API_BASE}${path}`
@@ -45,6 +57,11 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 
   if (!headers.has('Content-Type') && options.body && typeof options.body === 'string') {
     headers.set('Content-Type', 'application/json')
+  }
+
+  // Attach JWT access token in memory (never read from storage).
+  if (_accessToken && !headers.has('Authorization')) {
+    headers.set('Authorization', `Bearer ${_accessToken}`)
   }
 
   let res: Response
@@ -64,6 +81,8 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
     const message = body?.error?.message ?? res.statusText
     const details = body?.error?.details
     if (res.status === 401 && !path.startsWith('/auth/login') && !path.startsWith('/auth/me')) {
+      // Token expired or revoked — clear it and notify the app.
+      _accessToken = null
       onAuthFailureCallback?.()
     }
     throw new ApiError(res.status, code, message, details)
@@ -124,7 +143,12 @@ export async function downloadPaymentsCsvApi(from?: string, to?: string): Promis
   const path = `/reports/payments.csv${params.toString() ? `?${params.toString()}` : ''}`
   const url = `${API_BASE}${path}`
 
-  const res = await fetch(url, { credentials: 'include' })
+  const headers: HeadersInit = {}
+  if (_accessToken) {
+    headers['Authorization'] = `Bearer ${_accessToken}`
+  }
+
+  const res = await fetch(url, { credentials: 'include', headers })
   if (!res.ok) {
     const body = await res.json().catch(() => null)
     throw new ApiError(res.status, body?.error?.code ?? `HTTP_${res.status}`, body?.error?.message ?? 'CSV export failed')

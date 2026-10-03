@@ -2,7 +2,11 @@
 
 Sign-in compares the email and password with the users table. A match opens a server-side
 session: a random id goes to the browser in an HttpOnly cookie and only its SHA-256 is stored,
-so every later request is tied back to a users row and its role. There are no JWTs.
+so every later request is tied back to a users row and its role.
+
+Part B: a short-lived JWT access token is also issued on login.  The frontend keeps it in
+memory only (never localStorage / sessionStorage) and sends it as ``Authorization: Bearer``.
+The server accepts either the JWT or the session cookie so all existing tests keep passing.
 """
 
 import hashlib
@@ -10,6 +14,9 @@ import re
 import secrets
 from datetime import datetime, timedelta, timezone
 from typing import Any
+
+import jwt as _jwt
+from jwt.exceptions import InvalidTokenError as _JWTError
 
 from argon2 import PasswordHasher
 from argon2.exceptions import Argon2Error
@@ -115,6 +122,36 @@ def open_session(session: Session, user: User) -> str:
     return raw
 
 
+# ----------------------------------------------------------------- JWT access tokens
+
+_JWT_ALGORITHM = "HS256"
+
+
+def issue_access_token(user: User) -> str:
+    """Return a signed JWT that encodes user_id, role and expiry.
+
+    The token is short-lived (ACCESS_TOKEN_EXPIRE_MINUTES).  It is returned in the
+    login response body so the browser can keep it in JS memory only — it never
+    touches a cookie or localStorage.
+    """
+    now = utcnow()
+    payload = {
+        "sub": str(user.id),
+        "role": user.role,
+        "iat": now,
+        "exp": now + timedelta(minutes=settings.access_token_expire_minutes),
+    }
+    return _jwt.encode(payload, settings.jwt_secret, algorithm=_JWT_ALGORITHM)
+
+
+def _decode_access_token(token: str) -> dict[str, Any] | None:
+    """Return the decoded payload or None if the token is invalid/expired."""
+    try:
+        return _jwt.decode(token, settings.jwt_secret, algorithms=[_JWT_ALGORITHM])
+    except _JWTError:
+        return None
+
+
 def close_session(session: Session, raw: str | None) -> None:
     """Idempotent: an unknown or already-closed session is not an error."""
     if not raw:
@@ -159,7 +196,27 @@ def clear_session_cookie(response: Response) -> None:
     )
 
 
-def get_current_user(request: Request, session: Session = Depends(get_session)) -> User:
+def get_current_user(request: Request, session: Session = Depends(get_session)) -> User:  # noqa: C901
+    """Resolve the caller to a User row.
+
+    Accepts either:
+    1. ``Authorization: Bearer <jwt>`` header — preferred by the SPA (Part B).
+    2. ``ccms_session`` HttpOnly cookie — kept for backward compat and test suite.
+    """
+    # ── 1. Bearer JWT path ────────────────────────────────────────────────────
+    auth_header = request.headers.get("Authorization", "")
+    if auth_header.startswith("Bearer "):
+        raw_token = auth_header.removeprefix("Bearer ")
+        payload = _decode_access_token(raw_token)
+        if payload is None:
+            raise AppError("NOT_AUTHENTICATED", "Please sign in.", 401)
+        user_id = int(payload["sub"])
+        user = session.get(User, user_id)
+        if user is None or not user.is_active:
+            raise AppError("NOT_AUTHENTICATED", "Please sign in.", 401)
+        return user
+
+    # ── 2. Session cookie path (tests + legacy) ───────────────────────────────
     raw = request.cookies.get(SESSION_COOKIE_NAME)
     if not raw:
         raise AppError("NOT_AUTHENTICATED", "Please sign in.", 401)

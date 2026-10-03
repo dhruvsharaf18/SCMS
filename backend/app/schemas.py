@@ -119,6 +119,9 @@ class UserOut(BaseModel):
 
 class LoginResponse(BaseModel):
     user: UserSummary
+    # Part B: short-lived JWT the SPA keeps in JS memory only (never localStorage).
+    access_token: str = ""
+    token_type: str = "bearer"
 
 
 # ------------------------------------------------------------------ pagination (SRS 1.4)
