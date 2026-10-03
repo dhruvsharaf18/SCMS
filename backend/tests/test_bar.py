@@ -14,17 +14,24 @@ from app.models import BarOrder, Member, Membership, MenuItem, Payment, Plan, Us
 from app.security import utcnow
 from app.services import membership as membership_svc
 
-from .conftest import API, GOOD_PASSWORD, TEST_MENU_PREFIX, TEST_PHONE_PREFIX, TEST_TABLE_PREFIX
+from .conftest import (
+    API,
+    GOOD_PASSWORD,
+    TEST_MENU_PREFIX,
+    TEST_PHONE_PREFIX,
+    TEST_TABLE_PREFIX,
+    as_user,
+    login_token,
+    sign_in,
+)
 
 
 def _token(client: TestClient, user: User) -> str:
-    r = client.post(f"{API}/auth/login", json={"email": user.email, "password": GOOD_PASSWORD})
-    assert r.status_code == 200, r.text
-    return r.json()["access_token"]
+    return login_token(client, user.email)
 
 
 def _auth(token: str) -> dict[str, str]:
-    return {"Authorization": f"Bearer {token}"}
+    return as_user(token)
 
 
 @pytest.fixture
@@ -488,13 +495,7 @@ def test_members_cannot_read_bar_orders(client: TestClient, make_user, make_menu
     item = make_menu_item()
     other = _order(client, bar, item.id, guest_name="Not you")["id"]
 
-    member_token = client.post(
-        f"{API}/auth/login",
-        json={
-            "email": "member1@club.test",
-            "password": os.environ.get("SEED_PASSWORD", "Club@12345"),
-        },
-    ).json()["access_token"]
+    member_token = sign_in(client, "member1@club.test", os.environ.get("SEED_PASSWORD", "Club@12345"))["token"]
 
     # SRS 3.1 gives MEMBER no access to bar orders at all.
     assert client.get(f"{API}/bar/orders/{other}", headers=_auth(member_token)).status_code == 403

@@ -439,7 +439,7 @@ export default function PortalShop() {
 
       {/* Floating Cart Trigger Button */}
       {totalCartCount > 0 && (
-        <div className="fixed bottom-6 right-6 z-40 animate-slide-up">
+        <div className="fixed bottom-20 right-4 md:bottom-6 md:right-6 z-50 animate-slide-up">
           <button
             onClick={() => setIsCartOpen(true)}
             className="flex items-center gap-3 px-5 py-3.5 bg-primary-500 hover:bg-primary-600 text-white rounded-full shadow-raised transition-all touch-manipulation group"

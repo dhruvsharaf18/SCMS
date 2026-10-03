@@ -17,17 +17,15 @@ from app.security import AppError, utcnow
 from app.services import booking as svc
 from app.services import membership as membership_svc
 
-from .conftest import API, GOOD_PASSWORD, TEST_PHONE_PREFIX
+from .conftest import API, GOOD_PASSWORD, TEST_PHONE_PREFIX, as_user, login_token, sign_in
 
 
 def _token(client: TestClient, user: User) -> str:
-    r = client.post(f"{API}/auth/login", json={"email": user.email, "password": GOOD_PASSWORD})
-    assert r.status_code == 200, r.text
-    return r.json()["access_token"]
+    return login_token(client, user.email)
 
 
 def _auth(token: str) -> dict[str, str]:
-    return {"Authorization": f"Bearer {token}"}
+    return as_user(token)
 
 
 def _slot(days_ahead: int = 2, hour: int = 12, minute: int = 30) -> datetime:
@@ -694,13 +692,7 @@ def test_member_booking_is_forced_to_own_id_and_web_source(
     import os
 
     court = make_court(Sport.TENNIS)
-    login = client.post(
-        f"{API}/auth/login",
-        json={
-            "email": "member1@club.test",
-            "password": os.environ.get("SEED_PASSWORD", "Club@12345"),
-        },
-    ).json()
+    login = sign_in(client, "member1@club.test", os.environ.get("SEED_PASSWORD", "Club@12345"))
     own_id = login["user"]["member_id"]
 
     other_id = session.execute(
@@ -715,13 +707,13 @@ def test_member_booking_is_forced_to_own_id_and_web_source(
             "member_id": other_id,
             "source": "FRONT_DESK",
         },
-        headers=_auth(login["access_token"]),
+        headers=_auth(login["token"]),
     )
     assert created.status_code == 201, created.text
     assert created.json()["member_id"] == own_id
     assert created.json()["source"] == "WEB"
 
-    listed = client.get(f"{API}/bookings", headers=_auth(login["access_token"])).json()
+    listed = client.get(f"{API}/bookings", headers=_auth(login["token"])).json()
     assert all(item["member_id"] == own_id for item in listed["items"])
 
 
@@ -743,13 +735,7 @@ def test_member_cannot_read_another_members_booking(
         headers=_auth(_token(client, staff)),
     ).json()
 
-    member_token = client.post(
-        f"{API}/auth/login",
-        json={
-            "email": "member1@club.test",
-            "password": os.environ.get("SEED_PASSWORD", "Club@12345"),
-        },
-    ).json()["access_token"]
+    member_token = sign_in(client, "member1@club.test", os.environ.get("SEED_PASSWORD", "Club@12345"))["token"]
 
     blocked = client.get(f"{API}/bookings/{created['id']}", headers=_auth(member_token))
     assert blocked.status_code == 404

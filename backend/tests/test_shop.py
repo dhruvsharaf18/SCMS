@@ -18,17 +18,23 @@ from app.security import AppError, utcnow
 from app.services import membership as membership_svc
 from app.services import shop as svc
 
-from .conftest import API, GOOD_PASSWORD, TEST_PHONE_PREFIX, TEST_SKU_PREFIX
+from .conftest import (
+    API,
+    GOOD_PASSWORD,
+    TEST_PHONE_PREFIX,
+    TEST_SKU_PREFIX,
+    as_user,
+    login_token,
+    sign_in,
+)
 
 
 def _token(client: TestClient, user: User) -> str:
-    r = client.post(f"{API}/auth/login", json={"email": user.email, "password": GOOD_PASSWORD})
-    assert r.status_code == 200, r.text
-    return r.json()["access_token"]
+    return login_token(client, user.email)
 
 
 def _auth(token: str) -> dict[str, str]:
-    return {"Authorization": f"Bearer {token}"}
+    return as_user(token)
 
 
 @pytest.fixture
@@ -360,13 +366,7 @@ def test_low_stock_list_and_notification(
 
 
 def _member_login(client: TestClient) -> dict:
-    return client.post(
-        f"{API}/auth/login",
-        json={
-            "email": "member1@club.test",
-            "password": os.environ.get("SEED_PASSWORD", "Club@12345"),
-        },
-    ).json()
+    return sign_in(client, "member1@club.test", os.environ.get("SEED_PASSWORD", "Club@12345"))
 
 
 def test_online_delivery_needs_an_address(client: TestClient, make_product) -> None:
@@ -380,7 +380,7 @@ def test_online_delivery_needs_an_address(client: TestClient, make_product) -> N
             "fulfilment": "DELIVERY",
             "items": [{"product_id": product.id, "qty": 1}],
         },
-        headers=_auth(login["access_token"]),
+        headers=_auth(login["token"]),
     )
     assert response.status_code == 422
     assert response.json()["error"]["code"] == "ADDRESS_REQUIRED"
@@ -399,7 +399,7 @@ def test_online_pickup_is_placed_and_reserves_stock(
             "fulfilment": "PICKUP",
             "items": [{"product_id": product.id, "qty": 2}],
         },
-        headers=_auth(login["access_token"]),
+        headers=_auth(login["token"]),
     )
     assert response.status_code == 201, response.text
     body = response.json()
@@ -436,7 +436,7 @@ def test_pay_at_pickup_then_complete(client: TestClient, make_user, make_product
             "fulfilment": "PICKUP",
             "items": [{"product_id": product.id, "qty": 1}],
         },
-        headers=_auth(login["access_token"]),
+        headers=_auth(login["token"]),
     ).json()
 
     staff = _token(client, make_user(Role.FRONT_DESK))
@@ -483,7 +483,7 @@ def test_status_cannot_go_backwards(client: TestClient, make_user, make_product)
             "fulfilment": "PICKUP",
             "items": [{"product_id": product.id, "qty": 1}],
         },
-        headers=_auth(login["access_token"]),
+        headers=_auth(login["token"]),
     ).json()
 
     staff = _token(client, make_user(Role.FRONT_DESK))
@@ -558,12 +558,12 @@ def test_member_sees_only_own_orders(client: TestClient, make_user, make_product
 
     login = _member_login(client)
     blocked = client.get(
-        f"{API}/shop/orders/{other['id']}", headers=_auth(login["access_token"])
+        f"{API}/shop/orders/{other['id']}", headers=_auth(login["token"])
     )
     assert blocked.status_code == 404
 
     own_id = login["user"]["member_id"]
-    listed = client.get(f"{API}/shop/orders", headers=_auth(login["access_token"])).json()
+    listed = client.get(f"{API}/shop/orders", headers=_auth(login["token"])).json()
     assert all(item["member_id"] == own_id for item in listed["items"])
 
 

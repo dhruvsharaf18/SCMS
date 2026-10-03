@@ -59,13 +59,25 @@ const shopItems: NavItem[] = [
   { id: 'stock', label: 'Stock', icon: Package, path: '/staff/stock' },
 ]
 
+const reservationsItem: NavItem = {
+  id: 'reservations',
+  label: 'Reservations',
+  icon: ClipboardList,
+  path: '/staff/reservations',
+}
+
 const barItems: NavItem[] = [
   { id: 'bar', label: 'Bar POS', icon: UtensilsCrossed, path: '/staff/bar', mobileBar: true },
   { id: 'kitchen', label: 'Kitchen', icon: ChefHat, path: '/staff/kitchen' },
+  reservationsItem,
 ]
 
 const leadItems: NavItem[] = [
   { id: 'leads', label: 'Leads', icon: UserSearch, path: '/staff/leads' },
+]
+
+const teamItems: NavItem[] = [
+  { id: 'hr', label: 'Staff', icon: UsersRound, path: '/staff/hr' },
 ]
 
 const financeItems: NavItem[] = [
@@ -80,6 +92,7 @@ export const NAV_CONFIG: Record<Role, NavSection[]> = {
     { title: 'Club', items: [...memberManagement, ...courtBooking] },
     { title: 'Commerce', items: [...shopItems, ...barItems] },
     { title: 'Pipeline', items: leadItems },
+    { title: 'Team', items: teamItems },
     { title: 'Finance', items: financeItems },
   ],
   MANAGER: [
@@ -87,12 +100,13 @@ export const NAV_CONFIG: Record<Role, NavSection[]> = {
     { title: 'Club', items: [...memberManagement, ...courtBooking] },
     { title: 'Commerce', items: [...shopItems, ...barItems] },
     { title: 'Pipeline', items: leadItems },
+    { title: 'Team', items: teamItems },
     { title: 'Finance', items: financeItems.filter((i) => i.id !== 'reports') },
   ],
   FRONT_DESK: [
     { items: staffCommon },
     { title: 'Club', items: [...memberManagement, ...courtBooking] },
-    { title: 'Commerce', items: shopItems },
+    { title: 'Commerce', items: [...shopItems, reservationsItem] },
     { title: 'Pipeline', items: leadItems },
   ],
   BAR_STAFF: [
@@ -107,6 +121,7 @@ export const NAV_CONFIG: Record<Role, NavSection[]> = {
         { id: 'portal-bookings', label: 'Bookings', icon: CalendarDays, path: '/portal/bookings', mobileBar: true },
         { id: 'portal-shop', label: 'Shop', icon: ShoppingCart, path: '/portal/shop', mobileBar: true },
         { id: 'portal-orders', label: 'Orders', icon: Package, path: '/portal/orders' },
+        { id: 'portal-dining', label: 'Dining', icon: UtensilsCrossed, path: '/portal/dining' },
         { id: 'portal-profile', label: 'Profile', icon: User, path: '/portal/profile', mobileBar: true },
       ],
     },

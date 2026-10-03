@@ -107,6 +107,31 @@ def list_payments(
     return list(rows), int(total)
 
 
+def payment_totals(
+    session: Session,
+    from_: date | None = None,
+    to: date | None = None,
+    source_type: SourceType | str | None = None,
+    method: PaymentMethod | str | None = None,
+) -> dict:
+    """Totals over the whole filtered range, so the ledger's figures never depend on paging."""
+    filters = _payment_filters(from_, to, source_type, method, True, None)
+    rows = session.execute(
+        select(Payment.status, func.count(Payment.id), func.coalesce(func.sum(Payment.amount_paise), 0))
+        .where(*filters)
+        .group_by(Payment.status)
+    ).all()
+    by_status = {status: (int(count), int(amount)) for status, count, amount in rows}
+    completed = by_status.get(PaymentStatus.COMPLETED.value, (0, 0))
+    refunded = by_status.get(PaymentStatus.REFUNDED.value, (0, 0))
+    return {
+        "count": completed[0] + refunded[0],
+        "collected_paise": completed[1],
+        "refunded_count": refunded[0],
+        "refunded_paise": refunded[1],
+    }
+
+
 def _payment_filters(
     from_: date | None,
     to: date | None,

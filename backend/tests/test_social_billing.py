@@ -15,17 +15,15 @@ from app.models import CourtSlot, Invoice, Member, Membership, Payment, Plan, Us
 from app.security import utcnow
 from app.services import membership as membership_svc
 
-from .conftest import API, GOOD_PASSWORD, TEST_PHONE_PREFIX
+from .conftest import API, GOOD_PASSWORD, TEST_PHONE_PREFIX, as_user, login_token, sign_in
 
 
 def _token(client: TestClient, user: User) -> str:
-    r = client.post(f"{API}/auth/login", json={"email": user.email, "password": GOOD_PASSWORD})
-    assert r.status_code == 200, r.text
-    return r.json()["access_token"]
+    return login_token(client, user.email)
 
 
 def _auth(token: str) -> dict[str, str]:
-    return {"Authorization": f"Bearer {token}"}
+    return as_user(token)
 
 
 def _slot(days_ahead: int, hour: int, minute: int = 0) -> str:
@@ -346,25 +344,19 @@ def test_member_joins_itself_and_roster_is_staff_only(
         headers=_auth(manager),
     ).json()
 
-    login = client.post(
-        f"{API}/auth/login",
-        json={
-            "email": "member1@club.test",
-            "password": os.environ.get("SEED_PASSWORD", "Club@12345"),
-        },
-    ).json()
+    login = sign_in(client, "member1@club.test", os.environ.get("SEED_PASSWORD", "Club@12345"))
 
     joined = client.post(
         f"{API}/social-sessions/{social['id']}/join",
         json={"member_id": 99999},  # ignored: the token decides
-        headers=_auth(login["access_token"]),
+        headers=_auth(login["token"]),
     )
     assert joined.status_code == 201
     assert joined.json()["member_id"] == login["user"]["member_id"]
 
     blocked = client.get(
         f"{API}/social-sessions/{social['id']}/participants",
-        headers=_auth(login["access_token"]),
+        headers=_auth(login["token"]),
     )
     assert blocked.status_code == 403
 

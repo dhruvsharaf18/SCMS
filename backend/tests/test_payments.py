@@ -14,17 +14,23 @@ from app.models import AuditLog, Booking, MenuItem, Payment, Product, User
 from app.security import utcnow
 from app.services import reports as svc
 
-from .conftest import API, GOOD_PASSWORD, TEST_MENU_PREFIX, TEST_SKU_PREFIX
+from .conftest import (
+    API,
+    GOOD_PASSWORD,
+    TEST_MENU_PREFIX,
+    TEST_SKU_PREFIX,
+    as_user,
+    login_token,
+    sign_in,
+)
 
 
 def _token(client: TestClient, user: User) -> str:
-    r = client.post(f"{API}/auth/login", json={"email": user.email, "password": GOOD_PASSWORD})
-    assert r.status_code == 200, r.text
-    return r.json()["access_token"]
+    return login_token(client, user.email)
 
 
 def _auth(token: str) -> dict[str, str]:
-    return {"Authorization": f"Bearer {token}"}
+    return as_user(token)
 
 
 @pytest.fixture
@@ -144,6 +150,47 @@ def test_refund_twice_is_409(client: TestClient, make_user, product, session: Se
     assert rows == 1  # the row is flipped, never deleted or duplicated
 
 
+def test_payment_summary_totals_the_whole_filtered_range(
+    client: TestClient, make_user, product, session: Session
+) -> None:
+    owner = _token(client, make_user(Role.OWNER))
+    today = local_date(utcnow()).isoformat()
+    params = {"from": today, "to": today, "source_type": "SHOP_ORDER", "method": "CARD"}
+
+    def summary() -> dict:
+        response = client.get(f"{API}/payments/summary", params=params, headers=_auth(owner))
+        assert response.status_code == 200, response.text
+        return response.json()
+
+    before = summary()
+    kept = _sell(client, owner, product.id, method="CARD")
+    refunded = _sell(client, owner, product.id, method="CARD")
+    refunded_payment = session.execute(
+        select(Payment.id).where(
+            Payment.source_type == "SHOP_ORDER", Payment.source_id == refunded["id"]
+        )
+    ).scalar_one()
+    assert client.post(
+        f"{API}/payments/{refunded_payment}/refund", json={}, headers=_auth(owner)
+    ).status_code == 200
+    after = summary()
+
+    assert after["count"] - before["count"] == 2
+    assert after["collected_paise"] - before["collected_paise"] == kept["total_paise"]
+    assert after["refunded_count"] - before["refunded_count"] == 1
+    assert after["refunded_paise"] - before["refunded_paise"] == refunded["total_paise"]
+    listed = client.get(
+        f"{API}/payments", params={**params, "page_size": 1}, headers=_auth(owner)
+    ).json()
+    assert listed["total"] == after["count"]
+
+
+def test_front_desk_cannot_read_payment_totals(client: TestClient, make_user) -> None:
+    desk = _token(client, make_user(Role.FRONT_DESK))
+
+    assert client.get(f"{API}/payments/summary", headers=_auth(desk)).status_code == 403
+
+
 def test_refund_is_audited_and_updates_the_source(
     client: TestClient, make_user, product, session: Session
 ) -> None:
@@ -189,16 +236,10 @@ def test_payments_mine_is_scoped_to_the_caller(client: TestClient, make_user, pr
     staff = _token(client, make_user(Role.FRONT_DESK))
     _sell(client, staff, product.id)
 
-    login = client.post(
-        f"{API}/auth/login",
-        json={
-            "email": "member1@club.test",
-            "password": os.environ.get("SEED_PASSWORD", "Club@12345"),
-        },
-    ).json()
+    login = sign_in(client, "member1@club.test", os.environ.get("SEED_PASSWORD", "Club@12345"))
     own_id = login["user"]["member_id"]
 
-    mine = client.get(f"{API}/payments/mine", headers=_auth(login["access_token"]))
+    mine = client.get(f"{API}/payments/mine", headers=_auth(login["token"]))
     assert mine.status_code == 200
     assert all(item["member_id"] == own_id for item in mine.json()["items"])
 

@@ -149,6 +149,13 @@ class KitchenStatus(_Str):
     CANCELLED = "CANCELLED"
 
 
+class ReservationStatus(_Str):
+    CONFIRMED = "CONFIRMED"
+    SEATED = "SEATED"
+    CANCELLED = "CANCELLED"
+    NO_SHOW = "NO_SHOW"
+
+
 class BarPaymentStatus(_Str):
     UNPAID = "UNPAID"
     PAID = "PAID"

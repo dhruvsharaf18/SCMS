@@ -17,7 +17,7 @@ from .conftest import (
     TEST_SKU_PREFIX,
 )
 
-EXPECTED_TABLE_COUNT = 33
+EXPECTED_TABLE_COUNT = 34
 
 
 def test_every_srs_table_exists(session: Session) -> None:

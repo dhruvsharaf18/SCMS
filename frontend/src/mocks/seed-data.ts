@@ -406,7 +406,7 @@ export function generateInitialPayments(members: Member[]): Payment[] {
         amount_paise: amountPaise,
         tax_paise: Math.round(amountPaise * 0.05),
         method: method,
-        status: isRefunded ? 'REFUNDED' : 'PAID',
+        status: isRefunded ? 'REFUNDED' : 'COMPLETED',
         reference: `TXN-${y}${String(m).padStart(2, '0')}-${idCounter}`,
         created_at: dtStr,
         received_by: 3,

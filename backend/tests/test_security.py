@@ -19,19 +19,17 @@ from app.main import app
 from app.models import Member, User
 from app.security import utcnow
 
-from .conftest import API, GOOD_PASSWORD
+from .conftest import API, GOOD_PASSWORD, as_user, login_token, sign_in
 
 SEED_PASSWORD = os.environ.get("SEED_PASSWORD", "Club@12345")
 
 
 def _token(client: TestClient, user: User) -> str:
-    r = client.post(f"{API}/auth/login", json={"email": user.email, "password": GOOD_PASSWORD})
-    assert r.status_code == 200, r.text
-    return r.json()["access_token"]
+    return login_token(client, user.email)
 
 
 def _auth(token: str) -> dict[str, str]:
-    return {"Authorization": f"Bearer {token}"}
+    return as_user(token)
 
 
 def _slot(days_ahead: int, hour: int) -> str:
@@ -58,6 +56,15 @@ RBAC_MATRIX = [
     ("shop orders", "GET", "/shop/orders", None, Role.FRONT_DESK, Role.BAR_STAFF),
     ("menu write", "POST", "/menu-items", "menu", Role.MANAGER, Role.BAR_STAFF),
     ("bar orders", "GET", "/bar/orders", None, Role.BAR_STAFF, Role.MEMBER),
+    ("dining menu", "GET", "/dining/menu", None, Role.BAR_STAFF, None),
+    (
+        "dining status",
+        "POST",
+        "/dining/reservations/999999/status",
+        {"status": "SEATED"},
+        Role.FRONT_DESK,
+        Role.MEMBER,
+    ),
     ("payments ledger", "GET", "/payments", None, Role.MANAGER, Role.FRONT_DESK),
     ("dashboard", "GET", "/dashboard/summary", None, Role.OWNER, Role.BAR_STAFF),
     ("exports", "GET", "/reports/payments.csv", None, Role.OWNER, Role.FRONT_DESK),
@@ -134,7 +141,6 @@ def test_t07_every_non_public_route_has_a_role_guard() -> None:
     public = {
         "/api/v1/auth/login",
         "/api/v1/auth/logout",
-        "/api/v1/auth/refresh",
         "/api/v1/auth/me",  # guarded by get_current_user, which has no role list
         "/api/v1/plans",  # SRS 3.2.2: the price list is public
         "/api/v1/court-prices",
@@ -176,11 +182,7 @@ def two_members(client: TestClient, session: Session):
     """member1 and member2 are seeded accounts; the test only reads through them."""
     logins = {}
     for email in ("member1@club.test", "member2@club.test"):
-        response = client.post(
-            f"{API}/auth/login", json={"email": email, "password": SEED_PASSWORD}
-        )
-        assert response.status_code == 200, response.text
-        logins[email] = response.json()
+        logins[email] = sign_in(client, email, SEED_PASSWORD)
     return logins
 
 
@@ -194,7 +196,7 @@ def test_t08_idor_across_profile_booking_and_order(
 ) -> None:
     a = two_members["member1@club.test"]
     b = two_members["member2@club.test"]
-    a_token, b_token = a["access_token"], b["access_token"]
+    a_token, b_token = a["token"], b["token"]
     b_member_id = b["user"]["member_id"]
 
     # Staff set up a booking and a shop order that belong to member B.
@@ -260,7 +262,7 @@ def test_t08_list_endpoints_are_scoped_not_filtered_client_side(
     """Passing someone else's member_id must not widen what a member sees."""
     a = two_members["member1@club.test"]
     b_id = two_members["member2@club.test"]["user"]["member_id"]
-    token = a["access_token"]
+    token = a["token"]
     own_id = a["user"]["member_id"]
 
     for path in ("/bookings", "/shop/orders", "/payments/mine"):
@@ -289,7 +291,7 @@ def test_t08_member_cannot_mutate_another_members_booking(
     cancelled = client.post(
         f"{API}/bookings/{booking['id']}/cancel",
         json={"reason": "not mine"},
-        headers=_auth(a["access_token"]),
+        headers=_auth(a["token"]),
     )
     assert cancelled.status_code == 404
 
@@ -310,15 +312,15 @@ def test_s11_unauthenticated_calls_are_401_not_500(client: TestClient) -> None:
     for path in ("/members", "/bookings", "/dashboard/summary", "/audit-logs"):
         response = client.get(f"{API}{path}")
         assert response.status_code == 401
-        assert response.json()["error"]["code"] in ("UNAUTHORIZED", "INVALID_TOKEN", "TOKEN_MISSING")
+        assert response.json()["error"]["code"] == "NOT_AUTHENTICATED"
 
 
-def test_s12_a_tampered_token_is_rejected(client: TestClient, make_user) -> None:
+def test_s12_a_tampered_session_id_is_rejected(client: TestClient, make_user) -> None:
     token = _token(client, make_user(Role.OWNER))
-    head, payload, signature = token.split(".")
-    forged = f"{head}.{payload}.{signature[:-3]}xyz"
+    forged = token[:-3] + ("xyz" if not token.endswith("xyz") else "abc")
     response = client.get(f"{API}/dashboard/summary", headers=_auth(forged))
     assert response.status_code == 401
+    assert response.json()["error"]["code"] == "NOT_AUTHENTICATED"
 
 
 def test_s15_public_endpoints_return_no_personal_data(

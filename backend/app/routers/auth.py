@@ -3,22 +3,20 @@ from sqlalchemy.orm import Session
 
 from ..db import get_session
 from ..enums import Role
-from ..schemas import LoginRequest, TokenResponse, UserCreate, UserOut, UserSummary, UserUpdate
+from ..schemas import LoginRequest, LoginResponse, UserCreate, UserOut, UserSummary, UserUpdate
 from ..security import (
-    REFRESH_COOKIE_NAME,
+    SESSION_COOKIE_NAME,
     authenticate,
-    clear_refresh_cookie,
+    clear_session_cookie,
     client_ip,
-    create_access_token,
-    current_member_id,
+    close_session,
     create_staff_user,
+    current_member_id,
     get_current_user,
-    issue_refresh_token,
     limiter,
+    open_session,
     require_roles,
-    revoke_refresh_token,
-    rotate_refresh_token,
-    set_refresh_cookie,
+    set_session_cookie,
     update_user,
 )
 from ..models import User
@@ -33,38 +31,17 @@ def _summary(session: Session, user: User) -> UserSummary:
     return summary
 
 
-def _token_response(session: Session, user: User) -> TokenResponse:
-    access_token, expires_in = create_access_token(user)
-    return TokenResponse(
-        access_token=access_token,
-        token_type="bearer",
-        expires_in=expires_in,
-        user=_summary(session, user),
-    )
-
-
-@router.post("/auth/login", response_model=TokenResponse)
+@router.post("/auth/login", response_model=LoginResponse)
 @limiter.limit("5/minute")
 def login(
     request: Request,
     response: Response,
     payload: LoginRequest,
     session: Session = Depends(get_session),
-) -> TokenResponse:
+) -> LoginResponse:
     user = authenticate(session, payload.email, payload.password)
-    set_refresh_cookie(response, issue_refresh_token(session, user))
-    return _token_response(session, user)
-
-
-@router.post("/auth/refresh", response_model=TokenResponse)
-def refresh(
-    request: Request,
-    response: Response,
-    session: Session = Depends(get_session),
-) -> TokenResponse:
-    user, new_raw = rotate_refresh_token(session, request.cookies.get(REFRESH_COOKIE_NAME))
-    set_refresh_cookie(response, new_raw)
-    return _token_response(session, user)
+    set_session_cookie(response, open_session(session, user))
+    return LoginResponse(user=_summary(session, user))
 
 
 @router.post("/auth/logout")
@@ -74,8 +51,8 @@ def logout(
     session: Session = Depends(get_session),
     _: User = Depends(get_current_user),
 ) -> dict[str, str]:
-    revoke_refresh_token(session, request.cookies.get(REFRESH_COOKIE_NAME))
-    clear_refresh_cookie(response)
+    close_session(session, request.cookies.get(SESSION_COOKIE_NAME))
+    clear_session_cookie(response)
     return {"status": "ok"}
 
 

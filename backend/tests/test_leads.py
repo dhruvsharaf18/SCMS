@@ -12,19 +12,17 @@ from app.enums import Role
 from app.models import Lead, Notification, User
 from app.security import limiter
 
-from .conftest import API, GOOD_PASSWORD, TEST_PHONE_PREFIX
+from .conftest import API, GOOD_PASSWORD, TEST_PHONE_PREFIX, as_user, login_token, sign_in
 
 LEAD_MARKER = "ZZTEST"
 
 
 def _token(client: TestClient, user: User) -> str:
-    r = client.post(f"{API}/auth/login", json={"email": user.email, "password": GOOD_PASSWORD})
-    assert r.status_code == 200, r.text
-    return r.json()["access_token"]
+    return login_token(client, user.email)
 
 
 def _auth(token: str) -> dict[str, str]:
-    return {"Authorization": f"Bearer {token}"}
+    return as_user(token)
 
 
 def _enquiry(**overrides) -> dict:
@@ -303,12 +301,6 @@ def test_cannot_read_someone_elses_notification(client: TestClient, make_user) -
 
 
 def test_member_sees_only_their_own_notifications(client: TestClient) -> None:
-    login = client.post(
-        f"{API}/auth/login",
-        json={
-            "email": "member1@club.test",
-            "password": os.environ.get("SEED_PASSWORD", "Club@12345"),
-        },
-    ).json()
-    body = client.get(f"{API}/notifications", headers=_auth(login["access_token"])).json()
+    login = sign_in(client, "member1@club.test", os.environ.get("SEED_PASSWORD", "Club@12345"))
+    body = client.get(f"{API}/notifications", headers=_auth(login["token"])).json()
     assert all(item["type"] != "NEW_LEAD" for item in body["items"])

@@ -15,8 +15,7 @@ class Settings(BaseSettings):
     )
 
     database_url: str
-    jwt_secret: str
-    access_token_minutes: int = 15
+    session_hours: int = 12
     cookie_secure: bool = False
     allowed_origins: str = "http://localhost:5173,http://localhost:8080"
     seed: bool = False

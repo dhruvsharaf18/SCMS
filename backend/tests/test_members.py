@@ -12,17 +12,15 @@ from app.enums import MemberStatus, PlanCode, Role
 from app.models import Member, Plan, User
 from app.security import utcnow
 
-from .conftest import API, GOOD_PASSWORD, TEST_PHONE_PREFIX
+from .conftest import API, GOOD_PASSWORD, TEST_PHONE_PREFIX, as_user, login_token, sign_in
 
 
 def _token(client: TestClient, user: User) -> str:
-    r = client.post(f"{API}/auth/login", json={"email": user.email, "password": GOOD_PASSWORD})
-    assert r.status_code == 200, r.text
-    return r.json()["access_token"]
+    return login_token(client, user.email)
 
 
 def _auth(token: str) -> dict[str, str]:
-    return {"Authorization": f"Bearer {token}"}
+    return as_user(token)
 
 
 def _phone() -> str:
@@ -128,12 +126,9 @@ def test_member_cannot_read_another_member(client: TestClient, session: Session)
 
     import os
 
-    r = client.post(
-        f"{API}/auth/login",
-        json={"email": "member1@club.test", "password": os.environ.get("SEED_PASSWORD", "Club@12345")},
+    token = login_token(
+        client, "member1@club.test", os.environ.get("SEED_PASSWORD", "Club@12345")
     )
-    assert r.status_code == 200, r.text
-    token = r.json()["access_token"]
 
     assert client.get(f"{API}/members/{own_id}", headers=_auth(token)).status_code == 200
     blocked = client.get(f"{API}/members/{other_id}", headers=_auth(token))
@@ -147,12 +142,7 @@ def test_member_cannot_read_another_member(client: TestClient, session: Session)
 def test_login_returns_real_member_id_for_members(client: TestClient, session: Session) -> None:
     import os
 
-    r = client.post(
-        f"{API}/auth/login",
-        json={"email": "member1@club.test", "password": os.environ.get("SEED_PASSWORD", "Club@12345")},
-    )
-    assert r.status_code == 200
-    body = r.json()
+    body = sign_in(client, "member1@club.test", os.environ.get("SEED_PASSWORD", "Club@12345"))
     expected = session.execute(
         select(Member.id).join(User, User.id == Member.user_id).where(
             User.email == "member1@club.test"
@@ -160,15 +150,13 @@ def test_login_returns_real_member_id_for_members(client: TestClient, session: S
     ).scalar_one()
     assert body["user"]["member_id"] == expected
 
-    me = client.get(f"{API}/auth/me", headers=_auth(body["access_token"]))
+    me = client.get(f"{API}/auth/me", headers=_auth(body["token"]))
     assert me.json()["member_id"] == expected
 
 
 def test_staff_login_has_no_member_id(client: TestClient, make_user) -> None:
     user = make_user(Role.FRONT_DESK)
-    body = client.post(
-        f"{API}/auth/login", json={"email": user.email, "password": GOOD_PASSWORD}
-    ).json()
+    body = sign_in(client, user.email, GOOD_PASSWORD)
     assert body["user"]["member_id"] is None
 
 

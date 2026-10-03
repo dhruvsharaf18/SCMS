@@ -60,8 +60,10 @@ class User(Base):
     created_at: Mapped[datetime] = _created_at()
 
 
-class RefreshToken(Base):
-    __tablename__ = "refresh_tokens"
+class LoginSession(Base):
+    """A signed-in browser. Only the SHA-256 of the cookie value is stored."""
+
+    __tablename__ = "login_sessions"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
@@ -402,6 +404,35 @@ class BarTable(Base):
         Integer, nullable=False, default=4, server_default=text("4")
     )
     created_at: Mapped[datetime] = _created_at()
+
+
+class TableReservation(Base):
+    """A member's advance booking of a bar & dining table for a fixed-length sitting."""
+
+    __tablename__ = "table_reservations"
+    __table_args__ = (
+        _check("status", enums.ReservationStatus),
+        CheckConstraint("party_size > 0", name="ck_table_reservations_party"),
+        CheckConstraint("end_at > start_at", name="ck_table_reservations_times"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    member_id: Mapped[int] = mapped_column(ForeignKey("members.id"), nullable=False)
+    table_id: Mapped[int] = mapped_column(ForeignKey("bar_tables.id"), nullable=False)
+    party_size: Mapped[int] = mapped_column(Integer, nullable=False)
+    start_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    end_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    status: Mapped[str] = mapped_column(
+        String(10), nullable=False, default="CONFIRMED", server_default=text("'CONFIRMED'")
+    )
+    note: Mapped[str | None] = mapped_column(String(200))
+    created_by: Mapped[int | None] = mapped_column(ForeignKey("users.id"))
+    cancelled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = _created_at()
+
+
+Index("ix_table_reservations_table_start", TableReservation.table_id, TableReservation.start_at)
+Index("ix_table_reservations_member_start", TableReservation.member_id, TableReservation.start_at)
 
 
 class BarOrder(Base):

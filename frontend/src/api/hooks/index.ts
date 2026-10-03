@@ -7,6 +7,7 @@ import type {
   BookingCancelResponse,
   Member,
   MemberCreateInput,
+  MemberHistoryEvent,
   Product,
   ProductCreateInput,
   ProductUpdateInput,
@@ -17,9 +18,18 @@ import type {
   BarOrder,
   BarOrderCreateInput,
   BarDailyReport,
+  DiningMenu,
+  DiningAvailability,
+  TableReservation,
+  ReservationCreateInput,
+  ReservationStatus,
   Payment,
   PaginatedPayments,
-  PaymentRefundResponse,
+  PaymentTotals,
+  TaxSummary,
+  Employee,
+  EmployeeCreateInput,
+  EmployeeUpdateInput,
   SocialSession,
   SocialSessionJoinInput,
   DashboardSummary,
@@ -246,10 +256,26 @@ export function useMember(id: number) {
   return useQuery<Member | null, ApiError>({
     queryKey: ['member', id],
     queryFn: async () => {
-      await new Promise((r) => setTimeout(r, 60))
-      return getMockMember(id)
+      if (USE_MOCKS) {
+        await new Promise((r) => setTimeout(r, 60))
+        return getMockMember(id)
+      }
+      return api.get<Member>(`/members/${id}`)
     },
     enabled: id > 0,
+  })
+}
+
+export function useMemberHistory(id: number, pageSize = 20) {
+  return useQuery<MemberHistoryEvent[], ApiError>({
+    queryKey: ['member', id, 'history', pageSize],
+    queryFn: async () => {
+      const res = await api.get<{ items: MemberHistoryEvent[] }>(
+        `/members/${id}/history?page_size=${pageSize}`,
+      )
+      return res.items
+    },
+    enabled: id > 0 && !USE_MOCKS,
   })
 }
 
@@ -385,6 +411,62 @@ export function useMenuItems(category?: string) {
       }
       return api.get<MenuItem[]>(`/menu-items${category && category !== 'ALL' ? `?category=${category}` : ''}`)
     },
+  })
+}
+
+// ── Bar & Dining (member menu + table reservations) ───────────────────────
+export function useDiningMenu() {
+  return useQuery<DiningMenu, ApiError>({
+    queryKey: ['dining', 'menu'],
+    queryFn: () => api.get<DiningMenu>('/dining/menu'),
+  })
+}
+
+export function useDiningAvailability(date: string, partySize: number) {
+  return useQuery<DiningAvailability, ApiError>({
+    queryKey: ['dining', 'availability', date, partySize],
+    queryFn: () =>
+      api.get<DiningAvailability>(`/dining/availability?date=${date}&party_size=${partySize}`),
+    enabled: Boolean(date) && partySize > 0,
+  })
+}
+
+export function useReservations(filters?: { date?: string; status?: ReservationStatus; upcoming?: boolean }) {
+  return useQuery<TableReservation[], ApiError>({
+    queryKey: ['dining', 'reservations', filters],
+    queryFn: async () => {
+      const params = new URLSearchParams({ page_size: '100' })
+      if (filters?.date) params.set('date', filters.date)
+      if (filters?.status) params.set('status', filters.status)
+      if (filters?.upcoming) params.set('upcoming', 'true')
+      const res = await api.get<{ items: TableReservation[] }>(`/dining/reservations?${params.toString()}`)
+      return res.items
+    },
+  })
+}
+
+export function useCreateReservation() {
+  const qc = useQueryClient()
+  return useMutation<TableReservation, ApiError, ReservationCreateInput>({
+    mutationFn: (input) => api.post<TableReservation>('/dining/reservations', input),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['dining'] }),
+  })
+}
+
+export function useCancelReservation() {
+  const qc = useQueryClient()
+  return useMutation<TableReservation, ApiError, number>({
+    mutationFn: (id) => api.post<TableReservation>(`/dining/reservations/${id}/cancel`, {}),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['dining'] }),
+  })
+}
+
+export function useSetReservationStatus() {
+  const qc = useQueryClient()
+  return useMutation<TableReservation, ApiError, { id: number; status: 'SEATED' | 'NO_SHOW' }>({
+    mutationFn: ({ id, status }) =>
+      api.post<TableReservation>(`/dining/reservations/${id}/status`, { status }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['dining'] }),
   })
 }
 
@@ -628,15 +710,62 @@ export function usePayments(filters?: {
   })
 }
 
+// ── Staff / HR ─────────────────────────────────────────────────────────────
+export function useEmployees(includeInactive: boolean) {
+  return useQuery<Employee[], ApiError>({
+    queryKey: ['employees', includeInactive],
+    queryFn: () => api.get<Employee[]>(`/employees${includeInactive ? '?include_inactive=true' : ''}`),
+  })
+}
+
+export function useCreateEmployee() {
+  const qc = useQueryClient()
+  return useMutation<Employee, ApiError, EmployeeCreateInput>({
+    mutationFn: (input) => api.post<Employee>('/employees', input),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['employees'] }),
+  })
+}
+
+export function useUpdateEmployee() {
+  const qc = useQueryClient()
+  return useMutation<Employee, ApiError, { id: number; changes: EmployeeUpdateInput }>({
+    mutationFn: ({ id, changes }) => api.patch<Employee>(`/employees/${id}`, changes),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['employees'] }),
+  })
+}
+
+export function usePaymentTotals(filters: { from?: string; to?: string; source_type?: string; method?: string }) {
+  return useQuery<PaymentTotals, ApiError>({
+    queryKey: ['payments', 'summary', filters],
+    queryFn: () => {
+      const params = new URLSearchParams()
+      if (filters.from) params.set('from', filters.from)
+      if (filters.to) params.set('to', filters.to)
+      if (filters.source_type && filters.source_type !== 'ALL') params.set('source_type', filters.source_type)
+      if (filters.method && filters.method !== 'ALL') params.set('method', filters.method)
+      return api.get<PaymentTotals>(`/payments/summary?${params.toString()}`)
+    },
+    enabled: !USE_MOCKS,
+  })
+}
+
+export function useTaxSummary(month: string) {
+  return useQuery<TaxSummary, ApiError>({
+    queryKey: ['reports', 'tax-summary', month],
+    queryFn: () => api.get<TaxSummary>(`/reports/tax-summary?month=${month}`),
+    enabled: Boolean(month) && !USE_MOCKS,
+  })
+}
+
 export function useRefundPayment() {
   const qc = useQueryClient()
-  return useMutation<PaymentRefundResponse, ApiError, { paymentId: number; reason?: string }>({
+  return useMutation<Payment, ApiError, { paymentId: number; reason?: string }>({
     mutationFn: async ({ paymentId, reason }) => {
       if (USE_MOCKS) {
         await new Promise((r) => setTimeout(r, 100))
         return refundMockPayment(paymentId, reason)
       }
-      return api.post<PaymentRefundResponse>(`/payments/${paymentId}/refund`, reason ? { reason } : undefined)
+      return api.post<Payment>(`/payments/${paymentId}/refund`, reason ? { reason } : {})
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['payments'] })
@@ -735,8 +864,11 @@ export function usePlans() {
   return useQuery<Plan[], ApiError>({
     queryKey: ['plans', 'public'],
     queryFn: async () => {
-      await new Promise((r) => setTimeout(r, 60))
-      return getMockPlans()
+      if (USE_MOCKS) {
+        await new Promise((r) => setTimeout(r, 60))
+        return getMockPlans()
+      }
+      return api.get<Plan[]>('/plans')
     },
   })
 }

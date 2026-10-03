@@ -87,16 +87,6 @@ export default function PortalHome() {
             Welcome to your Champions Club Member Portal
           </p>
         </div>
-
-        <button
-          type="button"
-          onClick={() => setQrModalOpen(true)}
-          className="p-2.5 rounded-2xl bg-surface border border-border-light shadow-soft hover:shadow-card transition-all text-text-secondary hover:text-primary-600 flex items-center gap-1.5 touch-target"
-          aria-label="Display Member QR Code"
-        >
-          <QrCode size={20} />
-          <span className="text-xs font-semibold hidden sm:inline">My Pass</span>
-        </button>
       </div>
 
       {/* ── Luxury Digital Membership Card ── */}
@@ -178,7 +168,7 @@ export default function PortalHome() {
       </div>
 
       {/* ── Quick Actions Grid ── */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
         <button
           type="button"
           onClick={() => navigate('/portal/book')}
@@ -232,6 +222,20 @@ export default function PortalHome() {
           <div>
             <p className="font-bold text-xs text-text-primary">My Orders</p>
             <p className="text-[10px] text-text-tertiary mt-0.5">Purchases & pickup</p>
+          </div>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => navigate('/portal/dining')}
+          className="col-span-2 sm:col-span-1 p-4 rounded-2xl bg-surface border border-border-light shadow-soft hover:shadow-card hover:border-rose-300 transition-all text-left flex flex-col justify-between group touch-target"
+        >
+          <div className="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
+            <UtensilsCrossed size={20} />
+          </div>
+          <div>
+            <p className="font-bold text-xs text-text-primary">Bar & Dining</p>
+            <p className="text-[10px] text-text-tertiary mt-0.5">Menu & table booking</p>
           </div>
         </button>
       </div>
@@ -386,7 +390,7 @@ export default function PortalHome() {
                     </p>
                     <StatusChip
                       label={p.status}
-                      variant={p.status === 'PAID' ? 'success' : 'error'}
+                      variant={p.status === 'COMPLETED' ? 'success' : 'error'}
                     />
                   </div>
                 </div>

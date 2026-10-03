@@ -28,7 +28,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TokenResponse"
+                  "$ref": "#/components/schemas/LoginResponse"
                 }
               }
             }
@@ -39,27 +39,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/auth/refresh": {
-      "post": {
-        "tags": [
-          "auth"
-        ],
-        "summary": "Refresh",
-        "operationId": "refresh_api_v1_auth_refresh_post",
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TokenResponse"
                 }
               }
             }
@@ -89,12 +68,7 @@
               }
             }
           }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
+        }
       }
     },
     "/api/v1/auth/me": {
@@ -115,12 +89,7 @@
               }
             }
           }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
+        }
       }
     },
     "/api/v1/users": {
@@ -161,12 +130,7 @@
               }
             }
           }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
+        }
       }
     },
     "/api/v1/users/{user_id}": {
@@ -176,11 +140,6 @@
         ],
         "summary": "Patch User",
         "operationId": "patch_user_api_v1_users__user_id__patch",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "user_id",
@@ -259,11 +218,6 @@
         ],
         "summary": "Patch Plan",
         "operationId": "patch_plan_api_v1_plans__plan_id__patch",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "plan_id",
@@ -379,12 +333,7 @@
               }
             }
           }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
+        }
       }
     },
     "/api/v1/members": {
@@ -394,11 +343,6 @@
         ],
         "summary": "Create Member",
         "operationId": "create_member_api_v1_members_post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -438,11 +382,6 @@
         ],
         "summary": "List Members",
         "operationId": "list_members_api_v1_members_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "q",
@@ -531,11 +470,6 @@
         ],
         "summary": "Expiring",
         "operationId": "expiring_api_v1_members_expiring_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "days",
@@ -557,7 +491,6 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "additionalProperties": true,
                   "title": "Response Expiring Api V1 Members Expiring Get"
                 }
               }
@@ -583,11 +516,6 @@
         ],
         "summary": "By Code",
         "operationId": "by_code_api_v1_members_by_code__code__get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "code",
@@ -628,11 +556,6 @@
         ],
         "summary": "Get Member",
         "operationId": "get_member_api_v1_members__member_id__get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "member_id",
@@ -671,11 +594,6 @@
         ],
         "summary": "Patch Member",
         "operationId": "patch_member_api_v1_members__member_id__patch",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "member_id",
@@ -728,11 +646,6 @@
         ],
         "summary": "Renew",
         "operationId": "renew_api_v1_members__member_id__renew_post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "member_id",
@@ -785,11 +698,6 @@
         ],
         "summary": "History",
         "operationId": "history_api_v1_members__member_id__history_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "member_id",
@@ -855,11 +763,6 @@
         ],
         "summary": "List Courts",
         "operationId": "list_courts_api_v1_courts_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "sport",
@@ -921,11 +824,6 @@
         ],
         "summary": "Create Court",
         "operationId": "create_court_api_v1_courts_post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -967,11 +865,6 @@
         ],
         "summary": "Update Court",
         "operationId": "update_court_api_v1_courts__court_id__patch",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "court_id",
@@ -1025,11 +918,6 @@
         "summary": "Availability",
         "description": "Staff see walk-in prices unless they name a member; members always see their own.",
         "operationId": "availability_api_v1_courts_availability_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "date",
@@ -1105,11 +993,6 @@
         ],
         "summary": "Create Booking",
         "operationId": "create_booking_api_v1_bookings_post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -1149,11 +1032,6 @@
         ],
         "summary": "List Bookings",
         "operationId": "list_bookings_api_v1_bookings_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "date",
@@ -1275,11 +1153,6 @@
         ],
         "summary": "Get Booking",
         "operationId": "get_booking_api_v1_bookings__booking_id__get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "booking_id",
@@ -1322,11 +1195,6 @@
         ],
         "summary": "Cancel Booking",
         "operationId": "cancel_booking_api_v1_bookings__booking_id__cancel_post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "booking_id",
@@ -1379,11 +1247,6 @@
         ],
         "summary": "Set Status",
         "operationId": "set_status_api_v1_bookings__booking_id__status_post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "booking_id",
@@ -1436,11 +1299,6 @@
         ],
         "summary": "Pay Booking",
         "operationId": "pay_booking_api_v1_bookings__booking_id__pay_post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "booking_id",
@@ -1493,11 +1351,6 @@
         ],
         "summary": "List Sessions",
         "operationId": "list_sessions_api_v1_social_sessions_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "from",
@@ -1567,11 +1420,6 @@
         ],
         "summary": "Create Session",
         "operationId": "create_session_api_v1_social_sessions_post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -1613,11 +1461,6 @@
         ],
         "summary": "Get Session Row",
         "operationId": "get_session_row_api_v1_social_sessions__session_id__get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "session_id",
@@ -1658,11 +1501,6 @@
         ],
         "summary": "Cancel Session",
         "operationId": "cancel_session_api_v1_social_sessions__session_id__delete",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "session_id",
@@ -1706,11 +1544,6 @@
         "summary": "Participants",
         "description": "Staff only: the roster names other members (SRS 3.2.6, S-15).",
         "operationId": "participants_api_v1_social_sessions__session_id__participants_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "session_id",
@@ -1757,11 +1590,6 @@
         ],
         "summary": "Join",
         "operationId": "join_api_v1_social_sessions__session_id__join_post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "session_id",
@@ -1814,11 +1642,6 @@
         ],
         "summary": "Leave",
         "operationId": "leave_api_v1_social_sessions__session_id__leave_post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "session_id",
@@ -1864,11 +1687,6 @@
         ],
         "summary": "List Products",
         "operationId": "list_products_api_v1_products_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "category",
@@ -1946,11 +1764,6 @@
         ],
         "summary": "Create Product",
         "operationId": "create_product_api_v1_products_post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -2007,12 +1820,7 @@
               }
             }
           }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
+        }
       }
     },
     "/api/v1/products/{product_id}": {
@@ -2022,11 +1830,6 @@
         ],
         "summary": "Get Product",
         "operationId": "get_product_api_v1_products__product_id__get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "product_id",
@@ -2067,11 +1870,6 @@
         ],
         "summary": "Update Product",
         "operationId": "update_product_api_v1_products__product_id__patch",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "product_id",
@@ -2124,11 +1922,6 @@
         ],
         "summary": "Restock",
         "operationId": "restock_api_v1_products__product_id__restock_post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "product_id",
@@ -2181,11 +1974,6 @@
         ],
         "summary": "Create Order",
         "operationId": "create_order_api_v1_shop_orders_post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -2225,11 +2013,6 @@
         ],
         "summary": "List Orders",
         "operationId": "list_orders_api_v1_shop_orders_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "status",
@@ -2318,11 +2101,6 @@
         ],
         "summary": "Get Order",
         "operationId": "get_order_api_v1_shop_orders__order_id__get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "order_id",
@@ -2365,11 +2143,6 @@
         ],
         "summary": "Set Status",
         "operationId": "set_status_api_v1_shop_orders__order_id__status_post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "order_id",
@@ -2422,11 +2195,6 @@
         ],
         "summary": "Pay Order",
         "operationId": "pay_order_api_v1_shop_orders__order_id__pay_post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "order_id",
@@ -2479,11 +2247,6 @@
         ],
         "summary": "Cancel Order",
         "operationId": "cancel_order_api_v1_shop_orders__order_id__cancel_post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "order_id",
@@ -2536,11 +2299,6 @@
         ],
         "summary": "List Menu Items",
         "operationId": "list_menu_items_api_v1_menu_items_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "category",
@@ -2602,11 +2360,6 @@
         ],
         "summary": "Create Menu Item",
         "operationId": "create_menu_item_api_v1_menu_items_post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -2648,11 +2401,6 @@
         ],
         "summary": "Update Menu Item",
         "operationId": "update_menu_item_api_v1_menu_items__item_id__patch",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "item_id",
@@ -2720,12 +2468,7 @@
               }
             }
           }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
+        }
       },
       "post": {
         "tags": [
@@ -2764,12 +2507,7 @@
               }
             }
           }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
+        }
       }
     },
     "/api/v1/bar/tables/{table_id}": {
@@ -2779,11 +2517,6 @@
         ],
         "summary": "Update Table",
         "operationId": "update_table_api_v1_bar_tables__table_id__patch",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "table_id",
@@ -2836,11 +2569,6 @@
         ],
         "summary": "Create Order",
         "operationId": "create_order_api_v1_bar_orders_post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -2880,11 +2608,6 @@
         ],
         "summary": "List Orders",
         "operationId": "list_orders_api_v1_bar_orders_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "kitchen_status",
@@ -3006,11 +2729,6 @@
         "summary": "Daily Report",
         "description": "BAR_STAFF see only what they took themselves; managers see the whole bar (SRS 3.2.8).",
         "operationId": "daily_report_api_v1_bar_reports_daily_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "date",
@@ -3054,11 +2772,6 @@
         ],
         "summary": "Get Order",
         "operationId": "get_order_api_v1_bar_orders__order_id__get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "order_id",
@@ -3101,11 +2814,6 @@
         ],
         "summary": "Add Items",
         "operationId": "add_items_api_v1_bar_orders__order_id__items_post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "order_id",
@@ -3158,11 +2866,6 @@
         ],
         "summary": "Set Kitchen Status",
         "operationId": "set_kitchen_status_api_v1_bar_orders__order_id__kitchen_status_post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "order_id",
@@ -3215,11 +2918,6 @@
         ],
         "summary": "Pay Order",
         "operationId": "pay_order_api_v1_bar_orders__order_id__pay_post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "order_id",
@@ -3272,11 +2970,6 @@
         ],
         "summary": "Open Tab",
         "operationId": "open_tab_api_v1_bar_orders__order_id__tab_post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "order_id",
@@ -3354,12 +3047,357 @@
               }
             }
           }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
+        }
+      }
+    },
+    "/api/v1/dining/menu": {
+      "get": {
+        "tags": [
+          "dining"
+        ],
+        "summary": "Menu",
+        "operationId": "menu_api_v1_dining_menu_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DiningMenuOut"
+                }
+              }
+            }
           }
-        ]
+        }
+      }
+    },
+    "/api/v1/dining/availability": {
+      "get": {
+        "tags": [
+          "dining"
+        ],
+        "summary": "Availability",
+        "operationId": "availability_api_v1_dining_availability_get",
+        "parameters": [
+          {
+            "name": "date",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "title": "Date"
+            }
+          },
+          {
+            "name": "party_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 50,
+              "minimum": 1,
+              "default": 2,
+              "title": "Party Size"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DiningAvailabilityOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/dining/reservations": {
+      "post": {
+        "tags": [
+          "dining"
+        ],
+        "summary": "Create Reservation",
+        "operationId": "create_reservation_api_v1_dining_reservations_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReservationCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReservationOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "dining"
+        ],
+        "summary": "List Reservations",
+        "operationId": "list_reservations_api_v1_dining_reservations_get",
+        "parameters": [
+          {
+            "name": "date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Date"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/ReservationStatus"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "name": "upcoming",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Upcoming"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1,
+              "title": "Page"
+            }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 50,
+              "title": "Page Size"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/dining/reservations/{reservation_id}": {
+      "get": {
+        "tags": [
+          "dining"
+        ],
+        "summary": "Get Reservation",
+        "operationId": "get_reservation_api_v1_dining_reservations__reservation_id__get",
+        "parameters": [
+          {
+            "name": "reservation_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Reservation Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReservationOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/dining/reservations/{reservation_id}/cancel": {
+      "post": {
+        "tags": [
+          "dining"
+        ],
+        "summary": "Cancel Reservation",
+        "operationId": "cancel_reservation_api_v1_dining_reservations__reservation_id__cancel_post",
+        "parameters": [
+          {
+            "name": "reservation_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Reservation Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReservationOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/dining/reservations/{reservation_id}/status": {
+      "post": {
+        "tags": [
+          "dining"
+        ],
+        "summary": "Set Status",
+        "operationId": "set_status_api_v1_dining_reservations__reservation_id__status_post",
+        "parameters": [
+          {
+            "name": "reservation_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Reservation Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReservationStatusUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReservationOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/v1/payments": {
@@ -3369,11 +3407,6 @@
         ],
         "summary": "List Payments",
         "operationId": "list_payments_api_v1_payments_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "from",
@@ -3489,6 +3522,105 @@
         }
       }
     },
+    "/api/v1/payments/summary": {
+      "get": {
+        "tags": [
+          "payments"
+        ],
+        "summary": "Payment Summary",
+        "operationId": "payment_summary_api_v1_payments_summary_get",
+        "parameters": [
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "From"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "To"
+            }
+          },
+          {
+            "name": "source_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/SourceType"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Source Type"
+            }
+          },
+          {
+            "name": "method",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/PaymentMethod"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Method"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentTotals"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/payments/mine": {
       "get": {
         "tags": [
@@ -3496,11 +3628,6 @@
         ],
         "summary": "My Payments",
         "operationId": "my_payments_api_v1_payments_mine_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "page",
@@ -3557,11 +3684,6 @@
         ],
         "summary": "Refund",
         "operationId": "refund_api_v1_payments__payment_id__refund_post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "payment_id",
@@ -3614,11 +3736,6 @@
         ],
         "summary": "Payments Csv",
         "operationId": "payments_csv_api_v1_reports_payments_csv_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "from",
@@ -3684,11 +3801,6 @@
         ],
         "summary": "Tax Summary",
         "operationId": "tax_summary_api_v1_reports_tax_summary_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "month",
@@ -3732,11 +3844,6 @@
         "summary": "List Audit Logs",
         "description": "SRS 3.1 gives the audit trail to the OWNER alone, read-only. It is never written here.",
         "operationId": "list_audit_logs_api_v1_audit_logs_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "action",
@@ -3842,11 +3949,6 @@
         "summary": "Summary",
         "description": "Loading the dashboard is what generates expiry notifications (SRS 4.9).",
         "operationId": "summary_api_v1_dashboard_summary_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "period",
@@ -3890,11 +3992,6 @@
         ],
         "summary": "Revenue Series",
         "operationId": "revenue_series_api_v1_dashboard_revenue_series_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "period",
@@ -3938,11 +4035,6 @@
         ],
         "summary": "List Leads",
         "operationId": "list_leads_api_v1_leads_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "status",
@@ -4031,11 +4123,6 @@
         ],
         "summary": "Get Lead",
         "operationId": "get_lead_api_v1_leads__lead_id__get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "lead_id",
@@ -4076,11 +4163,6 @@
         ],
         "summary": "Update Lead",
         "operationId": "update_lead_api_v1_leads__lead_id__patch",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "lead_id",
@@ -4133,11 +4215,6 @@
         ],
         "summary": "List Notes",
         "operationId": "list_notes_api_v1_leads__lead_id__notes_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "lead_id",
@@ -4182,11 +4259,6 @@
         ],
         "summary": "Add Note",
         "operationId": "add_note_api_v1_leads__lead_id__notes_post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "lead_id",
@@ -4239,11 +4311,6 @@
         ],
         "summary": "List Quotes",
         "operationId": "list_quotes_api_v1_leads__lead_id__quotes_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "lead_id",
@@ -4288,11 +4355,6 @@
         ],
         "summary": "Add Quote",
         "operationId": "add_quote_api_v1_leads__lead_id__quotes_post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "lead_id",
@@ -4346,11 +4408,6 @@
         "summary": "Convert",
         "description": "Returns a prefill; the lead only becomes WON once POST /members carries its id.",
         "operationId": "convert_api_v1_leads__lead_id__convert_post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "lead_id",
@@ -4408,12 +4465,7 @@
               }
             }
           }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
+        }
       },
       "post": {
         "tags": [
@@ -4452,12 +4504,7 @@
               }
             }
           }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
+        }
       }
     },
     "/api/v1/clients/{client_id}": {
@@ -4467,11 +4514,6 @@
         ],
         "summary": "Update Client",
         "operationId": "update_client_api_v1_clients__client_id__patch",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "client_id",
@@ -4524,11 +4566,6 @@
         ],
         "summary": "List Invoices",
         "operationId": "list_invoices_api_v1_invoices_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "status",
@@ -4631,11 +4668,6 @@
         ],
         "summary": "Create Invoice",
         "operationId": "create_invoice_api_v1_invoices_post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -4677,11 +4709,6 @@
         ],
         "summary": "Get Invoice",
         "operationId": "get_invoice_api_v1_invoices__invoice_id__get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "invoice_id",
@@ -4725,11 +4752,6 @@
         "summary": "Print Invoice",
         "description": "Server-rendered HTML with every field escaped (S-16).",
         "operationId": "print_invoice_api_v1_invoices__invoice_id__print_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "invoice_id",
@@ -4770,11 +4792,6 @@
         ],
         "summary": "Set Status",
         "operationId": "set_status_api_v1_invoices__invoice_id__status_post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "invoice_id",
@@ -4827,11 +4844,6 @@
         ],
         "summary": "Mark Paid",
         "operationId": "mark_paid_api_v1_invoices__invoice_id__mark_paid_post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "invoice_id",
@@ -4884,11 +4896,6 @@
         ],
         "summary": "List Expenses",
         "operationId": "list_expenses_api_v1_expenses_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "status",
@@ -4959,11 +4966,6 @@
         ],
         "summary": "Create Expense",
         "operationId": "create_expense_api_v1_expenses_post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -5005,11 +5007,6 @@
         ],
         "summary": "Get Expense",
         "operationId": "get_expense_api_v1_expenses__expense_id__get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "expense_id",
@@ -5052,11 +5049,6 @@
         ],
         "summary": "Mark Paid",
         "operationId": "mark_paid_api_v1_expenses__expense_id__mark_paid_post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "expense_id",
@@ -5099,11 +5091,6 @@
         ],
         "summary": "List Employees",
         "operationId": "list_employees_api_v1_employees_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "include_inactive",
@@ -5149,11 +5136,6 @@
         ],
         "summary": "Create Employee",
         "operationId": "create_employee_api_v1_employees_post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -5188,6 +5170,58 @@
         }
       }
     },
+    "/api/v1/employees/{employee_id}": {
+      "patch": {
+        "tags": [
+          "hr"
+        ],
+        "summary": "Update Employee",
+        "operationId": "update_employee_api_v1_employees__employee_id__patch",
+        "parameters": [
+          {
+            "name": "employee_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Employee Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmployeeUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmployeeOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/shifts": {
       "get": {
         "tags": [
@@ -5196,11 +5230,6 @@
         "summary": "List Shifts",
         "description": "Any date inside the week works; the roster runs Monday to Sunday.",
         "operationId": "list_shifts_api_v1_shifts_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "week",
@@ -5269,11 +5298,6 @@
         ],
         "summary": "Create Shift",
         "operationId": "create_shift_api_v1_shifts_post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -5316,11 +5340,6 @@
         "summary": "List Leave Requests",
         "description": "Staff see their own requests; managers see everyone's.",
         "operationId": "list_leave_requests_api_v1_leave_requests_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "status",
@@ -5372,11 +5391,6 @@
         ],
         "summary": "Create Leave Request",
         "operationId": "create_leave_request_api_v1_leave_requests_post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -5418,11 +5432,6 @@
         ],
         "summary": "Decide Leave",
         "operationId": "decide_leave_api_v1_leave_requests__request_id__decide_post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "request_id",
@@ -5475,11 +5484,6 @@
         ],
         "summary": "List Payroll",
         "operationId": "list_payroll_api_v1_payroll_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "month",
@@ -5569,12 +5573,7 @@
               }
             }
           }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
+        }
       }
     },
     "/api/v1/payroll/{payroll_id}/mark-paid": {
@@ -5584,11 +5583,6 @@
         ],
         "summary": "Mark Payroll Paid",
         "operationId": "mark_payroll_paid_api_v1_payroll__payroll_id__mark_paid_post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "payroll_id",
@@ -5630,7 +5624,7 @@
           "public"
         ],
         "summary": "Public Availability",
-        "description": "Anonymous grid. FREE / BUSY only \u2014 never a name, a phone or a price (S-13).",
+        "description": "Anonymous grid. FREE / BUSY only ΓÇö never a name, a phone or a price (S-13).",
         "operationId": "public_availability_api_v1_public_availability_get",
         "parameters": [
           {
@@ -5800,11 +5794,6 @@
         "summary": "List Notifications",
         "description": "Own notifications only: those addressed to this user or to this user's role.",
         "operationId": "list_notifications_api_v1_notifications_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "unread_only",
@@ -5882,12 +5871,7 @@
               }
             }
           }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
+        }
       }
     },
     "/api/v1/notifications/{notification_id}/read": {
@@ -5897,11 +5881,6 @@
         ],
         "summary": "Mark Read",
         "operationId": "mark_read_api_v1_notifications__notification_id__read_post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "notification_id",
@@ -7119,6 +7098,119 @@
         ],
         "title": "DashboardSummary"
       },
+      "DiningAvailabilityOut": {
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date",
+            "title": "Date"
+          },
+          "party_size": {
+            "type": "integer",
+            "title": "Party Size"
+          },
+          "max_party_size": {
+            "type": "integer",
+            "title": "Max Party Size"
+          },
+          "sitting_minutes": {
+            "type": "integer",
+            "title": "Sitting Minutes"
+          },
+          "slots": {
+            "items": {
+              "$ref": "#/components/schemas/DiningSlotOut"
+            },
+            "type": "array",
+            "title": "Slots"
+          }
+        },
+        "type": "object",
+        "required": [
+          "date",
+          "party_size",
+          "max_party_size",
+          "sitting_minutes",
+          "slots"
+        ],
+        "title": "DiningAvailabilityOut"
+      },
+      "DiningMenuItemOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "category": {
+            "$ref": "#/components/schemas/MenuCategory"
+          },
+          "price_paise": {
+            "type": "integer",
+            "title": "Price Paise"
+          },
+          "member_price_paise": {
+            "type": "integer",
+            "title": "Member Price Paise"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "category",
+          "price_paise",
+          "member_price_paise"
+        ],
+        "title": "DiningMenuItemOut"
+      },
+      "DiningMenuOut": {
+        "properties": {
+          "tier": {
+            "$ref": "#/components/schemas/Tier"
+          },
+          "discount_pct": {
+            "type": "integer",
+            "title": "Discount Pct"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/DiningMenuItemOut"
+            },
+            "type": "array",
+            "title": "Items"
+          }
+        },
+        "type": "object",
+        "required": [
+          "tier",
+          "discount_pct",
+          "items"
+        ],
+        "title": "DiningMenuOut"
+      },
+      "DiningSlotOut": {
+        "properties": {
+          "start_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Start At"
+          },
+          "available": {
+            "type": "boolean",
+            "title": "Available"
+          }
+        },
+        "type": "object",
+        "required": [
+          "start_at",
+          "available"
+        ],
+        "title": "DiningSlotOut"
+      },
       "EmployeeCreate": {
         "properties": {
           "user_id": {
@@ -7159,6 +7251,16 @@
             "type": "boolean",
             "title": "Is Active",
             "default": true
+          },
+          "login": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EmployeeLogin"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "additionalProperties": false,
@@ -7168,6 +7270,35 @@
           "monthly_salary_paise"
         ],
         "title": "EmployeeCreate"
+      },
+      "EmployeeLogin": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 3,
+            "pattern": "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$",
+            "title": "Email"
+          },
+          "password": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Password"
+          },
+          "role": {
+            "$ref": "#/components/schemas/Role"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "email",
+          "password",
+          "role"
+        ],
+        "title": "EmployeeLogin",
+        "description": "A staff login created together with the employee. OWNER only, like POST /users."
       },
       "EmployeeOut": {
         "properties": {
@@ -7208,6 +7339,38 @@
           "is_active": {
             "type": "boolean",
             "title": "Is Active"
+          },
+          "login_email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Login Email"
+          },
+          "login_role": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Role"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "login_active": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Login Active"
           }
         },
         "type": "object",
@@ -7220,6 +7383,61 @@
           "is_active"
         ],
         "title": "EmployeeOut"
+      },
+      "EmployeeUpdate": {
+        "properties": {
+          "full_name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 120,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Full Name"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 60
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          },
+          "monthly_salary_paise": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Monthly Salary Paise"
+          },
+          "is_active": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Active"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "EmployeeUpdate"
       },
       "EnquiryAccepted": {
         "properties": {
@@ -8154,6 +8372,18 @@
           "password"
         ],
         "title": "LoginRequest"
+      },
+      "LoginResponse": {
+        "properties": {
+          "user": {
+            "$ref": "#/components/schemas/UserSummary"
+          }
+        },
+        "type": "object",
+        "required": [
+          "user"
+        ],
+        "title": "LoginResponse"
       },
       "LowStockRow": {
         "properties": {
@@ -9105,6 +9335,34 @@
         ],
         "title": "PaymentStatus"
       },
+      "PaymentTotals": {
+        "properties": {
+          "count": {
+            "type": "integer",
+            "title": "Count"
+          },
+          "collected_paise": {
+            "type": "integer",
+            "title": "Collected Paise"
+          },
+          "refunded_count": {
+            "type": "integer",
+            "title": "Refunded Count"
+          },
+          "refunded_paise": {
+            "type": "integer",
+            "title": "Refunded Paise"
+          }
+        },
+        "type": "object",
+        "required": [
+          "count",
+          "collected_paise",
+          "refunded_count",
+          "refunded_paise"
+        ],
+        "title": "PaymentTotals"
+      },
       "PayrollOut": {
         "properties": {
           "id": {
@@ -9860,6 +10118,175 @@
         "additionalProperties": false,
         "type": "object",
         "title": "RefundRequest"
+      },
+      "ReservationCreate": {
+        "properties": {
+          "start_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Start At"
+          },
+          "party_size": {
+            "type": "integer",
+            "maximum": 50.0,
+            "minimum": 1.0,
+            "title": "Party Size"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "member_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Member Id"
+          },
+          "table_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Table Id"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "start_at",
+          "party_size"
+        ],
+        "title": "ReservationCreate"
+      },
+      "ReservationOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "member_id": {
+            "type": "integer",
+            "title": "Member Id"
+          },
+          "member_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Member Name"
+          },
+          "member_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Member Code"
+          },
+          "table_id": {
+            "type": "integer",
+            "title": "Table Id"
+          },
+          "table_label": {
+            "type": "string",
+            "title": "Table Label"
+          },
+          "party_size": {
+            "type": "integer",
+            "title": "Party Size"
+          },
+          "start_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Start At"
+          },
+          "end_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "End At"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ReservationStatus"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "member_id",
+          "table_id",
+          "table_label",
+          "party_size",
+          "start_at",
+          "end_at",
+          "status",
+          "note",
+          "created_at"
+        ],
+        "title": "ReservationOut"
+      },
+      "ReservationStatus": {
+        "type": "string",
+        "enum": [
+          "CONFIRMED",
+          "SEATED",
+          "CANCELLED",
+          "NO_SHOW"
+        ],
+        "title": "ReservationStatus"
+      },
+      "ReservationStatusUpdate": {
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/ReservationStatus"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "title": "ReservationStatusUpdate"
       },
       "RestockRequest": {
         "properties": {
@@ -10663,33 +11090,6 @@
         ],
         "title": "Tier"
       },
-      "TokenResponse": {
-        "properties": {
-          "access_token": {
-            "type": "string",
-            "title": "Access Token"
-          },
-          "token_type": {
-            "type": "string",
-            "title": "Token Type",
-            "default": "bearer"
-          },
-          "expires_in": {
-            "type": "integer",
-            "title": "Expires In"
-          },
-          "user": {
-            "$ref": "#/components/schemas/UserSummary"
-          }
-        },
-        "type": "object",
-        "required": [
-          "access_token",
-          "expires_in",
-          "user"
-        ],
-        "title": "TokenResponse"
-      },
       "UnreadCount": {
         "properties": {
           "unread": {
@@ -10860,13 +11260,6 @@
           "type": {
             "type": "string",
             "title": "Error Type"
-          },
-          "input": {
-            "title": "Input"
-          },
-          "ctx": {
-            "type": "object",
-            "title": "Context"
           }
         },
         "type": "object",
@@ -10876,12 +11269,6 @@
           "type"
         ],
         "title": "ValidationError"
-      }
-    },
-    "securitySchemes": {
-      "HTTPBearer": {
-        "type": "http",
-        "scheme": "bearer"
       }
     }
   }

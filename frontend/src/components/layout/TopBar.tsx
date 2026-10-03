@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { Search, Bell, Menu, ChevronDown } from 'lucide-react'
+import { Search, Bell, Menu, ChevronDown, LogOut } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
 import { Avatar } from '../ui/Avatar'
 import { PillTabs, type PillTab } from '../ui/PillTabs'
@@ -22,14 +22,12 @@ const ROLE_LABELS: Record<Role, string> = {
   MEMBER: 'Member',
 }
 
-const ALL_ROLES: Role[] = ['OWNER', 'MANAGER', 'FRONT_DESK', 'BAR_STAFF', 'MEMBER']
-
 export function TopBar({ className }: TopBarProps) {
-  const { user, switchRole } = useAuth()
+  const { user, logout } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
   const [drawerOpen, setDrawerOpen] = useState(false)
-  const [roleMenuOpen, setRoleMenuOpen] = useState(false)
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false)
   const [notifDropdownOpen, setNotifDropdownOpen] = useState(false)
 
   // Notification hooks with 30s polling
@@ -201,60 +199,45 @@ export function TopBar({ className }: TopBarProps) {
           {/* Divider */}
           <div className="hidden md:block w-px h-6 bg-border-light mx-1" />
 
-          {/* User profile / dev role switcher (strictly gated behind import.meta.env.DEV) */}
-          {import.meta.env.DEV ? (
-            <div className="relative">
-              <button
-                onClick={() => setRoleMenuOpen((v) => !v)}
-                className="flex items-center gap-2 px-2 py-1 rounded-xl hover:bg-surface transition-colors"
-                aria-label="Switch role (Dev)"
-              >
-                <Avatar name={user?.full_name ?? 'User'} size="sm" />
-                <div className="hidden md:block text-left">
-                  <p className="text-sm font-medium text-text-primary leading-tight">{user?.full_name}</p>
-                  <p className="text-[11px] text-text-tertiary leading-tight">{user ? ROLE_LABELS[user.role] : ''}</p>
-                </div>
-                <ChevronDown size={14} className="hidden md:block text-text-tertiary" />
-              </button>
-
-              {roleMenuOpen && (
-                <>
-                  <div className="fixed inset-0 z-40" onClick={() => setRoleMenuOpen(false)} />
-                  <div className="absolute right-0 top-full mt-1 z-50 bg-surface rounded-2xl shadow-raised border border-border-light py-1 min-w-[180px] animate-scale-in">
-                    <p className="px-3 py-1.5 text-[10px] font-semibold text-text-tertiary uppercase tracking-wider">
-                      Switch Role (Dev)
-                    </p>
-                    {ALL_ROLES.map((role) => (
-                      <button
-                        key={role}
-                        onClick={() => {
-                          switchRole(role)
-                          setRoleMenuOpen(false)
-                          navigate(role === 'MEMBER' ? '/portal' : '/staff')
-                        }}
-                        className={cn(
-                          'w-full text-left px-3 py-2 text-sm transition-colors',
-                          user?.role === role
-                            ? 'bg-primary-50 text-primary-600 font-medium'
-                            : 'text-text-primary hover:bg-canvas',
-                        )}
-                      >
-                        {ROLE_LABELS[role]}
-                      </button>
-                    ))}
-                  </div>
-                </>
-              )}
-            </div>
-          ) : (
-            <div className="flex items-center gap-2 px-2 py-1">
+          {/* Account menu. A role only changes by logging out and signing in as another user. */}
+          <div className="relative">
+            <button
+              onClick={() => setAccountMenuOpen((v) => !v)}
+              className="flex items-center gap-2 px-2 py-1 rounded-xl hover:bg-surface transition-colors"
+              aria-label="Account menu"
+            >
               <Avatar name={user?.full_name ?? 'User'} size="sm" />
               <div className="hidden md:block text-left">
                 <p className="text-sm font-medium text-text-primary leading-tight">{user?.full_name}</p>
                 <p className="text-[11px] text-text-tertiary leading-tight">{user ? ROLE_LABELS[user.role] : ''}</p>
               </div>
-            </div>
-          )}
+              <ChevronDown size={14} className="hidden md:block text-text-tertiary" />
+            </button>
+
+            {accountMenuOpen && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setAccountMenuOpen(false)} />
+                <div className="absolute right-0 top-full mt-1 z-50 bg-surface rounded-2xl shadow-raised border border-border-light py-1 min-w-[220px] animate-scale-in">
+                  <div className="px-3 py-2 border-b border-border-light">
+                    <p className="text-sm font-semibold text-text-primary truncate">{user?.full_name}</p>
+                    <p className="text-[11px] text-text-tertiary truncate">{user?.email}</p>
+                    <p className="text-[11px] text-primary-600 font-medium mt-0.5">{user ? ROLE_LABELS[user.role] : ''}</p>
+                  </div>
+                  <button
+                    onClick={async () => {
+                      setAccountMenuOpen(false)
+                      await logout()
+                      navigate('/login', { replace: true })
+                    }}
+                    className="w-full flex items-center gap-2 text-left px-3 py-2 text-sm text-accent-red hover:bg-canvas transition-colors"
+                  >
+                    <LogOut size={16} />
+                    Log out
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </header>
 

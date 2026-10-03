@@ -15,7 +15,13 @@ from .. import audit
 from ..config import local_date
 from ..enums import ExpenseStatus, LeaveStatus, PayrollStatus, Role
 from ..models import Employee, Expense, LeaveRequest, Payroll, Shift, User
-from ..security import AppError, utcnow
+from ..security import (
+    AppError,
+    close_user_sessions,
+    hash_password,
+    utcnow,
+    validate_password_policy,
+)
 
 
 # ---------------------------------------------------------------------------- employees
@@ -35,17 +41,85 @@ def get_employee(session: Session, employee_id: int) -> Employee:
     return employee
 
 
+def _require_owner(actor: User, what: str) -> None:
+    """Staff logins are OWNER business (SRS 3.1), even when reached through an employee."""
+    if actor.role != Role.OWNER.value:
+        raise AppError("FORBIDDEN", f"Only the owner can {what}.", 403)
+
+
 def create_employee(session: Session, actor: User, data: dict, ip: str | None = None) -> Employee:
-    user_id = data.get("user_id")
-    if user_id is not None:
-        linked = session.get(User, user_id)
+    """Optionally creates the staff login in the same transaction, so neither exists alone."""
+    data = dict(data)
+    login = data.pop("login", None)
+    if login is not None and data.get("user_id") is not None:
+        raise AppError("VALIDATION_ERROR", "Give either user_id or login, not both.", 422)
+
+    if login is not None:
+        _require_owner(actor, "create staff logins")
+        validate_password_policy(login["password"])
+        user = User(
+            email=login["email"],
+            password_hash=hash_password(login["password"]),
+            full_name=data["full_name"],
+            role=Role(login["role"]).value,
+        )
+        session.add(user)
+        try:
+            session.flush()
+        except IntegrityError:
+            session.rollback()
+            raise AppError("EMAIL_EXISTS", "A user with that email already exists.", 409) from None
+        audit.log(session, actor.id, "USER_CREATED", "user", user.id,
+                  {"after": {"email": user.email, "role": user.role, "is_active": True}}, ip)
+        data["user_id"] = user.id
+    elif data.get("user_id") is not None:
+        linked = session.get(User, data["user_id"])
         if linked is None or linked.role == Role.MEMBER.value:
             raise AppError("NOT_FOUND", "Staff user not found.", 404)
 
     employee = Employee(**data)
     session.add(employee)
     session.flush()
-    audit.log(session, actor.id, "EMPLOYEE_CREATED", "employee", employee.id, data, ip)
+    audit.log(session, actor.id, "EMPLOYEE_CREATED", "employee", employee.id,
+              {**data, "login": bool(login)}, ip)
+    session.commit()
+    session.refresh(employee)
+    return employee
+
+
+def update_employee(
+    session: Session, actor: User, employee_id: int, changes: dict, ip: str | None = None
+) -> Employee:
+    """Deactivating is how an employee is removed: payroll and shift history must survive.
+
+    A linked login follows the employee's active flag, which is why only the OWNER may change
+    that flag on an employee who has a login, and nobody may switch off their own.
+    """
+    employee = session.execute(
+        select(Employee).where(Employee.id == employee_id).with_for_update()
+    ).scalar_one_or_none()
+    if employee is None:
+        raise AppError("NOT_FOUND", "Employee not found.", 404)
+
+    linked = session.get(User, employee.user_id) if employee.user_id is not None else None
+    activity = changes.get("is_active")
+    if activity is not None and activity != employee.is_active and linked is not None:
+        _require_owner(actor, "deactivate or reactivate an employee who has a login")
+        if linked.id == actor.id:
+            raise AppError("CANNOT_DEACTIVATE_SELF", "You cannot deactivate your own account.", 409)
+
+    before = {key: getattr(employee, key) for key in changes}
+    for key, value in changes.items():
+        setattr(employee, key, value)
+    if activity is not None and linked is not None and linked.is_active != activity:
+        linked.is_active = activity
+        if not activity:
+            close_user_sessions(session, linked.id)
+        audit.log(session, actor.id, "USER_UPDATED", "user", linked.id,
+                  {"before": {"is_active": not activity}, "after": {"is_active": activity}}, ip)
+
+    audit.log(session, actor.id, "EMPLOYEE_UPDATED", "employee", employee.id,
+              {"before": before, "after": changes}, ip)
     session.commit()
     session.refresh(employee)
     return employee

@@ -11,7 +11,7 @@ The SRS (`docs/SRS.md`) is the single source of truth. If code and SRS disagree,
 ## Quick start
 
 ```bash
-cp .env.example .env     # then edit JWT_SECRET, POSTGRES_PASSWORD and ALLOWED_ORIGINS
+cp .env.example .env     # then edit POSTGRES_PASSWORD and ALLOWED_ORIGINS
 docker compose up --build
 ```
 

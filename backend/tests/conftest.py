@@ -3,7 +3,7 @@ from collections.abc import Callable, Iterator
 
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import delete, select, update
+from sqlalchemy import delete, or_, select, update
 from sqlalchemy.orm import Session
 
 from app.db import SessionLocal
@@ -33,16 +33,17 @@ from app.models import (
     Payroll,
     Product,
     Quote,
-    RefreshToken,
+    LoginSession,
     ShopOrder,
     ShopOrderItem,
     SocialParticipant,
     Shift,
     SocialSession,
     StockMovement,
+    TableReservation,
     User,
 )
-from app.security import hash_password, limiter
+from app.security import SESSION_COOKIE_NAME, hash_password, limiter
 
 API = "/api/v1"
 TEST_EMAIL_PREFIX = "test-"
@@ -56,6 +57,28 @@ TEST_MENU_PREFIX = "ZZTEST "
 TEST_TABLE_PREFIX = "ZZT-"
 TEST_LEAD_PREFIX = "ZZTEST"
 TEST_EMPLOYEE_PREFIX = "ZZTEST"
+
+
+def sign_in(client: TestClient, email: str, password: str = GOOD_PASSWORD) -> dict:
+    """The login body with the session id added under "token"; the cookie jar is left empty.
+
+    Tests juggle several users on one client, so each request names its user explicitly
+    through `as_user` instead of inheriting whoever logged in last.
+    """
+    response = client.post(f"{API}/auth/login", json={"email": email, "password": password})
+    assert response.status_code == 200, response.text
+    body = response.json()
+    body["token"] = response.cookies[SESSION_COOKIE_NAME]
+    client.cookies.clear()
+    return body
+
+
+def login_token(client: TestClient, email: str, password: str = GOOD_PASSWORD) -> str:
+    return sign_in(client, email, password)["token"]
+
+
+def as_user(token: str) -> dict[str, str]:
+    return {"Cookie": f"{SESSION_COOKIE_NAME}={token}"}
 
 
 @pytest.fixture(autouse=True)
@@ -211,6 +234,16 @@ def _cleanup_test_rows() -> Iterator[None]:
                 )
                 db.execute(delete(BarOrder).where(BarOrder.id.in_(bar_order_ids)))
             db.execute(delete(MenuItem).where(MenuItem.id.in_(menu_ids)))
+        test_table_ids = select(BarTable.id).where(BarTable.label.like(f"{TEST_TABLE_PREFIX}%"))
+        db.execute(
+            delete(TableReservation).where(
+                or_(
+                    TableReservation.table_id.in_(test_table_ids),
+                    TableReservation.member_id.in_(member_ids or [0]),
+                    TableReservation.created_by.in_(user_ids or [0]),
+                )
+            )
+        )
         db.execute(delete(BarTable).where(BarTable.label.like(f"{TEST_TABLE_PREFIX}%")))
 
         product_ids = (
@@ -282,7 +315,7 @@ def _cleanup_test_rows() -> Iterator[None]:
 
         if user_ids:
             db.execute(delete(Expense).where(Expense.created_by.in_(user_ids)))
-            db.execute(delete(RefreshToken).where(RefreshToken.user_id.in_(user_ids)))
+            db.execute(delete(LoginSession).where(LoginSession.user_id.in_(user_ids)))
             db.execute(delete(AuditLog).where(AuditLog.actor_id.in_(user_ids)))
             db.execute(
                 delete(AuditLog).where(AuditLog.entity == "user", AuditLog.entity_id.in_(user_ids))

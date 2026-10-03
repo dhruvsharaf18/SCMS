@@ -188,6 +188,45 @@ Where the SRS is silent, the most conservative reading was taken.
 64. **The seeded low-stock count is a floor, not an exact number.** The sales history draws extra
     products under their reorder level, so `test_seed_shapes` asserts at least the SRS-required 3.
 
+65. **JWT replaced by server-side login sessions (mentor request, post-Stage 10).** Login still
+    checks email + argon2 password against `users`, with the lockout, rate limit and password
+    policy kept. A match stores the SHA-256 of a random id in `login_sessions` and sets it as an
+    HttpOnly `ccms_session` cookie (path `/`, SameSite=Lax, `SESSION_HOURS` default 12). Every
+    request resolves the cookie to a user and `require_roles` is unchanged. `/auth/refresh`,
+    `refresh_tokens`, `JWT_SECRET`, `ACCESS_TOKEN_MINUTES` and `pyjwt` are gone. 401 codes are
+    now `NOT_AUTHENTICATED` and `SESSION_EXPIRED`. This deviates from SRS 3.2.1 / S-03 / S-04,
+    which specify JWT access + rotating refresh tokens. No SMTP or email verification existed.
+66. **Members get a Bar & Dining module (`/api/v1/dining/*`, post-Stage 10).** This narrows
+    decision 59. Members still cannot reach `/menu-items` or bar orders. Instead they get a
+    read-only `GET /dining/menu` showing their tier's `bar_discount_pct` (the same figure
+    `bar._retotal` applies when staff link an order to the member). They can also reserve tables
+    in a new `table_reservations` table (CONFIRMED -> SEATED | NO_SHOW | CANCELLED). The rules:
+    - Sittings are a fixed 120 minutes, starting on the half hour from 08:00 to 21:00 IST.
+    - Tables can be booked up to 14 days ahead.
+    - Each member gets one active reservation per IST day.
+    - The service picks the smallest free table that seats the party. Members never choose.
+
+    Concurrency matches the court-slot pattern. The member row is locked before the daily-limit
+    count. The candidate tables are locked `FOR UPDATE` in (seats, id) order before the overlap
+    check, so a race for the last table gives one 201 and one 409 `NO_TABLE_AVAILABLE`.
+
+    Members only see and cancel their own reservations (404 otherwise), and only before the
+    sitting starts. Staff book for any member and mark SEATED or NO_SHOW. Reservations carry no
+    deposit and no payment row.
+67. **`GET /payments/summary` (OWNER, MANAGER) totals the ledger over the same filters as
+    `GET /payments`.** It returns the count, the COMPLETED amount, and the REFUNDED count and
+    amount, so the ledger's KPI cards cover the whole filtered range rather than one page.
+68. **Employees are removed by deactivation, via `PATCH /employees/{id}` (OWNER, MANAGER).**
+    The endpoint edits name, title, salary and `is_active`. It never hard-deletes, because
+    shifts and payroll reference the row, and inactive employees are already skipped by
+    payroll runs.
+    - A linked staff login follows the employee's active flag: deactivating disables the login
+      and closes its sessions, and reactivating re-enables it.
+    - Logins are OWNER business (SRS 3.1). So only the OWNER may toggle an employee who has a
+      login, and nobody may deactivate their own.
+    - `POST /employees` accepts an optional `login` (OWNER only) that creates the staff user in
+      the same transaction. A duplicate email therefore leaves neither row behind.
+
 ---
 
 ## KNOWN_ISSUES

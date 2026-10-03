@@ -40,11 +40,13 @@ from app.models import (
     Payment,
     Plan,
     Product,
+    TableReservation,
     User,
 )
 from app.security import AppError, hash_password
 from app.services import bar as bar_svc
 from app.services import booking as booking_svc
+from app.services import dining as dining_svc
 from app.services import leads as leads_svc
 from app.services import shop as shop_svc
 from app.services import social as social_svc
@@ -550,6 +552,39 @@ def _seed_history(session: Session) -> None:
     session.commit()
 
 
+# (member code, days ahead, IST start, party size, note) — booked by the front desk.
+SEED_RESERVATIONS: tuple[tuple[str, int, time, int, str | None], ...] = (
+    ("CC-000001", 1, time(19, 30), 4, "Anniversary dinner"),
+    ("CC-000002", 2, time(13, 0), 2, None),
+    ("CC-000005", 1, time(20, 0), 6, "Team celebration"),
+    ("CC-000012", 3, time(18, 30), 3, None),
+)
+
+
+def _seed_reservations(session: Session) -> None:
+    """A few upcoming table bookings so the dining pages have something to show."""
+    if session.execute(select(func.count(TableReservation.id))).scalar_one():
+        return
+    desk = session.execute(select(User).where(User.email == "desk@club.test")).scalar_one()
+    members = dict(session.execute(select(Member.member_code, Member.id)).tuples().all())
+    today = _today_ist()
+    for code, days, start, party, note in SEED_RESERVATIONS:
+        start_at = datetime.combine(today + timedelta(days=days), start, tzinfo=CLUB_TZ)
+        try:
+            dining_svc.create_reservation(
+                session,
+                desk,
+                {
+                    "member_id": members[code],
+                    "start_at": start_at.astimezone(timezone.utc),
+                    "party_size": party,
+                    "note": note,
+                },
+            )
+        except AppError:
+            session.rollback()
+
+
 def run_seed(session: Session) -> None:
     _seed_users(session)
     _seed_plans(session)
@@ -560,3 +595,4 @@ def run_seed(session: Session) -> None:
     _seed_bar_tables(session)
     _seed_members(session)
     _seed_history(session)
+    _seed_reservations(session)

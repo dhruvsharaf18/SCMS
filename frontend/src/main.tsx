@@ -27,6 +27,7 @@ import PortalShop from './pages/portal/PortalShop'
 import PortalOrders from './pages/portal/PortalOrders'
 import PortalSocial from './pages/portal/PortalSocial'
 import PortalProfile from './pages/portal/PortalProfile'
+import PortalDining from './pages/portal/PortalDining'
 
 // ── Staff pages ───────────────────────────────────────────────────────────
 import StaffDashboard from './pages/staff/StaffDashboard'
@@ -39,6 +40,7 @@ import StaffShop from './pages/staff/StaffShop'
 import StaffStock from './pages/staff/StaffStock'
 import StaffBar from './pages/staff/StaffBar'
 import StaffKitchen from './pages/staff/StaffKitchen'
+import StaffReservations from './pages/staff/StaffReservations'
 import StaffLeads from './pages/staff/StaffLeads'
 import StaffPayments from './pages/staff/StaffPayments'
 import StaffInvoices from './pages/staff/StaffInvoices'
@@ -97,6 +99,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
                 <Route path="/portal/orders" element={<PortalOrders />} />
                 <Route path="/portal/social" element={<PortalSocial />} />
                 <Route path="/portal/profile" element={<PortalProfile />} />
+                <Route path="/portal/dining" element={<PortalDining />} />
               </Route>
 
               {/* ── Staff console (staff roles, inside shell) ── */}
@@ -117,6 +120,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
                 <Route path="/staff/stock" element={<StaffStock />} />
                 <Route path="/staff/bar" element={<StaffBar />} />
                 <Route path="/staff/kitchen" element={<StaffKitchen />} />
+                <Route path="/staff/reservations" element={<StaffReservations />} />
                 <Route path="/staff/leads" element={<StaffLeads />} />
                 <Route path="/staff/payments" element={<StaffPayments />} />
                 <Route path="/staff/invoices" element={<StaffInvoices />} />

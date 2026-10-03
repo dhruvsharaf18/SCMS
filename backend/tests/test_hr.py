@@ -13,17 +13,15 @@ from app.enums import Role
 from app.models import Employee, Expense, Payroll, User
 from app.security import utcnow
 
-from .conftest import API, GOOD_PASSWORD, TEST_EMPLOYEE_PREFIX
+from .conftest import API, GOOD_PASSWORD, TEST_EMPLOYEE_PREFIX, as_user, login_token
 
 
 def _token(client: TestClient, user: User) -> str:
-    r = client.post(f"{API}/auth/login", json={"email": user.email, "password": GOOD_PASSWORD})
-    assert r.status_code == 200, r.text
-    return r.json()["access_token"]
+    return login_token(client, user.email)
 
 
 def _auth(token: str) -> dict[str, str]:
-    return {"Authorization": f"Bearer {token}"}
+    return as_user(token)
 
 
 @pytest.fixture
@@ -48,6 +46,159 @@ def test_employee_create_and_list(client: TestClient, make_user, employee) -> No
     assert listed.status_code == 200
     assert employee["id"] in [row["id"] for row in listed.json()]
     assert employee["monthly_salary_paise"] == 4500000
+
+
+def _new_employee(client: TestClient, token: str, **extra) -> object:
+    return client.post(
+        f"{API}/employees",
+        json={
+            "full_name": f"{TEST_EMPLOYEE_PREFIX} {uuid.uuid4().hex[:5]}",
+            "title": "Desk",
+            "monthly_salary_paise": 3000000,
+            **extra,
+        },
+        headers=_auth(token),
+    )
+
+
+def _login_body(role: str = "FRONT_DESK") -> dict:
+    return {
+        "email": f"test-{uuid.uuid4().hex[:10]}@test.local",
+        "password": GOOD_PASSWORD,
+        "role": role,
+    }
+
+
+def test_owner_adds_an_employee_with_a_working_login(client: TestClient, make_user) -> None:
+    owner = _token(client, make_user(Role.OWNER))
+    login = _login_body()
+
+    created = _new_employee(client, owner, login=login)
+
+    assert created.status_code == 201, created.text
+    body = created.json()
+    assert body["login_email"] == login["email"]
+    assert body["login_role"] == "FRONT_DESK"
+    assert body["login_active"] is True
+    assert login_token(client, login["email"])  # the new person can sign in
+
+
+def test_manager_cannot_create_staff_logins(client: TestClient, make_user) -> None:
+    manager = _token(client, make_user(Role.MANAGER))
+
+    refused = _new_employee(client, manager, login=_login_body())
+
+    assert refused.status_code == 403
+    assert _new_employee(client, manager).status_code == 201  # payroll-only staff is fine
+
+
+def test_duplicate_login_email_creates_nothing(
+    client: TestClient, make_user, session: Session
+) -> None:
+    owner = _token(client, make_user(Role.OWNER))
+    login = _login_body()
+    assert _new_employee(client, owner, login=login).status_code == 201
+    name = f"{TEST_EMPLOYEE_PREFIX} dup {uuid.uuid4().hex[:5]}"
+
+    again = _new_employee(client, owner, login=login, full_name=name)
+
+    assert again.status_code == 409
+    assert again.json()["error"]["code"] == "EMAIL_EXISTS"
+    assert session.execute(
+        select(func.count(Employee.id)).where(Employee.full_name == name)
+    ).scalar_one() == 0
+
+
+def test_edit_an_employee(client: TestClient, make_user, employee) -> None:
+    manager = _token(client, make_user(Role.MANAGER))
+
+    edited = client.patch(
+        f"{API}/employees/{employee['id']}",
+        json={"title": "Head Coach", "monthly_salary_paise": 5000000},
+        headers=_auth(manager),
+    )
+
+    assert edited.status_code == 200, edited.text
+    assert edited.json()["title"] == "Head Coach"
+    assert edited.json()["monthly_salary_paise"] == 5000000
+
+
+def test_deactivated_employee_leaves_the_active_list(
+    client: TestClient, make_user, employee
+) -> None:
+    manager = _token(client, make_user(Role.MANAGER))
+
+    removed = client.patch(
+        f"{API}/employees/{employee['id']}", json={"is_active": False}, headers=_auth(manager)
+    )
+
+    assert removed.status_code == 200
+    active = client.get(f"{API}/employees", headers=_auth(manager)).json()
+    everyone = client.get(
+        f"{API}/employees", params={"include_inactive": True}, headers=_auth(manager)
+    ).json()
+    assert employee["id"] not in [row["id"] for row in active]
+    assert employee["id"] in [row["id"] for row in everyone]
+    assert [row for row in everyone if row["id"] == employee["id"]][0]["is_active"] is False
+
+
+def test_deactivating_an_employee_disables_their_login(client: TestClient, make_user) -> None:
+    owner = _token(client, make_user(Role.OWNER))
+    login = _login_body()
+    created = _new_employee(client, owner, login=login).json()
+    their_session = login_token(client, login["email"])
+
+    removed = client.patch(
+        f"{API}/employees/{created['id']}", json={"is_active": False}, headers=_auth(owner)
+    )
+
+    assert removed.json()["login_active"] is False
+    assert client.get(f"{API}/auth/me", headers=_auth(their_session)).status_code == 401
+    refused = client.post(
+        f"{API}/auth/login", json={"email": login["email"], "password": GOOD_PASSWORD}
+    )
+    assert refused.status_code == 401
+
+    restored = client.patch(
+        f"{API}/employees/{created['id']}", json={"is_active": True}, headers=_auth(owner)
+    )
+    assert restored.json()["login_active"] is True
+    assert login_token(client, login["email"])
+
+
+def test_only_the_owner_deactivates_someone_with_a_login(client: TestClient, make_user) -> None:
+    owner = _token(client, make_user(Role.OWNER))
+    created = _new_employee(client, owner, login=_login_body("BAR_STAFF")).json()
+    manager = _token(client, make_user(Role.MANAGER))
+
+    refused = client.patch(
+        f"{API}/employees/{created['id']}", json={"is_active": False}, headers=_auth(manager)
+    )
+
+    assert refused.status_code == 403
+
+
+def test_owner_cannot_deactivate_themselves(
+    client: TestClient, make_user, session: Session
+) -> None:
+    owner_user = make_user(Role.OWNER)
+    owner = _token(client, owner_user)
+    mine = _new_employee(client, owner, user_id=owner_user.id).json()
+
+    refused = client.patch(
+        f"{API}/employees/{mine['id']}", json={"is_active": False}, headers=_auth(owner)
+    )
+
+    assert refused.status_code == 409
+    assert refused.json()["error"]["code"] == "CANNOT_DEACTIVATE_SELF"
+
+
+def test_unknown_employee_is_404(client: TestClient, make_user) -> None:
+    owner = _token(client, make_user(Role.OWNER))
+
+    missing = client.patch(f"{API}/employees/999999", json={"title": "x"}, headers=_auth(owner))
+
+    assert missing.status_code == 404
 
 
 def test_shift_roster_is_a_monday_to_sunday_week(

@@ -20,6 +20,7 @@ from .routers import (
     bookings,
     courts,
     dashboard,
+    dining,
     expenses,
     hr,
     invoices,
@@ -44,6 +45,7 @@ _ROUTERS = (
     social,
     shop,
     bar,
+    dining,
     payments,
     dashboard,
     leads,
@@ -60,7 +62,7 @@ logger = logging.getLogger("ccms")
 
 _STATUS_CODES = {
     400: "BAD_REQUEST",
-    401: "INVALID_TOKEN",
+    401: "NOT_AUTHENTICATED",
     403: "FORBIDDEN",
     404: "NOT_FOUND",
     405: "METHOD_NOT_ALLOWED",

@@ -13,6 +13,7 @@ from ..schemas import (
     PageOut,
     PageSize,
     PaymentOut,
+    PaymentTotals,
     RefundRequest,
     TaxSummary,
 )
@@ -45,6 +46,18 @@ def list_payments(
         page=page,
         page_size=page_size,
     )
+
+
+@router.get("/payments/summary", response_model=PaymentTotals)
+def payment_summary(
+    from_: date | None = Query(default=None, alias="from"),
+    to: date | None = None,
+    source_type: SourceType | None = None,
+    method: PaymentMethod | None = None,
+    session: Session = Depends(get_session),
+    user: User = Depends(require_roles(*_FINANCE)),
+) -> PaymentTotals:
+    return PaymentTotals.model_validate(svc.payment_totals(session, from_, to, source_type, method))
 
 
 @router.get("/payments/mine", response_model=PageOut)

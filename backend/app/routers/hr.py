@@ -9,6 +9,7 @@ from ..models import User
 from ..schemas import (
     EmployeeCreate,
     EmployeeOut,
+    EmployeeUpdate,
     LeaveDecision,
     LeaveRequestCreate,
     LeaveRequestOut,
@@ -30,6 +31,17 @@ _STAFF = (Role.OWNER, Role.MANAGER, Role.FRONT_DESK, Role.BAR_STAFF)
 # ---------------------------------------------------------------------------- employees
 
 
+def _employee_out(session: Session, employee) -> EmployeeOut:
+    out = EmployeeOut.model_validate(employee)
+    if employee.user_id is not None:
+        linked = session.get(User, employee.user_id)
+        if linked is not None:
+            out.login_email = linked.email
+            out.login_role = Role(linked.role)
+            out.login_active = linked.is_active
+    return out
+
+
 @router.get("/employees", response_model=list[EmployeeOut])
 def list_employees(
     include_inactive: bool = False,
@@ -37,7 +49,7 @@ def list_employees(
     user: User = Depends(require_roles(*_ADMIN)),
 ) -> list[EmployeeOut]:
     rows = svc.list_employees(session, active_only=not include_inactive)
-    return [EmployeeOut.model_validate(row) for row in rows]
+    return [_employee_out(session, row) for row in rows]
 
 
 @router.post("/employees", response_model=EmployeeOut, status_code=status.HTTP_201_CREATED)
@@ -48,7 +60,20 @@ def create_employee(
     user: User = Depends(require_roles(*_ADMIN)),
 ) -> EmployeeOut:
     employee = svc.create_employee(session, user, payload.model_dump(), client_ip(request))
-    return EmployeeOut.model_validate(employee)
+    return _employee_out(session, employee)
+
+
+@router.patch("/employees/{employee_id}", response_model=EmployeeOut)
+def update_employee(
+    employee_id: int,
+    payload: EmployeeUpdate,
+    request: Request,
+    session: Session = Depends(get_session),
+    user: User = Depends(require_roles(*_ADMIN)),
+) -> EmployeeOut:
+    changes = payload.model_dump(exclude_unset=True)
+    employee = svc.update_employee(session, user, employee_id, changes, client_ip(request))
+    return _employee_out(session, employee)
 
 
 # ------------------------------------------------------------------------------- shifts

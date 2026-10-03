@@ -1,21 +1,12 @@
-import type { AuthUser, TokenResponse } from './types'
+import type { AuthUser, LoginResponse } from './types'
 
 const API_BASE = '/api/v1'
 
 /**
- * In-memory access token storage (SRS §7, S-02).
- * NEVER persisted to localStorage or sessionStorage.
+ * Sign-in is a server-side session. The API sets an HttpOnly `ccms_session` cookie on login
+ * and the browser sends it with every same-origin request, so nothing is stored in JS.
  */
-let inMemoryAccessToken: string | null = null
 let onAuthFailureCallback: (() => void) | null = null
-
-export function getAccessToken(): string | null {
-  return inMemoryAccessToken
-}
-
-export function setAccessToken(token: string | null) {
-  inMemoryAccessToken = token
-}
 
 export function setOnAuthFailure(callback: () => void) {
   onAuthFailureCallback = callback
@@ -35,62 +26,25 @@ export class ApiError extends Error {
     super(message)
     this.name = 'ApiError'
   }
-}
 
-/**
- * Single in-flight refresh promise so parallel requests share one refresh cycle.
- */
-let refreshPromise: Promise<TokenResponse | null> | null = null
-
-export async function refreshSession(): Promise<TokenResponse | null> {
-  if (!refreshPromise) {
-    refreshPromise = (async () => {
-      try {
-        const res = await fetch(`${API_BASE}/auth/refresh`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-        })
-
-        if (!res.ok) {
-          setAccessToken(null)
-          return null
-        }
-
-        const data: TokenResponse = await res.json()
-        setAccessToken(data.access_token)
-        return data
-      } catch {
-        setAccessToken(null)
-        return null
-      } finally {
-        refreshPromise = null
-      }
-    })()
+  /** Same shape as the server's error envelope, which is what pages read (`err.error.message`). */
+  get error() {
+    return { code: this.code, message: this.message, details: this.details }
   }
-
-  return refreshPromise
 }
 
 /**
  * Core HTTP request handler.
  * - Same-origin baseUrl: /api/v1 (forwarded by Vite dev proxy / nginx)
- * - Credentials: 'include' for HttpOnly refresh cookie
- * - In-memory access token attached via Authorization header
- * - Automatic 401 TOKEN_EXPIRED refresh & retry (single retry, no loops)
+ * - Credentials: 'include' so the session cookie travels with the request
+ * - A 401 outside login means the session is gone; the app drops back to signed-out
  */
-async function request<T>(path: string, options: RequestInit = {}, isRetry = false): Promise<T> {
+async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const url = `${API_BASE}${path}`
   const headers = new Headers(options.headers)
 
   if (!headers.has('Content-Type') && options.body && typeof options.body === 'string') {
     headers.set('Content-Type', 'application/json')
-  }
-
-  // Attach in-memory JWT if available
-  const token = getAccessToken()
-  if (token && !headers.has('Authorization')) {
-    headers.set('Authorization', `Bearer ${token}`)
   }
 
   let res: Response
@@ -104,22 +58,14 @@ async function request<T>(path: string, options: RequestInit = {}, isRetry = fal
     throw new ApiError(0, 'NETWORK_ERROR', netErr?.message || 'Network connection error')
   }
 
-  // Handle 401 TOKEN_EXPIRED with single refresh & retry
-  if (res.status === 401 && !isRetry && !path.startsWith('/auth/login') && !path.startsWith('/auth/refresh')) {
-    const refreshed = await refreshSession()
-    if (refreshed) {
-      return request<T>(path, options, true)
-    } else {
-      onAuthFailureCallback?.()
-      throw new ApiError(401, 'TOKEN_EXPIRED', 'Your session has expired. Please sign in again.')
-    }
-  }
-
   if (!res.ok) {
     const body = await res.json().catch(() => null)
     const code = body?.error?.code ?? `HTTP_${res.status}`
     const message = body?.error?.message ?? res.statusText
     const details = body?.error?.details
+    if (res.status === 401 && !path.startsWith('/auth/login') && !path.startsWith('/auth/me')) {
+      onAuthFailureCallback?.()
+    }
     throw new ApiError(res.status, code, message, details)
   }
 
@@ -147,12 +93,8 @@ export const api = {
 }
 
 // ── Real Auth API Endpoints (SRS §3.2.1) ────────────────────────────────────
-export async function loginApi(email: string, password: string): Promise<TokenResponse> {
-  return api.post<TokenResponse>('/auth/login', { email, password })
-}
-
-export async function refreshApi(): Promise<TokenResponse> {
-  return api.post<TokenResponse>('/auth/refresh')
+export async function loginApi(email: string, password: string): Promise<LoginResponse> {
+  return api.post<LoginResponse>('/auth/login', { email, password })
 }
 
 export async function logoutApi(): Promise<{ status: string }> {
@@ -169,11 +111,8 @@ export async function downloadPaymentsCsvApi(from?: string, to?: string): Promis
   if (to) params.set('to', to)
   const path = `/reports/payments.csv${params.toString() ? `?${params.toString()}` : ''}`
   const url = `${API_BASE}${path}`
-  const token = getAccessToken()
-  const headers = new Headers()
-  if (token) headers.set('Authorization', `Bearer ${token}`)
 
-  const res = await fetch(url, { headers, credentials: 'include' })
+  const res = await fetch(url, { credentials: 'include' })
   if (!res.ok) {
     const body = await res.json().catch(() => null)
     throw new ApiError(res.status, body?.error?.code ?? `HTTP_${res.status}`, body?.error?.message ?? 'CSV export failed')

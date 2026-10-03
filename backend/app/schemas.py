@@ -28,6 +28,7 @@ from .enums import (
     PlanCode,
     ProductCategory,
     QuoteStatus,
+    ReservationStatus,
     Role,
     ShopChannel,
     ShiftArea,
@@ -116,10 +117,7 @@ class UserOut(BaseModel):
     is_active: bool
 
 
-class TokenResponse(BaseModel):
-    access_token: str
-    token_type: str = "bearer"
-    expires_in: int
+class LoginResponse(BaseModel):
     user: UserSummary
 
 
@@ -546,6 +544,65 @@ class BarTableUpdate(_Request):
     seats: Annotated[int, Field(ge=1, le=50)] | None = None
 
 
+# ------------------------------------------------------------------ bar & dining (members)
+
+
+class DiningMenuItemOut(BaseModel):
+    id: int
+    name: str
+    category: MenuCategory
+    price_paise: int
+    member_price_paise: int
+
+
+class DiningMenuOut(BaseModel):
+    tier: Tier
+    discount_pct: int
+    items: list[DiningMenuItemOut]
+
+
+class DiningSlotOut(BaseModel):
+    start_at: datetime
+    available: bool
+
+
+class DiningAvailabilityOut(BaseModel):
+    date: date
+    party_size: int
+    max_party_size: int
+    sitting_minutes: int
+    slots: list[DiningSlotOut]
+
+
+class ReservationCreate(_Request):
+    start_at: datetime
+    party_size: Annotated[int, Field(ge=1, le=50)]
+    note: Annotated[
+        str, StringConstraints(strip_whitespace=True, min_length=1, max_length=200)
+    ] | None = None
+    member_id: int | None = None
+    table_id: int | None = None
+
+
+class ReservationStatusUpdate(_Request):
+    status: ReservationStatus
+
+
+class ReservationOut(BaseModel):
+    id: int
+    member_id: int
+    member_name: str | None = None
+    member_code: str | None = None
+    table_id: int
+    table_label: str
+    party_size: int
+    start_at: datetime
+    end_at: datetime
+    status: ReservationStatus
+    note: str | None
+    created_at: datetime
+
+
 class BarLineIn(_Request):
     menu_item_id: int
     qty: Annotated[int, Field(ge=1, le=50)]
@@ -639,6 +696,13 @@ class PaymentOut(BaseModel):
     reference: str | None
     received_by: int | None
     created_at: datetime
+
+
+class PaymentTotals(BaseModel):
+    count: int
+    collected_paise: int
+    refunded_count: int
+    refunded_paise: int
 
 
 class RefundRequest(_Request):
@@ -972,12 +1036,37 @@ class ExpenseOut(BaseModel):
 # ----------------------------------------------------------------------------------- hr
 
 
+class EmployeeLogin(_Request):
+    """A staff login created together with the employee. OWNER only, like POST /users."""
+
+    email: Email
+    password: Password
+    role: Role
+
+    @field_validator("role")
+    @classmethod
+    def _staff_only(cls, value: Role) -> Role:
+        if value not in STAFF_ROLES:
+            raise ValueError("role must be one of OWNER, MANAGER, FRONT_DESK, BAR_STAFF")
+        return value
+
+
 class EmployeeCreate(_Request):
     user_id: int | None = None
     full_name: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=120)]
     title: Annotated[str, StringConstraints(max_length=60)] | None = None
     monthly_salary_paise: Annotated[int, Field(ge=0)]
     is_active: bool = True
+    login: EmployeeLogin | None = None
+
+
+class EmployeeUpdate(_Request):
+    full_name: Annotated[
+        str, StringConstraints(strip_whitespace=True, min_length=1, max_length=120)
+    ] | None = None
+    title: Annotated[str, StringConstraints(max_length=60)] | None = None
+    monthly_salary_paise: Annotated[int, Field(ge=0)] | None = None
+    is_active: bool | None = None
 
 
 class EmployeeOut(BaseModel):
@@ -989,6 +1078,9 @@ class EmployeeOut(BaseModel):
     title: str | None
     monthly_salary_paise: int
     is_active: bool
+    login_email: str | None = None
+    login_role: Role | None = None
+    login_active: bool | None = None
 
 
 class ShiftCreate(_Request):

@@ -20,10 +20,7 @@ export interface AuthUser {
   member_id: number | null
 }
 
-export interface TokenResponse {
-  access_token: string
-  token_type: string
-  expires_in: number
+export interface LoginResponse {
   user: AuthUser
 }
 
@@ -47,6 +44,9 @@ export type BookingStatus = 'CONFIRMED' | 'CANCELLED' | 'COMPLETED' | 'NO_SHOW'
 export type BookingSource = 'WEB' | 'FRONT_DESK' | 'PHONE'
 
 export type PaymentStatus = 'PAID' | 'UNPAID' | 'WAIVED' | 'REFUNDED'
+
+/** Status of a row in the payments ledger, as opposed to a booking's or order's payment_status. */
+export type LedgerStatus = 'COMPLETED' | 'REFUNDED'
 
 export type PaymentMethod = 'CASH' | 'CARD' | 'UPI' | 'ONLINE_MOCK'
 
@@ -73,6 +73,8 @@ export interface Plan {
   duration_days: number
   shop_discount_pct: number
   bar_discount_pct: number
+  max_bookings_per_day?: number
+  advance_booking_days?: number
 }
 
 export interface CourtPrice {
@@ -252,6 +254,14 @@ export interface Member {
   membership: Membership | null
   status: MemberStatus
   tier: Tier
+}
+
+export interface MemberHistoryEvent {
+  kind: 'BOOKING' | 'SHOP_ORDER' | 'BAR_ORDER' | 'PAYMENT'
+  id: number
+  at: string
+  amount_paise: number
+  detail: string
 }
 
 export interface MemberCreateInput {
@@ -459,6 +469,57 @@ export interface MenuItem {
   is_available: boolean
 }
 
+// ── Bar & Dining (member menu + table reservations) ───────────────────────
+export type ReservationStatus = 'CONFIRMED' | 'SEATED' | 'CANCELLED' | 'NO_SHOW'
+
+export interface DiningMenuItem {
+  id: number
+  name: string
+  category: MenuCategory
+  price_paise: number
+  member_price_paise: number
+}
+
+export interface DiningMenu {
+  tier: string
+  discount_pct: number
+  items: DiningMenuItem[]
+}
+
+export interface DiningSlot {
+  start_at: string
+  available: boolean
+}
+
+export interface DiningAvailability {
+  date: string
+  party_size: number
+  max_party_size: number
+  sitting_minutes: number
+  slots: DiningSlot[]
+}
+
+export interface TableReservation {
+  id: number
+  member_id: number
+  member_name: string | null
+  member_code: string | null
+  table_id: number
+  table_label: string
+  party_size: number
+  start_at: string
+  end_at: string
+  status: ReservationStatus
+  note: string | null
+  created_at: string
+}
+
+export interface ReservationCreateInput {
+  start_at: string
+  party_size: number
+  note?: string
+}
+
 export interface BarTable {
   id: number
   label: string
@@ -530,10 +591,53 @@ export interface Payment {
   amount_paise: number
   tax_paise: number
   method: PaymentMethod
-  status: PaymentStatus
+  status: LedgerStatus
   reference: string | null
   received_by: number | null
   created_at: string
+}
+
+// ── Staff / HR (SRS 3.2.11) ────────────────────────────────────────────────
+export type StaffRole = Exclude<Role, 'MEMBER'>
+
+export interface Employee {
+  id: number
+  user_id: number | null
+  full_name: string
+  title: string | null
+  monthly_salary_paise: number
+  is_active: boolean
+  login_email: string | null
+  login_role: StaffRole | null
+  login_active: boolean | null
+}
+
+export interface EmployeeCreateInput {
+  full_name: string
+  title?: string
+  monthly_salary_paise: number
+  login?: { email: string; password: string; role: StaffRole }
+}
+
+export interface EmployeeUpdateInput {
+  full_name?: string
+  title?: string | null
+  monthly_salary_paise?: number
+  is_active?: boolean
+}
+
+export interface PaymentTotals {
+  count: number
+  collected_paise: number
+  refunded_count: number
+  refunded_paise: number
+}
+
+export interface TaxSummary {
+  month: string
+  revenue_paise: number
+  tax_paise: number
+  by_source: Record<string, { revenue_paise: number; tax_paise: number }>
 }
 
 export interface PaginatedPayments {

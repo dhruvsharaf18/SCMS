@@ -39,7 +39,7 @@ from CCMS code.
 
 | File | Tests | Covers |
 |------|-------|--------|
-| `test_auth.py` | 12 | login, refresh rotation, logout, lockout, rate limit (T-09) |
+| `test_auth.py` | 14 | login, session cookie, logout, expiry, lockout, rate limit (T-09) |
 | `test_bar.py` | 20 | tabs, kitchen flow, split settle (T-12), daily report |
 | `test_bookings.py` | 31 | pricing tiers, availability grid, cancel/refund, T-01, T-02, T-03, T-04 |
 | `test_foundation.py` | 17 | schema shape, enums, seed shape, error envelope |
@@ -111,16 +111,16 @@ writing had only three days in it, while `week` reaches back into the previous m
 |----|-------------|-------|----------|
 | S-01 | Passwords hashed with argon2 | Done | `security.hash_password`; `test_auth.py` |
 | S-02 | Hashes never returned by the API | Done | `test_security.py::test_s02_password_hash_never_leaves_the_api` |
-| S-03 | Access token 15 min, refresh 7 days | Done | `config.py`; `test_auth.py` |
-| S-04 | Refresh tokens rotate and revoke on reuse | Done | `test_auth.py` rotation tests |
+| S-03 | Sessions expire (`SESSION_HOURS`, default 12) | Done | `test_auth.py::test_an_expired_session_is_refused` |
+| S-04 | Session id is random, HttpOnly, stored only as SHA-256 | Done | `security.open_session`; `test_auth.py` cookie test |
 | S-05 | Request bodies reject unknown fields | Done | `test_security.py::test_every_request_body_forbids_unknown_fields` sweeps every schema |
 | S-06 | Lockout after repeated failures | Done | `test_auth.py` lockout test |
-| S-07 | Logout revokes the refresh token | Done | `test_auth.py` |
+| S-07 | Logout ends the session server-side | Done | `test_auth.py::test_logout_ends_the_session` |
 | S-08 | Parameterised SQL only | Done | All access is SQLAlchemy `select()` / `update()`; no string SQL anywhere in `app/` |
 | S-09 | No hard deletes of financial rows | Done | Refunds mark status; `cancel` never deletes a payment |
 | S-10 | Secrets from env, never committed | Done | `.env.example` only; verified in the Prompt 1 pass |
 | S-11 | Unauthenticated calls are 401 | Done | `test_security.py::test_s11_unauthenticated_calls_are_401_not_500` |
-| S-12 | Tampered tokens rejected | Done | `test_security.py::test_s12_a_tampered_token_is_rejected` |
+| S-12 | Tampered session ids rejected | Done | `test_security.py::test_s12_a_tampered_session_id_is_rejected` |
 | S-13 | Role checks on every non-public route | Done | `test_security.py::test_t07_every_non_public_route_has_a_role_guard` reads the live route table |
 | S-14 | Members reach only their own records | Done | T-08, four endpoints, 404 not 403 |
 | S-15 | Public endpoints leak no personal data | Done | `test_security.py::test_s15_public_endpoints_return_no_personal_data` |
@@ -129,7 +129,7 @@ writing had only three days in it, while `week` reaches back into the previous m
 | S-18 | Uniform error envelope, no stack traces | Done | `test_security.py::test_s18_errors_use_the_srs_envelope` |
 | S-19 | Sensitive actions audited | Done | `audit.log()` on refund, price/plan change, role change, export, payroll, delete |
 | S-20 | Health endpoint leaks nothing | Done | `test_security.py::test_s20_health_needs_no_auth_and_leaks_nothing` |
-| S-21 | Rate limits on auth and public routes | Done | slowapi on login, refresh, enquiries, public availability; T-09 |
+| S-21 | Rate limits on auth and public routes | Done | slowapi on login, enquiries, public availability; T-09 |
 | S-22 | Security headers at the edge | Done | nginx `add_header` block, verified in the Prompt 1 closing pass |
 | S-23 | Real client IP behind the proxy | Done | `--proxy-headers`, `X-Forwarded-For` spoofing test in the Prompt 1 pass |
 
@@ -151,7 +151,6 @@ endpoint.
 | `POST /api/v1/auth/login` | public |
 | `POST /api/v1/auth/logout` | any authenticated |
 | `GET /api/v1/auth/me` | any authenticated |
-| `POST /api/v1/auth/refresh` | public |
 | `GET /api/v1/bar/orders` | OWNER, MANAGER, FRONT_DESK, BAR_STAFF |
 | `POST /api/v1/bar/orders` | OWNER, MANAGER, BAR_STAFF |
 | `GET /api/v1/bar/orders/{order_id}` | OWNER, MANAGER, FRONT_DESK, BAR_STAFF |
@@ -320,22 +319,21 @@ Demo accounts, all with the password in `SEED_PASSWORD` (`Club@12345` by default
 
 ## 9. What the frontend needs to know
 
-**Login and refresh.** `POST /auth/login` with `{email, password}` returns
-`{access_token, refresh_token, user}`. Send the access token as `Authorization: Bearer <token>`.
-It expires after 15 minutes.
+**Login.** `POST /auth/login` with `{email, password}` checks them against the `users` table
+and returns `{user}`. It also sets an HttpOnly `ccms_session` cookie (path `/`, SameSite=Lax),
+which the browser sends on every request; there are no tokens to store or attach. Send requests
+with `credentials: 'include'`. On page load, `GET /auth/me` says who is signed in, or returns 401.
 
-**TOKEN_EXPIRED.** When any call returns 401 with `error.code == "TOKEN_EXPIRED"`, call
-`POST /auth/refresh` with `{refresh_token}` and retry the original request once. Refresh tokens
-rotate: the response carries a new refresh token and the old one is dead. If refresh itself
-fails, or the code is `TOKEN_REVOKED`, send the user back to login. `POST /auth/logout` revokes
-the current refresh token.
+**Session end.** A session lasts `SESSION_HOURS` (12 by default). Any call returning 401 with
+`NOT_AUTHENTICATED` or `SESSION_EXPIRED` means the user must sign in again. `POST /auth/logout`
+closes the session server-side, and deactivating a user closes all of theirs.
 
 **Error envelope.** Every error, at every status code, is
 `{"error": {"code": "...", "message": "...", "details": {...}}}`. Drive UI off `code`, show
 `message`, and read `details` for field errors (`VALIDATION_ERROR` puts a list under
 `details.errors`) or for context such as `OUT_OF_STOCK` returning `details.available`.
 
-**Rate limits.** Login and refresh are limited per IP, as are the public enquiry and availability
+**Rate limits.** Login is limited per IP, as are the public enquiry and availability
 endpoints. A breach returns 429 with code `RATE_LIMITED`. Back off rather than retrying in a loop.
 
 **`member_id`.** For a MEMBER user, `user.member_id` in the login and `/auth/me` responses is the

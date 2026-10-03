@@ -879,7 +879,7 @@ export function getMockPayments(filters?: {
   return list.sort((a, b) => b.created_at.localeCompare(a.created_at))
 }
 
-export function refundMockPayment(paymentId: number, _reason?: string): PaymentRefundResponse {
+export function refundMockPayment(paymentId: number, _reason?: string): Payment {
   checkSimulatedError('ALREADY_REFUNDED')
   const p = payments.find((pay) => pay.id === paymentId)
   if (!p) throw { error: { code: 'NOT_FOUND', message: 'Payment not found' } }
@@ -888,11 +888,7 @@ export function refundMockPayment(paymentId: number, _reason?: string): PaymentR
   }
 
   p.status = 'REFUNDED'
-  return {
-    id: p.id,
-    status: 'REFUNDED',
-    refund_paise: p.amount_paise,
-  }
+  return { ...p }
 }
 
 // ── Social Sessions Operations (SRS 3.2.6) ─────────────────────────────────

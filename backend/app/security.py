@@ -1,8 +1,8 @@
-"""Hashing, JWT, RBAC dependencies, rate limiter and the identity business logic.
+"""Hashing, login sessions, RBAC dependencies, rate limiter and the identity business logic.
 
-SRS 2.1 puts hash/JWT/RBAC/rate-limit here. The login, lockout, refresh-rotation and
-user-management logic lives here too rather than in `services/`, because SRS 2.2 does not
-list an auth service module. Routers stay thin.
+Sign-in compares the email and password with the users table. A match opens a server-side
+session: a random id goes to the browser in an HttpOnly cookie and only its SHA-256 is stored,
+so every later request is tied back to a users row and its role. There are no JWTs.
 """
 
 import hashlib
@@ -11,11 +11,9 @@ import secrets
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
-import jwt
 from argon2 import PasswordHasher
 from argon2.exceptions import Argon2Error
 from fastapi import Depends, Request, Response
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 from sqlalchemy import select, update
@@ -26,22 +24,18 @@ from .audit import log
 from .config import settings
 from .db import get_session
 from .enums import Role
-from .models import RefreshToken, User
+from .models import LoginSession, User
 from .schemas import UserCreate, UserUpdate
 
-JWT_ALGORITHM = "HS256"
 LOCKOUT_THRESHOLD = 5
 LOCKOUT_MINUTES = 15
-REFRESH_TOKEN_DAYS = 7
-REFRESH_COOKIE_NAME = "refresh_token"
-REFRESH_COOKIE_PATH = "/api/v1/auth"
+SESSION_COOKIE_NAME = "ccms_session"
 
 # S-05 / S-06: keyed on the real client IP. uvicorn runs with --proxy-headers and nginx
 # overwrites X-Forwarded-For, so request.client.host is the browser, not the proxy.
 limiter = Limiter(key_func=get_remote_address, default_limits=["200/minute"])
 
 _hasher = PasswordHasher()
-_bearer = HTTPBearer(auto_error=False)
 
 
 class AppError(Exception):
@@ -100,42 +94,87 @@ def verify_password(password_hash: str, password: str) -> bool:
         return False
 
 
-# ------------------------------------------------------------------------- access JWT
+# ----------------------------------------------------------------------- login sessions
 
 
-def create_access_token(user: User) -> tuple[str, int]:
-    expires_in = settings.access_token_minutes * 60
-    payload = {
-        "sub": str(user.id),
-        "role": user.role,
-        "exp": utcnow() + timedelta(seconds=expires_in),
-    }
-    return jwt.encode(payload, settings.jwt_secret, algorithm=JWT_ALGORITHM), expires_in
+def _hash_session_id(raw: str) -> str:
+    return hashlib.sha256(raw.encode("utf-8")).hexdigest()
 
 
-def decode_access_token(token: str) -> dict[str, Any]:
-    try:
-        return jwt.decode(token, settings.jwt_secret, algorithms=[JWT_ALGORITHM])
-    except jwt.ExpiredSignatureError:
-        raise AppError("TOKEN_EXPIRED", "Your session has expired. Please sign in again.", 401)
-    except jwt.InvalidTokenError:
-        raise AppError("INVALID_TOKEN", "Invalid authentication token.", 401)
+def open_session(session: Session, user: User) -> str:
+    """Returns the raw id for the cookie; the database only ever sees its hash."""
+    raw = secrets.token_urlsafe(32)
+    session.add(
+        LoginSession(
+            user_id=user.id,
+            token_hash=_hash_session_id(raw),
+            expires_at=utcnow() + timedelta(hours=settings.session_hours),
+        )
+    )
+    session.commit()
+    return raw
 
 
-def get_current_user(
-    credentials: HTTPAuthorizationCredentials | None = Depends(_bearer),
-    session: Session = Depends(get_session),
-) -> User:
-    if credentials is None:
-        raise AppError("INVALID_TOKEN", "Authentication required.", 401)
-    payload = decode_access_token(credentials.credentials)
-    try:
-        user_id = int(payload.get("sub", ""))
-    except (TypeError, ValueError):
-        raise AppError("INVALID_TOKEN", "Invalid authentication token.", 401)
-    user = session.get(User, user_id)
+def close_session(session: Session, raw: str | None) -> None:
+    """Idempotent: an unknown or already-closed session is not an error."""
+    if not raw:
+        return
+    row = session.execute(
+        select(LoginSession).where(LoginSession.token_hash == _hash_session_id(raw))
+    ).scalar_one_or_none()
+    if row is not None and row.revoked_at is None:
+        row.revoked_at = utcnow()
+        session.commit()
+
+
+def close_user_sessions(session: Session, user_id: int) -> None:
+    session.execute(
+        update(LoginSession)
+        .where(LoginSession.user_id == user_id, LoginSession.revoked_at.is_(None))
+        .values(revoked_at=utcnow())
+    )
+
+
+def set_session_cookie(response: Response, raw: str) -> None:
+    # Path "/" so the browser sends it on every API call. SameSite=Lax keeps it off
+    # cross-site POSTs, which is what stops another site from acting as the user.
+    response.set_cookie(
+        SESSION_COOKIE_NAME,
+        raw,
+        max_age=settings.session_hours * 60 * 60,
+        path="/",
+        httponly=True,
+        samesite="lax",
+        secure=settings.cookie_secure,
+    )
+
+
+def clear_session_cookie(response: Response) -> None:
+    response.delete_cookie(
+        SESSION_COOKIE_NAME,
+        path="/",
+        httponly=True,
+        samesite="lax",
+        secure=settings.cookie_secure,
+    )
+
+
+def get_current_user(request: Request, session: Session = Depends(get_session)) -> User:
+    raw = request.cookies.get(SESSION_COOKIE_NAME)
+    if not raw:
+        raise AppError("NOT_AUTHENTICATED", "Please sign in.", 401)
+
+    row = session.execute(
+        select(LoginSession).where(LoginSession.token_hash == _hash_session_id(raw))
+    ).scalar_one_or_none()
+    if row is None or row.revoked_at is not None:
+        raise AppError("NOT_AUTHENTICATED", "Please sign in.", 401)
+    if row.expires_at <= utcnow():
+        raise AppError("SESSION_EXPIRED", "Your session has expired. Please sign in again.", 401)
+
+    user = session.get(User, row.user_id)
     if user is None or not user.is_active:
-        raise AppError("INVALID_TOKEN", "Invalid authentication token.", 401)
+        raise AppError("NOT_AUTHENTICATED", "Please sign in.", 401)
     return user
 
 
@@ -206,98 +245,6 @@ def authenticate(session: Session, email: str, password: str) -> User:
     return user
 
 
-# --------------------------------------------------------------------- refresh tokens
-
-
-def _hash_refresh_token(raw: str) -> str:
-    return hashlib.sha256(raw.encode("utf-8")).hexdigest()
-
-
-def issue_refresh_token(session: Session, user: User) -> str:
-    """S-02: only the SHA-256 hex of the token is stored."""
-    raw = secrets.token_urlsafe(32)
-    session.add(
-        RefreshToken(
-            user_id=user.id,
-            token_hash=_hash_refresh_token(raw),
-            expires_at=utcnow() + timedelta(days=REFRESH_TOKEN_DAYS),
-        )
-    )
-    session.commit()
-    return raw
-
-
-def rotate_refresh_token(session: Session, raw: str | None) -> tuple[User, str]:
-    invalid = AppError("INVALID_TOKEN", "Invalid or expired session. Please sign in again.", 401)
-    if not raw:
-        raise invalid
-
-    now = utcnow()
-    row = session.execute(
-        select(RefreshToken).where(RefreshToken.token_hash == _hash_refresh_token(raw))
-    ).scalar_one_or_none()
-    if row is None or row.revoked_at is not None or row.expires_at <= now:
-        raise invalid
-
-    user = session.get(User, row.user_id)
-    if user is None or not user.is_active:
-        raise invalid
-
-    row.revoked_at = now
-    new_raw = secrets.token_urlsafe(32)
-    session.add(
-        RefreshToken(
-            user_id=user.id,
-            token_hash=_hash_refresh_token(new_raw),
-            expires_at=now + timedelta(days=REFRESH_TOKEN_DAYS),
-        )
-    )
-    session.commit()
-    return user, new_raw
-
-
-def revoke_refresh_token(session: Session, raw: str | None) -> None:
-    """Idempotent: an unknown or already-revoked token is not an error."""
-    if not raw:
-        return
-    row = session.execute(
-        select(RefreshToken).where(RefreshToken.token_hash == _hash_refresh_token(raw))
-    ).scalar_one_or_none()
-    if row is not None and row.revoked_at is None:
-        row.revoked_at = utcnow()
-        session.commit()
-
-
-def revoke_user_refresh_tokens(session: Session, user_id: int) -> None:
-    session.execute(
-        update(RefreshToken)
-        .where(RefreshToken.user_id == user_id, RefreshToken.revoked_at.is_(None))
-        .values(revoked_at=utcnow())
-    )
-
-
-def set_refresh_cookie(response: Response, raw: str) -> None:
-    response.set_cookie(
-        REFRESH_COOKIE_NAME,
-        raw,
-        max_age=REFRESH_TOKEN_DAYS * 24 * 60 * 60,
-        path=REFRESH_COOKIE_PATH,
-        httponly=True,
-        samesite="strict",
-        secure=settings.cookie_secure,
-    )
-
-
-def clear_refresh_cookie(response: Response) -> None:
-    response.delete_cookie(
-        REFRESH_COOKIE_NAME,
-        path=REFRESH_COOKIE_PATH,
-        httponly=True,
-        samesite="strict",
-        secure=settings.cookie_secure,
-    )
-
-
 # ------------------------------------------------------------------- user management
 
 
@@ -349,7 +296,7 @@ def update_user(
     if data.is_active is not None:
         user.is_active = data.is_active
         if not data.is_active:
-            revoke_user_refresh_tokens(session, user.id)
+            close_user_sessions(session, user.id)
     after = {"role": user.role, "is_active": user.is_active}
 
     log(
