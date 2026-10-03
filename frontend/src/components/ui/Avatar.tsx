@@ -15,13 +15,12 @@ const sizeMap = {
 }
 
 const colorPairs = [
-  ['bg-primary-100', 'text-primary-700'],
-  ['bg-purple-100', 'text-purple-700'],
-  ['bg-emerald-100', 'text-emerald-700'],
-  ['bg-amber-100', 'text-amber-700'],
-  ['bg-rose-100', 'text-rose-700'],
-  ['bg-teal-100', 'text-teal-700'],
-  ['bg-indigo-100', 'text-indigo-700'],
+  ['bg-primary-500', 'text-ink border border-ink'],
+  ['bg-brand-purple', 'text-white border border-brand-purple-light'],
+  ['bg-surface-dark', 'text-white border border-ink'],
+  ['bg-ink', 'text-white border border-white/40'],
+  ['bg-brand-purple-dark', 'text-white border border-brand-purple-light'],
+  ['bg-surface-light', 'text-ink border border-ink'],
 ]
 
 function colorFor(name: string) {

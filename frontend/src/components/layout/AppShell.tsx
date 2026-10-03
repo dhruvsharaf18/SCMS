@@ -39,7 +39,7 @@ export function AppShell() {
         </div>
 
         {/* Main container */}
-        <div className="flex-1 bg-surface/40 rounded-shell border border-border-light/40 flex flex-col min-h-0 overflow-hidden">
+        <div className="flex-1 bg-surface rounded-shell border border-surface-dark flex flex-col min-h-0 overflow-hidden text-ink">
           <TopBar />
 
           {/* Content area */}

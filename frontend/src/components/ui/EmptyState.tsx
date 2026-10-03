@@ -24,12 +24,12 @@ export function EmptyState({
         className,
       )}
     >
-      <div className="flex items-center justify-center w-16 h-16 rounded-2xl bg-canvas mb-4">
-        <Icon size={28} className="text-text-tertiary" />
+      <div className="flex items-center justify-center w-16 h-16 rounded-2xl bg-surface-dark border border-border-light mb-4">
+        <Icon size={28} className="text-ink" />
       </div>
-      <h3 className="text-base font-semibold text-text-primary mb-1">{title}</h3>
+      <h3 className="text-base font-bold text-ink mb-1">{title}</h3>
       {description && (
-        <p className="text-sm text-text-secondary max-w-xs">{description}</p>
+        <p className="text-sm text-ink max-w-xs">{description}</p>
       )}
       {action && <div className="mt-4">{action}</div>}
     </div>
