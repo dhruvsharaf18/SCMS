@@ -245,6 +245,18 @@ export interface SocialParticipant {
   status: 'JOINED' | 'LEFT'
 }
 
+// ── Courts admin (SRS 3.2.4) ──────────────────────────────────────────────
+export interface CourtCreateInput {
+  name: string
+  sport: Sport
+}
+
+export interface CourtUpdateInput {
+  name?: string
+  sport?: Sport
+  is_active?: boolean
+}
+
 export interface SocialSessionCreateInput {
   court_id: number
   title: string

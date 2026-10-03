@@ -57,6 +57,8 @@ import type {
   ApiError,
   SocialParticipant,
   SocialSessionCreateInput,
+  CourtCreateInput,
+  CourtUpdateInput,
   PaginatedAuditLogs,
 } from '../types'
 import { api, ApiError as HttpError } from '../client'
@@ -119,6 +121,31 @@ export function useCourts(sport?: Sport) {
       }
       return api.get<Court[]>(`/courts${sport ? `?sport=${sport}` : ''}`)
     },
+  })
+}
+
+/** Courts admin list: inactive courts included (OWNER / MANAGER page). */
+export function useAllCourts(options?: { enabled?: boolean }) {
+  return useQuery<Court[], ApiError>({
+    queryKey: ['courts', 'all'],
+    queryFn: () => api.get<Court[]>('/courts?include_inactive=true'),
+    enabled: options?.enabled ?? true,
+  })
+}
+
+export function useCreateCourt() {
+  const qc = useQueryClient()
+  return useMutation<Court, ApiError, CourtCreateInput>({
+    mutationFn: (input) => api.post<Court>('/courts', input),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['courts'] }),
+  })
+}
+
+export function useUpdateCourt() {
+  const qc = useQueryClient()
+  return useMutation<Court, ApiError, { id: number; changes: CourtUpdateInput }>({
+    mutationFn: ({ id, changes }) => api.patch<Court>(`/courts/${id}`, changes),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['courts'] }),
   })
 }
 
