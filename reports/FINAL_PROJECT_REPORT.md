@@ -200,11 +200,12 @@ Copy-Item .env.example .env
 docker compose up --build -d
 
 # 4. Access in browser
-# App (nginx):  http://localhost:8080
-# API base:     http://localhost:8080/api/v1
-# Health:       http://localhost:8080/health
+# App (nginx HTTP):   http://localhost:8080
+# App (nginx HTTPS):  https://localhost:8443
+# API base:           http://localhost:8080/api/v1 (or https://localhost:8443/api/v1)
+# Health:             http://localhost:8080/health (or https://localhost:8443/health)
 ```
-Only the `web` service publishes a port (`8080:80`, `docker-compose.yml:34-40`). The `api` and `db` containers have no published ports (`docker-compose.yml:4`). nginx proxies only `/api/` and `/health` to the API (`nginx.conf:16-35`), so FastAPI's interactive docs are not reachable through nginx; use `openapi.json` in the repo root for the schema.
+Only the `web` service publishes ports (`8080:80` and `8443:443`, `docker-compose.yml:34-43`). The `api` and `db` containers have no published ports (`docker-compose.yml:4`). nginx proxies only `/api/` and `/health` to the API (`nginx.conf:16-35`, `:55-74`), so FastAPI's interactive docs are not reachable through nginx; use `openapi.json` in the repo root for the schema.
 
 ### Alternatively, Run Frontend in Dev Mode
 ```powershell

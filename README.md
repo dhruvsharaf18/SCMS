@@ -52,11 +52,11 @@ dedicated `location = /health` for it. Everything else goes through `/api/`.
 
 | Service | Published | Why |
 |---------|-----------|-----|
-| `web` (nginx) | `8080:80` | The only LAN-visible port (SRS §11.1, S-22) |
+| `web` (nginx) | `8080:80`, `8443:443` | LAN-visible HTTP and local HTTPS ports (SRS §11.1, S-22) |
 | `api` | none in demo mode | Internal compose network only; dev override binds `127.0.0.1:8000` |
 | `db` | none in demo mode | Internal compose network only; dev override binds `127.0.0.1:5432` |
 
-Allow inbound TCP 8080 (and 5173 in dev) in the OS firewall for the **private** network profile only.
+Allow inbound TCP 8080 and 8443 (and 5173 in dev) in the OS firewall for the **private** network profile only.
 
 ---
 
