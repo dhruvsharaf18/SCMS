@@ -76,6 +76,10 @@ export default function LoginPage() {
       }
     } finally {
       setLoading(false)
+      // S-21 (A3): Clear password from component state after every attempt —
+      // success or failure — so the plaintext is not retained in React state
+      // beyond the duration of the network request.
+      setPassword('')
     }
   }
 

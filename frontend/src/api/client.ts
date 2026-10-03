@@ -93,6 +93,18 @@ export const api = {
 }
 
 // ── Real Auth API Endpoints (SRS §3.2.1) ────────────────────────────────────
+/**
+ * Send login credentials to the server.
+ *
+ * Security note (SRS S-21 / A3):
+ *  - Sends only email and password as a JSON POST body — never in the URL or query string.
+ *  - Client-side password hashing is intentionally NOT performed:
+ *    the hash would become the effective password (replay attack risk), add no security,
+ *    and break login because the backend verifies the plaintext with argon2.
+ *  - TLS protects the password in transit in production (COOKIE_SECURE=true, HTTPS).
+ *  - The backend stores only the argon2 hash; the plaintext never reaches the database.
+ *  - If an encrypted-payload scheme is ever required, update ONLY this function.
+ */
 export async function loginApi(email: string, password: string): Promise<LoginResponse> {
   return api.post<LoginResponse>('/auth/login', { email, password })
 }
