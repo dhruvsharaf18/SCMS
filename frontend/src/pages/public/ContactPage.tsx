@@ -41,10 +41,26 @@ export default function ContactPage() {
   const [serverError, setServerError] = useState<string | null>(null)
   const [isSuccess, setIsSuccess] = useState(false)
 
+  // Bot Protection: Throttling state (Security Item 12)
+  const [lastSubmitTime, setLastSubmitTime] = useState(0)
+  const [pageMountTime] = useState(() => Date.now())
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setValidationError(null)
     setServerError(null)
+
+    // Security Item 12: Client-side throttling
+    const now = Date.now()
+    if (now - lastSubmitTime < 3000) {
+      setValidationError('Please wait a few seconds before submitting again.')
+      return
+    }
+    if (now - pageMountTime < 1000) {
+      setValidationError('Submission too fast. Please take a moment to review your enquiry.')
+      return
+    }
+    setLastSubmitTime(now)
 
     // Client-side validations
     if (!name.trim()) {
@@ -325,6 +341,32 @@ export default function ContactPage() {
                     </button>
                   </div>
                 )}
+
+                {/* Honeypot field (Item 12): hidden from humans & screen readers without breaking accessibility */}
+                <div
+                  style={{
+                    position: 'absolute',
+                    left: '-9999px',
+                    top: '-9999px',
+                    width: '1px',
+                    height: '1px',
+                    overflow: 'hidden',
+                    opacity: 0,
+                    pointerEvents: 'none',
+                  }}
+                  aria-hidden="true"
+                >
+                  <label htmlFor="website">Leave this field blank</label>
+                  <input
+                    type="text"
+                    id="website"
+                    name="website"
+                    tabIndex={-1}
+                    autoComplete="off"
+                    value={honeypot}
+                    onChange={(e) => setHoneypot(e.target.value)}
+                  />
+                </div>
 
                 <Button
                   type="submit"
