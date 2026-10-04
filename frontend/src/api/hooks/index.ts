@@ -1259,11 +1259,19 @@ export function useConvertLead() {
 // ── Notifications Hooks (SRS 3.2.11) ────────────────────────────────────────
 export function useNotifications(
   params?: { unread_only?: boolean; page?: number; page_size?: number },
-  options?: { refetchInterval?: number | false }
+  options?: {
+    enabled?: boolean
+    refetchInterval?: number | false
+    refetchIntervalInBackground?: boolean
+    staleTime?: number
+  }
 ) {
   return useQuery<PaginatedNotifications, ApiError>({
     queryKey: ['notifications', params],
-    refetchInterval: options?.refetchInterval ?? 30000,
+    enabled: options?.enabled ?? true,
+    refetchInterval: options?.refetchInterval ?? false,
+    refetchIntervalInBackground: options?.refetchIntervalInBackground ?? false,
+    staleTime: options?.staleTime ?? 0,
     queryFn: async () => {
       const searchParams = new URLSearchParams()
       if (params?.unread_only) searchParams.set('unread_only', 'true')
@@ -1275,10 +1283,16 @@ export function useNotifications(
   })
 }
 
-export function useUnreadNotificationsCount(options?: { refetchInterval?: number | false }) {
+export function useUnreadNotificationsCount(options?: {
+  enabled?: boolean
+  refetchInterval?: number | false
+  refetchIntervalInBackground?: boolean
+}) {
   return useQuery<UnreadCountResponse, ApiError>({
     queryKey: ['notifications', 'unread-count'],
-    refetchInterval: options?.refetchInterval ?? 30000,
+    enabled: options?.enabled ?? true,
+    refetchInterval: options?.refetchInterval ?? 60000,
+    refetchIntervalInBackground: options?.refetchIntervalInBackground ?? false,
     queryFn: async () => {
       return api.get<UnreadCountResponse>('/notifications/unread-count')
     },
@@ -1291,8 +1305,22 @@ export function useMarkNotificationRead() {
     mutationFn: async ({ notificationId }) => {
       return api.post<{ id: number; read_at: string }>(`/notifications/${notificationId}/read`)
     },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['notifications'] })
+    onSuccess: (data, { notificationId }) => {
+      // Update unread-count immediately in cache
+      qc.setQueryData<UnreadCountResponse>(['notifications', 'unread-count'], (old) => {
+        if (!old) return old
+        return { count: Math.max(0, old.count - 1) }
+      })
+      // Update notifications list items in cache
+      qc.setQueriesData<{ items: Notification[]; total?: number }>({ queryKey: ['notifications'] }, (old) => {
+        if (!old || !old.items) return old
+        return {
+          ...old,
+          items: old.items.map((item) =>
+            item.id === notificationId ? { ...item, read_at: data.read_at || new Date().toISOString() } : item
+          ),
+        }
+      })
       qc.invalidateQueries({ queryKey: ['notifications', 'unread-count'] })
     },
   })

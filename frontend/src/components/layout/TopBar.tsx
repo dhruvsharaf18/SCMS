@@ -30,18 +30,30 @@ export function TopBar({ className }: TopBarProps) {
   const [accountMenuOpen, setAccountMenuOpen] = useState(false)
   const [notifDropdownOpen, setNotifDropdownOpen] = useState(false)
 
-  // Notification hooks with 30s polling
+  // Notification hooks: 60s polling for unread count, on-demand fetch for notification list on open
   const {
     data: unreadData,
     isError: isUnreadError,
     error: unreadError,
-  } = useUnreadNotificationsCount({ refetchInterval: 30000 })
+  } = useUnreadNotificationsCount({
+    refetchInterval: 60000,
+    refetchIntervalInBackground: false,
+    enabled: !!user,
+  })
 
   const {
     data: notifsData,
     isError: isNotifsError,
     error: notifsError,
-  } = useNotifications({ page_size: 20 }, { refetchInterval: 30000 })
+  } = useNotifications(
+    { page_size: 20 },
+    {
+      enabled: notifDropdownOpen && !!user,
+      refetchInterval: false,
+      refetchIntervalInBackground: false,
+      staleTime: 0,
+    }
+  )
 
   const markReadMutation = useMarkNotificationRead()
 

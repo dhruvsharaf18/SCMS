@@ -79,17 +79,9 @@ export default function StaffKitchen() {
   const { toast } = useToast()
   const { currentError, setSimulatedError } = useErrorSimulation()
 
-  // Fetch all orders, refresh frequently for kitchen board
+  // Fetch all orders with 5-second polling for live kitchen board (PRD F-07)
   const { data: allOrders, isLoading, refetch } = useBarOrders()
   const setStatusMut = useSetKitchenStatus()
-
-  // Auto-refresh every 15 seconds for live kitchen board
-  useEffect(() => {
-    const interval = setInterval(() => {
-      refetch()
-    }, 15000)
-    return () => clearInterval(interval)
-  }, [refetch])
 
   // Group orders by kitchen status
   const grouped = useMemo(() => {
