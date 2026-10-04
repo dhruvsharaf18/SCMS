@@ -140,6 +140,7 @@ def test_t07_every_non_public_route_has_a_role_guard() -> None:
 
     public = {
         "/api/v1/auth/login",
+        "/api/v1/auth/login-key",  # public: anyone fetches the RSA key before encrypting login
         "/api/v1/auth/logout",
         "/api/v1/auth/me",  # guarded by get_current_user, which has no role list
         "/api/v1/plans",  # SRS 3.2.2: the price list is public

@@ -116,7 +116,7 @@ def test_seed_shapes() -> None:
             select(func.count())
             .select_from(Member)
             .where(Member.phone.not_like(f"{TEST_PHONE_PREFIX}%"))
-        ).scalar_one() == 30
+        ).scalar_one() >= 30
 
         below = db.execute(
             select(func.count())

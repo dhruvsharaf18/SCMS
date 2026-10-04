@@ -25,6 +25,10 @@ class Settings(BaseSettings):
     jwt_secret: str = "change_me_use_a_strong_random_32_char_string"
     access_token_expire_minutes: int = 60
 
+    # Encrypted login (feat/encrypted-login).  Set to false in production so that
+    # a network observer can never see plaintext credentials even by downgrading.
+    login_allow_plaintext: bool = True
+
     # Tax-inclusive rates in percent (SRS 4.6).
     tax_court: int = 18
     tax_shop: int = 18

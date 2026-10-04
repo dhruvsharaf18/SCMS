@@ -111,22 +111,65 @@ export const api = {
     request<T>(path, { ...options, method: 'DELETE' }),
 }
 
-// ── Real Auth API Endpoints (SRS §3.2.1) ────────────────────────────────────
+// ── Encrypted Login (feat/encrypted-login) ────────────────────────────────
 /**
- * Send login credentials to the server.
+ * Fetch the server's RSA public key, encrypt {email, password, ts} with
+ * RSA-OAEP / SHA-256 (SubtleCrypto — no external library), then POST
+ * {key_id, data} to /auth/login.
  *
- * Security note (SRS S-21 / A3):
- *  - Sends only email and password as a JSON POST body — never in the URL or query string.
- *  - Client-side password hashing is intentionally NOT performed:
- *    the hash would become the effective password (replay attack risk), add no security,
- *    and break login because the backend verifies the plaintext with argon2.
- *  - TLS protects the password in transit in production (COOKIE_SECURE=true, HTTPS).
- *  - The backend stores only the argon2 hash; the plaintext never reaches the database.
- *  - If an encrypted-payload scheme is ever required, update ONLY this function.
+ * The Network tab will show only an opaque base64 blob — never plaintext
+ * credentials.
+ *
+ * Security notes:
+ *  - Uses the browser's native SubtleCrypto; zero new npm dependencies.
+ *  - `ts` (Unix epoch seconds, float) protects against replay: the server
+ *    rejects payloads older than 120 seconds.
+ *  - email ≤ 120 chars, password ≤ 100 chars (server enforces 422 otherwise).
  */
 export async function loginApi(email: string, password: string): Promise<LoginResponse> {
-  return api.post<LoginResponse>('/auth/login', { email, password })
+  // 1. Fetch the current public key.
+  const keyRes = await fetch(`${API_BASE}/auth/login-key`, { credentials: 'include' })
+  if (!keyRes.ok) {
+    const body = await keyRes.json().catch(() => null)
+    throw new ApiError(keyRes.status, body?.error?.code ?? 'KEY_FETCH_ERROR', body?.error?.message ?? 'Failed to fetch login key')
+  }
+  const keyInfo: { key_id: string; public_key_spki_b64: string; expires_at: string } = await keyRes.json()
+
+  // 2. Import the SPKI-DER public key into SubtleCrypto.
+  const spkiDer = Uint8Array.from(atob(keyInfo.public_key_spki_b64), (c) => c.charCodeAt(0))
+  const cryptoKey = await crypto.subtle.importKey(
+    'spki',
+    spkiDer,
+    { name: 'RSA-OAEP', hash: 'SHA-256' },
+    false,
+    ['encrypt'],
+  )
+
+  // 3. Encrypt {email, password, ts} with RSA-OAEP.
+  const payload = JSON.stringify({ email, password, ts: Date.now() / 1000 })
+  const ciphertext = await crypto.subtle.encrypt(
+    { name: 'RSA-OAEP' },
+    cryptoKey,
+    new TextEncoder().encode(payload),
+  )
+  const dataB64 = btoa(String.fromCharCode(...new Uint8Array(ciphertext)))
+
+  // 4. POST the opaque blob.
+  const headers = new Headers({ 'Content-Type': 'application/json' })
+  if (_accessToken) headers.set('Authorization', `Bearer ${_accessToken}`)
+  const res = await fetch(`${API_BASE}/auth/login`, {
+    method: 'POST',
+    headers,
+    credentials: 'include',
+    body: JSON.stringify({ key_id: keyInfo.key_id, data: dataB64 }),
+  })
+  if (!res.ok) {
+    const body = await res.json().catch(() => null)
+    throw new ApiError(res.status, body?.error?.code ?? `HTTP_${res.status}`, body?.error?.message ?? res.statusText, body?.error?.details)
+  }
+  return res.json() as Promise<LoginResponse>
 }
+
 
 export async function logoutApi(): Promise<{ status: string }> {
   return api.post<{ status: string }>('/auth/logout')
