@@ -22,6 +22,9 @@ export interface AuthUser {
 
 export interface LoginResponse {
   user: AuthUser
+  /** Part B: short-lived JWT, kept in JS memory only — never in localStorage. */
+  access_token?: string
+  token_type?: string
 }
 
 export interface LoginRequest {
@@ -222,14 +225,67 @@ export interface SocialSession {
   capacity: number
   joined_count: number
   fee_paise: number
+  status?: SocialSessionStatus
   is_joined?: boolean
   participants: SocialSessionParticipant[]
 }
+
+export type SocialSessionStatus = 'OPEN' | 'CANCELLED'
 
 export interface SocialSessionJoinInput {
   sessionId: number
   memberId: number
   memberName?: string
+}
+
+/** Staff-only roster row from GET /social-sessions/{id}/participants. */
+export interface SocialParticipant {
+  id: number
+  session_id: number
+  member_id: number | null
+  guest_name: string | null
+  fee_paise: number
+  status: 'JOINED' | 'LEFT'
+}
+
+// ── Courts admin (SRS 3.2.4) ──────────────────────────────────────────────
+export interface CourtCreateInput {
+  name: string
+  sport: Sport
+}
+
+export interface CourtUpdateInput {
+  name?: string
+  sport?: Sport
+  is_active?: boolean
+}
+
+export interface SocialSessionCreateInput {
+  court_id: number
+  title: string
+  start_at: string
+  end_at: string
+  capacity: number
+  fee_paise: number
+}
+
+// ── Audit log (SRS 3.2.11) ────────────────────────────────────────────────
+export interface AuditLog {
+  id: number
+  actor_id: number | null
+  action: string
+  entity: string | null
+  entity_id: number | null
+  meta: Record<string, unknown> | null
+  ip: string | null
+  created_at: string
+}
+
+export interface PaginatedAuditLogs {
+  items: AuditLog[]
+  total: number
+  page: number
+  page_size: number
 }
 
 // ── Members (SRS 3.2.3) ────────────────────────────────────────────────────

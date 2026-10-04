@@ -129,24 +129,24 @@ export default function DesignShowcase() {
             value="28"
             delta={-3.2}
             icon={CalendarDays}
-            iconBg="bg-emerald-50"
-            iconColor="text-accent-green"
+            iconBg="bg-primary-500"
+            iconColor="text-ink"
           />
           <StatCard
             label="New Members"
             value="3"
             delta={0}
             icon={Users}
-            iconBg="bg-purple-50"
-            iconColor="text-accent-purple"
+            iconBg="bg-surface-dark"
+            iconColor="text-white"
           />
           <StatCard
             label="Shop Sales"
             value="₹90,000"
             delta={8.7}
             icon={ShoppingBag}
-            iconBg="bg-amber-50"
-            iconColor="text-accent-yellow"
+            iconBg="bg-primary-500"
+            iconColor="text-ink"
           />
         </div>
       </section>

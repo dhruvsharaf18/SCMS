@@ -53,6 +53,7 @@ import {
   ResponsiveContainer,
   CartesianGrid,
   Cell,
+  LabelList,
 } from 'recharts'
 
 // ── Executive Dashboard (OWNER & MANAGER) ─────────────────────────────────
@@ -77,19 +78,19 @@ function OwnerManagerDashboard() {
 
   const sourceData = summary?.revenue?.by_source
     ? [
-        { name: 'Court Bookings', value: Math.round(summary.revenue.by_source.BOOKING / 100), color: '#3B82F6' },
-        { name: 'Pro Shop', value: Math.round(summary.revenue.by_source.SHOP_ORDER / 100), color: '#8B5CF6' },
-        { name: 'Bar & Cafe', value: Math.round(summary.revenue.by_source.BAR_ORDER / 100), color: '#10B981' },
-        { name: 'Memberships', value: Math.round(summary.revenue.by_source.MEMBERSHIP / 100), color: '#F59E0B' },
+        { name: 'Court Bookings', value: Math.round(summary.revenue.by_source.BOOKING / 100), color: '#875A7B' },
+        { name: 'Pro Shop', value: Math.round(summary.revenue.by_source.SHOP_ORDER / 100), color: '#EAB14D' },
+        { name: 'Bar & Cafe', value: Math.round(summary.revenue.by_source.BAR_ORDER / 100), color: '#141B2D' },
+        { name: 'Memberships', value: Math.round(summary.revenue.by_source.MEMBERSHIP / 100), color: '#8E8E8E' },
       ].filter((d) => d.value > 0)
     : []
 
   const methodData = summary?.revenue?.by_method
     ? [
-        { name: 'Cash', value: Math.round(summary.revenue.by_method.CASH / 100), color: '#10B981' },
-        { name: 'Card', value: Math.round(summary.revenue.by_method.CARD / 100), color: '#3B82F6' },
-        { name: 'UPI', value: Math.round(summary.revenue.by_method.UPI / 100), color: '#8B5CF6' },
-        { name: 'Online', value: Math.round(summary.revenue.by_method.ONLINE_MOCK / 100), color: '#EC4899' },
+        { name: 'Cash', value: Math.round(summary.revenue.by_method.CASH / 100), color: '#141B2D' },
+        { name: 'Card', value: Math.round(summary.revenue.by_method.CARD / 100), color: '#875A7B' },
+        { name: 'UPI', value: Math.round(summary.revenue.by_method.UPI / 100), color: '#EAB14D' },
+        { name: 'Online', value: Math.round(summary.revenue.by_method.ONLINE_MOCK / 100), color: '#8E8E8E' },
       ].filter((d) => d.value > 0)
     : []
 
@@ -145,24 +146,24 @@ function OwnerManagerDashboard() {
           label="Court Utilization"
           value={summaryLoading ? '—' : `${summary?.bookings.utilization_pct ?? 0}%`}
           icon={Activity}
-          iconBg="bg-accent-green/10"
-          iconColor="text-accent-green"
+          iconBg="bg-primary-500"
+          iconColor="text-ink"
         />
 
         <StatCard
           label="New Members"
           value={summaryLoading ? '—' : `${summary?.members.new ?? 0}`}
           icon={Users}
-          iconBg="bg-accent-purple/10"
-          iconColor="text-accent-purple"
+          iconBg="bg-primary-500"
+          iconColor="text-ink"
         />
 
         <StatCard
           label="New Leads"
           value={summaryLoading ? '—' : `${summary?.leads.new ?? 0}`}
           icon={UserPlus}
-          iconBg="bg-accent-yellow/10"
-          iconColor="text-accent-yellow"
+          iconBg="bg-surface-dark"
+          iconColor="text-white"
         />
       </div>
 
@@ -177,13 +178,13 @@ function OwnerManagerDashboard() {
           </div>
           <div className="flex items-center gap-4 text-xs font-medium text-text-secondary">
             <span className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-primary-500" /> Bookings
+              <span className="w-2.5 h-2.5 rounded-full bg-brand-purple border border-ink" /> Bookings
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-accent-purple" /> Shop
+              <span className="w-2.5 h-2.5 rounded-full bg-primary-500 border border-ink" /> Shop
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-accent-green" /> Bar
+              <span className="w-2.5 h-2.5 rounded-full bg-ink" /> Bar
             </span>
           </div>
         </div>
@@ -196,22 +197,16 @@ function OwnerManagerDashboard() {
           ) : (
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.4} />
-                    <stop offset="95%" stopColor="#3B82F6" stopOpacity={0.0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" vertical={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="#7E7E7E" vertical={false} />
                 <XAxis
                   dataKey="date"
-                  stroke="#9CA3AF"
+                  stroke="#141B2D"
                   fontSize={11}
                   tickLine={false}
-                  axisLine={{ stroke: '#E5E7EB' }}
+                  axisLine={{ stroke: '#7E7E7E' }}
                 />
                 <YAxis
-                  stroke="#9CA3AF"
+                  stroke="#141B2D"
                   fontSize={11}
                   tickLine={false}
                   axisLine={false}
@@ -222,9 +217,9 @@ function OwnerManagerDashboard() {
                   labelFormatter={(_label, payload) => payload?.[0]?.payload?.fullDate ?? _label}
                   contentStyle={{
                     backgroundColor: '#FFFFFF',
-                    borderRadius: '16px',
-                    boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1)',
-                    border: '1px solid #E5E7EB',
+                    borderRadius: '8px',
+                    border: '1px solid #141B2D',
+                    color: '#141B2D',
                     fontSize: '12px',
                     fontWeight: 600,
                   }}
@@ -232,10 +227,11 @@ function OwnerManagerDashboard() {
                 <Area
                   type="monotone"
                   dataKey="total"
-                  stroke="#3B82F6"
+                  stroke="#141B2D"
                   strokeWidth={2.5}
-                  fillOpacity={1}
-                  fill="url(#colorTotal)"
+                  fill="none"
+                  dot={{ r: 3, fill: '#EAB14D', stroke: '#141B2D', strokeWidth: 1 }}
+                  activeDot={{ r: 5, fill: '#EAB14D', stroke: '#141B2D', strokeWidth: 2 }}
                 />
               </AreaChart>
             </ResponsiveContainer>
@@ -250,26 +246,27 @@ function OwnerManagerDashboard() {
           <SectionHeader title="Revenue by Source" />
           <div className="mt-4 h-56 w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={sourceData} layout="vertical" margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" horizontal={false} />
+              <BarChart data={sourceData} layout="vertical" margin={{ top: 5, right: 30, left: 10, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#7E7E7E" horizontal={false} />
                 <XAxis type="number" hide />
                 <YAxis
                   type="category"
                   dataKey="name"
                   fontSize={11}
-                  stroke="#6B7280"
+                  stroke="#141B2D"
                   tickLine={false}
                   axisLine={false}
                   width={95}
                 />
                 <Tooltip
                   formatter={(val: number) => [`₹${Number(val).toLocaleString('en-IN')}`, 'Revenue']}
-                  contentStyle={{ borderRadius: '12px', fontSize: '12px' }}
+                  contentStyle={{ backgroundColor: '#FFFFFF', borderRadius: '8px', border: '1px solid #141B2D', color: '#141B2D', fontSize: '12px' }}
                 />
                 <Bar dataKey="value" radius={[0, 8, 8, 0]}>
                   {sourceData.map((entry, index) => (
                     <Cell key={`source-cell-${index}`} fill={entry.color} />
                   ))}
+                  <LabelList dataKey="value" position="right" fill="#141B2D" fontSize={11} formatter={(val: number) => `₹${Number(val).toLocaleString('en-IN')}`} />
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
@@ -281,18 +278,19 @@ function OwnerManagerDashboard() {
           <SectionHeader title="Payment Methods" />
           <div className="mt-4 h-56 w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={methodData} margin={{ top: 10, right: 10, left: 0, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" vertical={false} />
-                <XAxis dataKey="name" fontSize={11} stroke="#6B7280" tickLine={false} axisLine={false} />
+              <BarChart data={methodData} margin={{ top: 15, right: 10, left: 0, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#7E7E7E" vertical={false} />
+                <XAxis dataKey="name" fontSize={11} stroke="#141B2D" tickLine={false} axisLine={false} />
                 <YAxis hide />
                 <Tooltip
                   formatter={(val: number) => [`₹${Number(val).toLocaleString('en-IN')}`, 'Amount']}
-                  contentStyle={{ borderRadius: '12px', fontSize: '12px' }}
+                  contentStyle={{ backgroundColor: '#FFFFFF', borderRadius: '8px', border: '1px solid #141B2D', color: '#141B2D', fontSize: '12px' }}
                 />
                 <Bar dataKey="value" radius={[8, 8, 0, 0]}>
                   {methodData.map((entry, index) => (
                     <Cell key={`method-cell-${index}`} fill={entry.color} />
                   ))}
+                  <LabelList dataKey="value" position="top" fill="#141B2D" fontSize={10} formatter={(val: number) => `₹${Number(val).toLocaleString('en-IN')}`} />
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
@@ -305,19 +303,19 @@ function OwnerManagerDashboard() {
             <SectionHeader title="Receivables & Payables" />
             <div className="mt-4 space-y-4">
               {/* Owed to Us */}
-              <div className="p-4 rounded-2xl bg-emerald-50/60 border border-emerald-100">
+              <div className="p-4 rounded-2xl bg-status-success border border-status-success-accent text-ink">
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs font-bold text-emerald-800 uppercase tracking-wider">
+                  <span className="text-xs font-bold text-ink uppercase tracking-wider">
                     Owed to Us (Receivables)
                   </span>
-                  <span className="text-xs font-bold text-emerald-700">
+                  <span className="text-xs font-bold text-ink">
                     {formatMoney(
                       (summary?.receivables.unpaid_tabs_paise ?? 0) +
                         (summary?.receivables.unpaid_invoices_paise ?? 0)
                     )}
                   </span>
                 </div>
-                <div className="text-xs text-emerald-700 space-y-1 mt-2">
+                <div className="text-xs text-ink space-y-1 mt-2">
                   <div className="flex justify-between">
                     <span>Unpaid Member Tabs:</span>
                     <span className="font-semibold">{formatMoney(summary?.receivables.unpaid_tabs_paise ?? 0)}</span>
@@ -330,19 +328,19 @@ function OwnerManagerDashboard() {
               </div>
 
               {/* We Owe */}
-              <div className="p-4 rounded-2xl bg-rose-50/60 border border-rose-100">
+              <div className="p-4 rounded-2xl bg-status-error border border-status-error-accent text-ink">
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs font-bold text-rose-800 uppercase tracking-wider">
+                  <span className="text-xs font-bold text-ink uppercase tracking-wider">
                     We Owe (Payables)
                   </span>
-                  <span className="text-xs font-bold text-rose-700">
+                  <span className="text-xs font-bold text-ink">
                     {formatMoney(
                       (summary?.payables.unpaid_expenses_paise ?? 0) +
                         (summary?.payables.pending_payroll_paise ?? 0)
                     )}
                   </span>
                 </div>
-                <div className="text-xs text-rose-700 space-y-1 mt-2">
+                <div className="text-xs text-ink space-y-1 mt-2">
                   <div className="flex justify-between">
                     <span>Vendor & Stock Expenses:</span>
                     <span className="font-semibold">{formatMoney(summary?.payables.unpaid_expenses_paise ?? 0)}</span>
@@ -396,13 +394,13 @@ function OwnerManagerDashboard() {
                 {summary.low_stock.map((item) => (
                   <div key={item.product_id} className="py-3 flex items-center justify-between gap-3 first:pt-1 last:pb-1">
                     <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
+                      <div className="w-10 h-10 rounded-xl bg-status-warning text-ink border border-status-warning-accent flex items-center justify-center">
                         <AlertTriangle size={18} />
                       </div>
                       <div className="min-w-0">
                         <p className="font-bold text-sm text-text-primary truncate">{item.name}</p>
                         <p className="text-xs text-text-secondary">
-                          Current Stock: <span className="font-semibold text-accent-red">{item.stock_qty}</span> (Min: {item.reorder_level})
+                          Current Stock: <span className="font-semibold text-ink">{item.stock_qty}</span> (Min: {item.reorder_level})
                         </p>
                       </div>
                     </div>
@@ -428,52 +426,52 @@ function OwnerManagerDashboard() {
             <button
               type="button"
               onClick={() => navigate('/staff/reports')}
-              className="w-full p-3.5 rounded-xl bg-surface border border-border-light hover:border-primary-300 hover:bg-canvas transition-all text-left flex items-center justify-between group touch-target"
+              className="w-full p-3.5 rounded-xl bg-surface border border-border-light hover:border-primary-500 hover:bg-surface-dark transition-all text-left flex items-center justify-between group touch-target"
             >
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-primary-50 text-primary-600 flex items-center justify-center">
+                <div className="w-9 h-9 rounded-xl bg-primary-500 text-ink border border-ink flex items-center justify-center">
                   <Receipt size={18} />
                 </div>
                 <div>
                   <p className="font-bold text-xs text-text-primary">Financial Ledger</p>
-                  <p className="text-[10px] text-text-tertiary">Audit payments & refunds</p>
+                  <p className="text-[10px] text-text-secondary">Audit payments & refunds</p>
                 </div>
               </div>
-              <ArrowRight size={14} className="text-text-tertiary group-hover:text-primary-600" />
+              <ArrowRight size={14} className="text-ink group-hover:text-ink" />
             </button>
 
             <button
               type="button"
               onClick={() => navigate('/staff/stock')}
-              className="w-full p-3.5 rounded-xl bg-surface border border-border-light hover:border-primary-300 hover:bg-canvas transition-all text-left flex items-center justify-between group touch-target"
+              className="w-full p-3.5 rounded-xl bg-surface border border-border-light hover:border-primary-500 hover:bg-surface-dark transition-all text-left flex items-center justify-between group touch-target"
             >
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
+                <div className="w-9 h-9 rounded-xl bg-primary-500 text-ink border border-ink flex items-center justify-center">
                   <Package size={18} />
                 </div>
                 <div>
                   <p className="font-bold text-xs text-text-primary">Catalog & Stock</p>
-                  <p className="text-[10px] text-text-tertiary">Add products & restock</p>
+                  <p className="text-[10px] text-text-secondary">Add products & restock</p>
                 </div>
               </div>
-              <ArrowRight size={14} className="text-text-tertiary group-hover:text-purple-600" />
+              <ArrowRight size={14} className="text-ink group-hover:text-ink" />
             </button>
 
             <button
               type="button"
               onClick={() => navigate('/staff/members')}
-              className="w-full p-3.5 rounded-xl bg-surface border border-border-light hover:border-primary-300 hover:bg-canvas transition-all text-left flex items-center justify-between group touch-target"
+              className="w-full p-3.5 rounded-xl bg-surface border border-border-light hover:border-primary-500 hover:bg-surface-dark transition-all text-left flex items-center justify-between group touch-target"
             >
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                <div className="w-9 h-9 rounded-xl bg-primary-500 text-ink border border-ink flex items-center justify-center">
                   <Users size={18} />
                 </div>
                 <div>
                   <p className="font-bold text-xs text-text-primary">Members & Plans</p>
-                  <p className="text-[10px] text-text-tertiary">Manage memberships</p>
+                  <p className="text-[10px] text-text-secondary">Manage memberships</p>
                 </div>
               </div>
-              <ArrowRight size={14} className="text-text-tertiary group-hover:text-emerald-600" />
+              <ArrowRight size={14} className="text-ink group-hover:text-ink" />
             </button>
           </Card>
         </div>
@@ -544,18 +542,18 @@ function BarDailyReportCard() {
         <button
           type="button"
           onClick={() => navigate('/staff/kitchen')}
-          className="p-5 rounded-2xl bg-surface border border-border-light shadow-soft hover:shadow-card hover:border-primary-300 transition-all text-left flex items-center justify-between group touch-target"
+          className="p-5 rounded-2xl bg-surface border border-border-light shadow-soft hover:shadow-card hover:border-primary-500 transition-all text-left flex items-center justify-between group touch-target"
         >
           <div className="flex items-center gap-3.5">
-            <div className="w-12 h-12 rounded-2xl bg-accent-green/10 flex items-center justify-center text-accent-green group-hover:scale-105 transition-transform">
+            <div className="w-12 h-12 rounded-2xl bg-primary-500 text-ink border border-ink flex items-center justify-center group-hover:scale-105 transition-transform">
               <UtensilsCrossed size={24} />
             </div>
             <div>
               <p className="font-bold text-sm text-text-primary">Kitchen Display</p>
-              <p className="text-xs text-text-tertiary">KDS preparation board</p>
+              <p className="text-xs text-text-secondary">KDS preparation board</p>
             </div>
           </div>
-          <ArrowRight size={18} className="text-text-tertiary group-hover:text-accent-green transition-colors" />
+          <ArrowRight size={18} className="text-ink group-hover:text-ink transition-colors" />
         </button>
       </div>
 
@@ -586,9 +584,9 @@ function BarDailyReportCard() {
             {report && (
               <>
                 {[
-                  { method: 'CASH', icon: Banknote, amount: report.by_method.CASH, color: 'text-accent-green' },
-                  { method: 'CARD', icon: CreditCard, amount: report.by_method.CARD, color: 'text-primary-500' },
-                  { method: 'UPI', icon: Smartphone, amount: report.by_method.UPI, color: 'text-accent-purple' },
+                  { method: 'CASH', icon: Banknote, amount: report.by_method.CASH, color: 'text-ink' },
+                  { method: 'CARD', icon: CreditCard, amount: report.by_method.CARD, color: 'text-ink' },
+                  { method: 'UPI', icon: Smartphone, amount: report.by_method.UPI, color: 'text-ink' },
                 ].map((entry) => {
                   const pct = report.revenue_paise > 0
                     ? Math.round((entry.amount / report.revenue_paise) * 100)
@@ -632,7 +630,7 @@ function BarDailyReportCard() {
             </div>
             <div className="flex justify-between text-sm border-t border-border-light pt-2">
               <span className="text-text-secondary">Outstanding Tabs</span>
-              <span className="font-bold text-accent-red">{formatMoney(report?.outstanding_tabs_paise ?? 0)}</span>
+              <span className="font-bold text-ink">{formatMoney(report?.outstanding_tabs_paise ?? 0)}</span>
             </div>
             {report?.by_staff && report.by_staff.length > 0 && (
               <>
@@ -694,52 +692,52 @@ function FrontDeskDashboard() {
         <button
           type="button"
           onClick={() => navigate('/staff/bookings')}
-          className="p-5 rounded-2xl bg-surface border border-border-light shadow-soft hover:shadow-card hover:border-primary-300 transition-all text-left flex items-center justify-between group touch-target"
+          className="p-5 rounded-2xl bg-surface border border-border-light shadow-soft hover:shadow-card hover:border-primary-500 transition-all text-left flex items-center justify-between group touch-target"
         >
           <div className="flex items-center gap-3.5">
-            <div className="w-12 h-12 rounded-2xl bg-primary-50 flex items-center justify-center text-primary-600 group-hover:scale-105 transition-transform">
+            <div className="w-12 h-12 rounded-2xl bg-primary-500 text-ink border border-ink flex items-center justify-center group-hover:scale-105 transition-transform">
               <CalendarDays size={24} />
             </div>
             <div>
               <p className="font-bold text-sm text-text-primary">Book Court</p>
-              <p className="text-xs text-text-tertiary">Reserve 1-hour slot</p>
+              <p className="text-xs text-text-secondary">Reserve 1-hour slot</p>
             </div>
           </div>
-          <ArrowRight size={18} className="text-text-tertiary group-hover:text-primary-600 transition-colors" />
+          <ArrowRight size={18} className="text-ink group-hover:text-ink transition-colors" />
         </button>
 
         <button
           type="button"
           onClick={() => navigate('/staff/members')}
-          className="p-5 rounded-2xl bg-surface border border-border-light shadow-soft hover:shadow-card hover:border-primary-300 transition-all text-left flex items-center justify-between group touch-target"
+          className="p-5 rounded-2xl bg-surface border border-border-light shadow-soft hover:shadow-card hover:border-primary-500 transition-all text-left flex items-center justify-between group touch-target"
         >
           <div className="flex items-center gap-3.5">
-            <div className="w-12 h-12 rounded-2xl bg-accent-green/10 flex items-center justify-center text-accent-green group-hover:scale-105 transition-transform">
+            <div className="w-12 h-12 rounded-2xl bg-primary-500 text-ink border border-ink flex items-center justify-center group-hover:scale-105 transition-transform">
               <UserPlus size={24} />
             </div>
             <div>
               <p className="font-bold text-sm text-text-primary">Register Member</p>
-              <p className="text-xs text-text-tertiary">New subscription</p>
+              <p className="text-xs text-text-secondary">New subscription</p>
             </div>
           </div>
-          <ArrowRight size={18} className="text-text-tertiary group-hover:text-accent-green transition-colors" />
+          <ArrowRight size={18} className="text-ink group-hover:text-ink transition-colors" />
         </button>
 
         <button
           type="button"
           onClick={() => navigate('/staff/shop')}
-          className="p-5 rounded-2xl bg-surface border border-border-light shadow-soft hover:shadow-card hover:border-primary-300 transition-all text-left flex items-center justify-between group touch-target"
+          className="p-5 rounded-2xl bg-surface border border-border-light shadow-soft hover:shadow-card hover:border-primary-500 transition-all text-left flex items-center justify-between group touch-target"
         >
           <div className="flex items-center gap-3.5">
-            <div className="w-12 h-12 rounded-2xl bg-accent-purple/10 flex items-center justify-center text-accent-purple group-hover:scale-105 transition-transform">
+            <div className="w-12 h-12 rounded-2xl bg-primary-500 text-ink border border-ink flex items-center justify-center group-hover:scale-105 transition-transform">
               <ShoppingBag size={24} />
             </div>
             <div>
               <p className="font-bold text-sm text-text-primary">Counter POS</p>
-              <p className="text-xs text-text-tertiary">Sell merchandise</p>
+              <p className="text-xs text-text-secondary">Sell merchandise</p>
             </div>
           </div>
-          <ArrowRight size={18} className="text-text-tertiary group-hover:text-accent-purple transition-colors" />
+          <ArrowRight size={18} className="text-ink group-hover:text-ink transition-colors" />
         </button>
       </div>
 

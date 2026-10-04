@@ -11,7 +11,7 @@ export function Skeleton({ className, variant = 'rect' }: SkeletonProps) {
     <div
       aria-hidden
       className={cn(
-        'bg-gradient-to-r from-border-light via-canvas to-border-light bg-[length:200%_100%] animate-shimmer',
+        'bg-surface-dark animate-pulse',
         variant === 'text' && 'h-4 rounded-md',
         variant === 'circle' && 'rounded-full',
         variant === 'rect' && 'rounded-2xl',

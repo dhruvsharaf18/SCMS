@@ -54,6 +54,10 @@ const courtBooking: NavItem[] = [
   { id: 'bookings', label: 'Bookings', icon: CalendarDays, path: '/staff/bookings', mobileBar: true },
 ]
 
+const courtsItem: NavItem = { id: 'courts', label: 'Courts', icon: Dumbbell, path: '/staff/courts' }
+
+const socialItem: NavItem = { id: 'social', label: 'Social Play', icon: Trophy, path: '/staff/social' }
+
 const shopItems: NavItem[] = [
   { id: 'shop', label: 'Shop', icon: ShoppingBag, path: '/staff/shop', mobileBar: true },
   { id: 'stock', label: 'Stock', icon: Package, path: '/staff/stock' },
@@ -85,19 +89,21 @@ const financeItems: NavItem[] = [
   { id: 'reports', label: 'Reports', icon: BarChart3, path: '/staff/reports' },
 ]
 
+const auditItem: NavItem = { id: 'audit', label: 'Audit Log', icon: FileText, path: '/staff/audit' }
+
 // ── Role → nav config map (one entry per SRS role: OWNER, MANAGER, FRONT_DESK, BAR_STAFF, MEMBER) ──
 export const NAV_CONFIG: Record<Role, NavSection[]> = {
   OWNER: [
     { items: staffCommon },
-    { title: 'Club', items: [...memberManagement, ...courtBooking] },
+    { title: 'Club', items: [...memberManagement, ...courtBooking, courtsItem, socialItem] },
     { title: 'Commerce', items: [...shopItems, ...barItems] },
     { title: 'Pipeline', items: leadItems },
     { title: 'Team', items: teamItems },
-    { title: 'Finance', items: financeItems },
+    { title: 'Finance', items: [...financeItems, auditItem] },
   ],
   MANAGER: [
     { items: staffCommon },
-    { title: 'Club', items: [...memberManagement, ...courtBooking] },
+    { title: 'Club', items: [...memberManagement, ...courtBooking, courtsItem, socialItem] },
     { title: 'Commerce', items: [...shopItems, ...barItems] },
     { title: 'Pipeline', items: leadItems },
     { title: 'Team', items: teamItems },

@@ -30,18 +30,30 @@ export function TopBar({ className }: TopBarProps) {
   const [accountMenuOpen, setAccountMenuOpen] = useState(false)
   const [notifDropdownOpen, setNotifDropdownOpen] = useState(false)
 
-  // Notification hooks with 30s polling
+  // Notification hooks: 60s polling for unread count, on-demand fetch for notification list on open
   const {
     data: unreadData,
     isError: isUnreadError,
     error: unreadError,
-  } = useUnreadNotificationsCount({ refetchInterval: 30000 })
+  } = useUnreadNotificationsCount({
+    refetchInterval: 60000,
+    refetchIntervalInBackground: false,
+    enabled: !!user,
+  })
 
   const {
     data: notifsData,
     isError: isNotifsError,
     error: notifsError,
-  } = useNotifications({ page_size: 20 }, { refetchInterval: 30000 })
+  } = useNotifications(
+    { page_size: 20 },
+    {
+      enabled: notifDropdownOpen && !!user,
+      refetchInterval: false,
+      refetchIntervalInBackground: false,
+      staleTime: 0,
+    }
+  )
 
   const markReadMutation = useMarkNotificationRead()
 
@@ -73,13 +85,13 @@ export function TopBar({ className }: TopBarProps) {
     <>
       <header
         className={cn(
-          'flex items-center gap-3 h-topbar px-4 lg:px-6',
+          'flex items-center gap-3 h-topbar px-4 lg:px-6 bg-odoo-grey border-b border-border-light text-ink',
           className,
         )}
       >
         {/* Mobile: hamburger */}
         <button
-          className="md:hidden flex items-center justify-center w-9 h-9 rounded-xl text-text-secondary hover:bg-surface transition-colors touch-target"
+          className="md:hidden flex items-center justify-center w-9 h-9 rounded-xl text-ink hover:bg-grey-tint transition-colors touch-target"
           onClick={() => setDrawerOpen(true)}
           aria-label="Open menu"
         >
@@ -107,7 +119,7 @@ export function TopBar({ className }: TopBarProps) {
         <div className="flex items-center gap-2">
           {/* Search */}
           <button
-            className="flex items-center justify-center w-9 h-9 rounded-xl text-text-secondary hover:bg-surface hover:text-text-primary transition-colors"
+            className="flex items-center justify-center w-9 h-9 rounded-xl text-ink hover:bg-grey-tint transition-colors"
             aria-label="Search"
           >
             <Search size={18} />
@@ -116,7 +128,7 @@ export function TopBar({ className }: TopBarProps) {
           {/* Notifications */}
           <div className="relative">
             <button
-              className="relative flex items-center justify-center w-9 h-9 rounded-xl text-text-secondary hover:bg-surface hover:text-text-primary transition-colors"
+              className="relative flex items-center justify-center w-9 h-9 rounded-xl text-ink hover:bg-grey-tint transition-colors"
               aria-label="Notifications"
               onClick={() => {
                 if (!isForbiddenOrNotFound) {
@@ -127,7 +139,7 @@ export function TopBar({ className }: TopBarProps) {
               <NotifIcon size={18} />
               {/* Unread count badge */}
               {unreadCount > 0 && (
-                <span className="absolute -top-1 -right-1 min-w-[18px] h-4 px-1 flex items-center justify-center rounded-full bg-accent-red text-[10px] font-bold text-white leading-none">
+                <span className="absolute -top-1 -right-1 min-w-[18px] h-4 px-1 flex items-center justify-center rounded-full bg-primary-500 text-[10px] font-bold text-ink border border-ink leading-none">
                   {unreadCount > 99 ? '99+' : unreadCount}
                 </span>
               )}
@@ -137,11 +149,11 @@ export function TopBar({ className }: TopBarProps) {
             {notifDropdownOpen && !isForbiddenOrNotFound && (
               <>
                 <div className="fixed inset-0 z-40" onClick={() => setNotifDropdownOpen(false)} />
-                <div className="absolute right-0 top-full mt-2 z-50 w-80 max-w-[90vw] bg-surface rounded-2xl shadow-raised border border-border-light py-2 animate-scale-in">
+                <div className="absolute right-0 top-full mt-2 z-50 w-80 max-w-[90vw] bg-surface rounded-2xl shadow-raised border border-border-light py-2 animate-scale-in text-ink">
                   <div className="px-4 py-2 border-b border-border-light flex items-center justify-between">
-                    <h3 className="text-xs font-bold text-text-primary uppercase tracking-wider">Notifications</h3>
+                    <h3 className="text-xs font-bold text-ink uppercase tracking-wider">Notifications</h3>
                     {unreadCount > 0 && (
-                      <span className="text-[11px] font-semibold text-primary-600 bg-primary-50 px-2 py-0.5 rounded-full">
+                      <span className="text-[11px] font-bold text-ink bg-primary-500 px-2 py-0.5 rounded-full border border-ink">
                         {unreadCount} unread
                       </span>
                     )}
@@ -149,7 +161,7 @@ export function TopBar({ className }: TopBarProps) {
 
                   <div className="max-h-80 overflow-y-auto divide-y divide-border-light/50">
                     {notifications.length === 0 ? (
-                      <div className="p-4 text-center text-xs text-text-tertiary">No notifications yet</div>
+                      <div className="p-4 text-center text-xs text-ink">No notifications yet</div>
                     ) : (
                       notifications.map((n) => {
                         const isUnread = !n.read_at
@@ -158,8 +170,8 @@ export function TopBar({ className }: TopBarProps) {
                             key={n.id}
                             onClick={() => handleNotificationClick(n.id, n.link)}
                             className={cn(
-                              'p-3 flex items-start gap-2.5 transition-colors cursor-pointer hover:bg-canvas',
-                              isUnread ? 'bg-primary-50/40' : 'opacity-80'
+                              'p-3 flex items-start gap-2.5 transition-colors cursor-pointer hover:bg-surface-light',
+                              isUnread ? 'bg-primary-50' : 'opacity-85'
                             )}
                           >
                             <div className="mt-0.5 flex-shrink-0">
@@ -167,10 +179,10 @@ export function TopBar({ className }: TopBarProps) {
                                 className={cn(
                                   'inline-block px-1.5 py-0.5 text-[9px] font-extrabold rounded-md uppercase tracking-wider',
                                   n.type === 'NEW_LEAD'
-                                    ? 'bg-blue-100 text-blue-800'
+                                    ? 'bg-status-info text-ink border border-accent-teal'
                                     : n.type === 'LOW_STOCK'
-                                    ? 'bg-amber-100 text-amber-800'
-                                    : 'bg-gray-100 text-gray-800'
+                                    ? 'bg-status-warning text-ink border border-accent-orange'
+                                    : 'bg-surface-dark text-ink border border-ink'
                                 )}
                               >
                                 {n.type.replace('_', ' ')}
@@ -285,8 +297,8 @@ function NavButton({ item, currentPath, onNav }: { item: NavItem; currentPath: s
     <button
       onClick={() => onNav(item.path)}
       className={cn(
-        'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors touch-target',
-        active ? 'bg-primary-50 text-primary-600' : 'text-text-secondary hover:bg-canvas hover:text-text-primary',
+        'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold transition-colors touch-target',
+        active ? 'bg-primary-500 text-ink shadow-pill' : 'text-ink hover:bg-surface-light',
       )}
     >
       <Icon size={18} />

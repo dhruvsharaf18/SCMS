@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200" role="img" aria-label="Badminton shuttlecock feather tube illustration">
+  <rect width="200" height="200" fill="#fdf4ff" rx="16"/>
+  <!-- Tube container -->
+  <rect x="78" y="45" width="44" height="120" fill="#e9d5ff" rx="8"/>
+  <rect x="80" y="47" width="40" height="116" fill="#ede9fe" rx="6"/>
+  <!-- Shuttlecock cork base -->
+  <ellipse cx="100" cy="80" rx="14" ry="8" fill="#fcd34d"/>
+  <!-- Feather fan -->
+  <line x1="100" y1="78" x2="86" y2="52" stroke="#7c3aed" stroke-width="1.5"/>
+  <line x1="100" y1="78" x2="89" y2="50" stroke="#7c3aed" stroke-width="1.5"/>
+  <line x1="100" y1="78" x2="93" y2="49" stroke="#8b5cf6" stroke-width="1.5"/>
+  <line x1="100" y1="78" x2="97" y2="48" stroke="#8b5cf6" stroke-width="1.5"/>
+  <line x1="100" y1="78" x2="101" y2="48" stroke="#8b5cf6" stroke-width="1.5"/>
+  <line x1="100" y1="78" x2="105" y2="49" stroke="#a78bfa" stroke-width="1.5"/>
+  <line x1="100" y1="78" x2="109" y2="50" stroke="#a78bfa" stroke-width="1.5"/>
+  <line x1="100" y1="78" x2="113" y2="52" stroke="#a78bfa" stroke-width="1.5"/>
+  <!-- Tube label -->
+  <rect x="78" y="108" width="44" height="34" fill="#7c3aed"/>
+  <text x="100" y="122" text-anchor="middle" font-family="sans-serif" font-size="8" font-weight="bold" fill="white">SHUTTLE</text>
+  <text x="100" y="134" text-anchor="middle" font-family="sans-serif" font-size="8" fill="white">FEATHER × 6</text>
+  <!-- Cap -->
+  <ellipse cx="100" cy="45" rx="22" ry="5" fill="#6d28d9"/>
+  <ellipse cx="100" cy="165" rx="22" ry="5" fill="#6d28d9"/>
+  <text x="100" y="185" text-anchor="middle" font-family="sans-serif" font-size="9" fill="#7c3aed">Tube of 6</text>
+</svg>

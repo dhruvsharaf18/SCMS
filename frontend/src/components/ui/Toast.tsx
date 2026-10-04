@@ -69,17 +69,17 @@ const icons: Record<ToastVariant, typeof CheckCircle> = {
 }
 
 const variantStyles: Record<ToastVariant, string> = {
-  success: 'border-accent-green/30 bg-status-success',
-  error: 'border-accent-red/30 bg-status-error',
-  warning: 'border-accent-yellow/30 bg-status-warning',
-  info: 'border-primary-200 bg-status-info',
+  success: 'border-2 border-accent-green bg-status-success',
+  error: 'border-2 border-accent-red bg-status-error',
+  warning: 'border-2 border-accent-orange bg-status-warning',
+  info: 'border-2 border-accent-teal bg-status-info',
 }
 
 const iconColors: Record<ToastVariant, string> = {
   success: 'text-accent-green',
   error: 'text-accent-red',
-  warning: 'text-accent-yellow',
-  info: 'text-primary-500',
+  warning: 'text-accent-orange',
+  info: 'text-accent-teal',
 }
 
 function ToastItem({ data, onDismiss }: { data: ToastData; onDismiss: () => void }) {
@@ -89,15 +89,15 @@ function ToastItem({ data, onDismiss }: { data: ToastData; onDismiss: () => void
     <div
       role="alert"
       className={cn(
-        'pointer-events-auto flex items-center gap-3 rounded-2xl border px-4 py-3 shadow-raised animate-toast-in',
+        'pointer-events-auto flex items-center gap-3 rounded-2xl px-4 py-3 shadow-raised animate-toast-in',
         variantStyles[data.variant],
       )}
     >
       <Icon size={18} className={iconColors[data.variant]} />
-      <p className="flex-1 text-sm font-medium text-text-primary">{data.message}</p>
+      <p className="flex-1 text-sm font-semibold text-ink">{data.message}</p>
       <button
         onClick={onDismiss}
-        className="text-text-tertiary hover:text-text-primary transition-colors"
+        className="text-ink hover:opacity-75 transition-opacity"
         aria-label="Dismiss"
       >
         <X size={14} />

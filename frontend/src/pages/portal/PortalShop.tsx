@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
+import React, { useState, useMemo, useEffect } from 'react'
+import { useNavigate, Link, useSearchParams } from 'react-router-dom'
 import type {
   Product,
   ProductCategory,
@@ -18,6 +18,8 @@ import {
   calcDiscountPaise,
   calcShopTaxPaise,
 } from '../../lib/format'
+import { getProductPresentation } from '../../lib/product-presentation'
+import { useCart, type CartLine } from '../../lib/cart-context'
 import {
   Card,
   Button,
@@ -44,10 +46,7 @@ import {
   Search,
 } from 'lucide-react'
 
-interface CartItem {
-  product: Product
-  quantity: number
-}
+type CartItem = CartLine
 
 const CATEGORIES: { id: 'ALL' | ProductCategory; label: string }[] = [
   { id: 'ALL', label: 'All Items' },
@@ -78,9 +77,17 @@ export default function PortalShop() {
   const createOrderMutation = useCreateShopOrder()
   const { currentError, setSimulatedError } = useErrorSimulation()
 
-  // Cart state
-  const [cart, setCart] = useState<CartItem[]>([])
+  // Cart state (shared with the product page through CartProvider)
+  const { lines: cart, setLines: setCart } = useCart()
+  const [searchParams, setSearchParams] = useSearchParams()
   const [isCartOpen, setIsCartOpen] = useState(false)
+
+  useEffect(() => {
+    if (searchParams.get('cart') === 'open') {
+      setIsCartOpen(true)
+      setSearchParams({}, { replace: true })
+    }
+  }, [searchParams, setSearchParams])
   const [fulfilment, setFulfilment] = useState<ShopFulfilment>('PICKUP')
   const [deliveryAddress, setDeliveryAddress] = useState('')
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('ONLINE_MOCK')
@@ -173,7 +180,7 @@ export default function PortalShop() {
             const nextQty = item.quantity + delta
             if (nextQty <= 0) return null
             if (nextQty > Math.min(item.product.stock_qty, 20)) {
-              toast(`Only ${item.product.stock_qty} available in stock.`, 'warning')
+              toast(`You cannot add more than ${Math.min(item.product.stock_qty, 20)} of this item.`, 'warning')
               return item
             }
             return { ...item, quantity: nextQty }
@@ -364,17 +371,27 @@ export default function PortalShop() {
                   </div>
 
                   {/* Product Visual Frame */}
-                  <div className="w-full h-32 rounded-xl bg-canvas flex items-center justify-center border border-border-light group-hover:border-primary-200 transition-colors">
-                    <Package className="text-text-tertiary group-hover:text-primary-500 transition-colors" size={40} />
-                  </div>
+                  <Link to={`/shop/${product.id}`} className="block group">
+                    <div className="w-full h-32 rounded-xl bg-canvas flex items-center justify-center border border-border-light group-hover:border-primary-200 transition-colors overflow-hidden">
+                      {getProductPresentation(product.sku).imagePath ? (
+                        <img
+                          src={getProductPresentation(product.sku).imagePath}
+                          alt={getProductPresentation(product.sku).imageAlt}
+                          className="w-full h-full object-contain p-2"
+                        />
+                      ) : (
+                        <Package className="text-text-tertiary group-hover:text-primary-500 transition-colors" size={40} />
+                      )}
+                    </div>
+                  </Link>
 
                   {/* Product Info */}
-                  <div>
-                    <h3 className="font-bold text-text-primary text-base line-clamp-1">
+                  <Link to={`/shop/${product.id}`} className="block group">
+                    <h3 className="font-bold text-text-primary text-base line-clamp-1 group-hover:text-primary-600 transition-colors">
                       {product.name}
                     </h3>
                     <p className="text-xs text-text-tertiary mt-0.5">SKU: {product.sku}</p>
-                  </div>
+                  </Link>
 
                   {/* Pricing */}
                   <div className="pt-1">
@@ -663,14 +680,14 @@ export default function PortalShop() {
 
               {/* Dev Simulation Error Box */}
               {currentError && (
-                <div className="p-2.5 bg-accent-yellow/10 border border-accent-yellow/30 rounded-xl flex items-center justify-between text-xs">
-                  <div className="flex items-center gap-1.5 text-accent-yellow font-medium">
-                    <AlertTriangle size={14} />
+                <div className="p-2.5 bg-status-warning border border-status-warning-accent rounded-xl flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-1.5 text-ink font-medium">
+                    <AlertTriangle size={14} className="text-status-warning-icon" />
                     <span>Mock Error Active: {currentError}</span>
                   </div>
                   <button
                     onClick={() => setSimulatedError(null)}
-                    className="text-accent-yellow hover:underline font-bold text-[10px]"
+                    className="text-ink hover:underline font-bold text-[10px]"
                   >
                     Clear
                   </button>

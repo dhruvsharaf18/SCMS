@@ -14,6 +14,7 @@ import {
 import { Button, Card, EmptyState, Skeleton } from '../../components/ui'
 import { usePublicProducts } from '../../api/hooks'
 import { formatMoney } from '../../lib/format'
+import { getProductPresentation } from '../../lib/product-presentation'
 import type { ProductCategory } from '../../api/types'
 
 const CATEGORIES: { id: 'ALL' | ProductCategory; label: string }[] = [
@@ -80,9 +81,9 @@ export default function ShopPage() {
       </div>
 
       {/* ── Member Discount Information Banner ───────────────────────────── */}
-      <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-primary-50 to-primary-100/50 border border-primary-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs shadow-soft">
+      <div className="p-4 sm:p-5 rounded-2xl bg-surface border border-border-light flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs shadow-soft text-ink">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-primary-500 text-white flex items-center justify-center shrink-0">
+          <div className="w-9 h-9 rounded-xl bg-primary-500 text-ink border border-ink flex items-center justify-center shrink-0">
             <Sparkles size={18} />
           </div>
           <div>
@@ -202,20 +203,30 @@ export default function ShopPage() {
                     </span>
                   </div>
 
-                  {/* Visual Placeholder Frame */}
-                  <div className="w-full h-32 rounded-xl bg-canvas flex items-center justify-center border border-border-light group-hover:border-primary-200 transition-colors">
-                    <Package className="text-text-tertiary group-hover:text-primary-500 transition-colors" size={38} />
-                  </div>
+                  {/* Visual Image / Frame */}
+                  <Link to={`/shop/${product.id}`} className="block group">
+                    <div className="w-full h-32 rounded-xl bg-canvas flex items-center justify-center border border-border-light group-hover:border-primary-200 transition-colors overflow-hidden">
+                      {getProductPresentation(product.sku).imagePath ? (
+                        <img
+                          src={getProductPresentation(product.sku).imagePath}
+                          alt={getProductPresentation(product.sku).imageAlt}
+                          className="w-full h-full object-contain p-2"
+                        />
+                      ) : (
+                        <Package className="text-text-tertiary group-hover:text-primary-500 transition-colors" size={38} />
+                      )}
+                    </div>
+                  </Link>
 
                   {/* Product Details */}
-                  <div>
-                    <h3 className="font-bold text-text-primary text-base line-clamp-1">
+                  <Link to={`/shop/${product.id}`} className="block group">
+                    <h3 className="font-bold text-text-primary text-base line-clamp-1 group-hover:text-primary-600 transition-colors">
                       {product.name}
                     </h3>
                     <p className="text-xs text-text-tertiary mt-0.5 line-clamp-2">
                       {product.description || product.variant || `SKU: ${product.sku}`}
                     </p>
-                  </div>
+                  </Link>
 
                   {/* Price */}
                   <div className="pt-1">
@@ -230,15 +241,16 @@ export default function ShopPage() {
 
                 {/* Card CTA */}
                 <div className="p-4 pt-0">
-                  <Button
-                    variant="secondary"
-                    onClick={() => navigate('/login')}
-                    disabled={!product.in_stock}
-                    className="w-full text-xs font-bold min-h-[44px] gap-1.5"
-                  >
-                    <LogIn size={14} />
-                    <span>{product.in_stock ? 'Log in to Order' : 'Out of Stock'}</span>
-                  </Button>
+                  <Link to={`/shop/${product.id}`}>
+                    <Button
+                      variant="secondary"
+                      disabled={!product.in_stock}
+                      className="w-full text-xs font-bold min-h-[44px] gap-1.5"
+                    >
+                      <LogIn size={14} />
+                      <span>{product.in_stock ? 'View Product' : 'Out of Stock'}</span>
+                    </Button>
+                  </Link>
                 </div>
               </Card>
             )

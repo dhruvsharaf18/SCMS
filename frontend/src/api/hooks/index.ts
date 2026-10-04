@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import type {
   Court,
@@ -54,62 +55,56 @@ import type {
   PaginatedNotifications,
   UnreadCountResponse,
   ApiError,
+  SocialParticipant,
+  SocialSessionCreateInput,
+  CourtCreateInput,
+  CourtUpdateInput,
+  PaginatedAuditLogs,
 } from '../types'
-import { api } from '../client'
+import { api, ApiError as HttpError } from '../client'
+import { useAuth } from '../../hooks/useAuth'
+import { getTodayIST } from '../../lib/format'
 import {
-  getMockCourtAvailability,
-  getMockBookings,
-  createMockBooking,
-  cancelMockBooking,
-  updateMockBookingStatus,
-  payMockBooking,
-  getMockMembers,
-  getMockMember,
-  getMockMemberByCode,
-  createMockMember,
-  getMockProducts,
-  getMockLowStockProducts,
-  createMockShopOrder,
-  restockMockProduct,
-  createMockProduct,
-  updateMockProduct,
-  getMockMenuItems,
-  getMockBarTables,
-  getMockBarOrders,
-  createMockBarOrder,
-  addMockBarOrderItems,
-  setMockKitchenStatus,
-  payMockBarOrder,
-  putMockOrderOnTab,
-  settleMockTabs,
-  getMockBarDailyReport,
-  getMockDashboardSummary,
-  getMockRevenueSeries,
-  getMockPayments,
-  refundMockPayment,
-  getMockSocialSessions,
-  joinMockSocialSession,
-  leaveMockSocialSession,
-  getMockMyBookings,
-  getMockMyPayments,
-  getMockMyOrders,
-  cancelMockShopOrder,
-  getMockCourts,
-  getMockPlans,
-  getMockCourtPrices,
-  getMockPublicAvailability,
-  getMockPublicProducts,
-  submitMockPublicEnquiry,
-  setSimulatedError,
-  getSimulatedError,
-} from '../../mocks/store'
+  toMember,
+  toPublicProduct,
+  publicToProduct,
+  toShopOrder,
+  historyToPayment,
+  toSocialSession,
+  toPublicAvailability,
+  type MemberApi,
+  type PublicProductApi,
+  type ShopOrderApi,
+  type SocialSessionApi,
+  type PublicAvailabilityApi,
+} from '../mappers'
 
 const USE_MOCKS = import.meta.env.VITE_USE_MOCKS === 'true'
 
+/** The mock store is only fetched in mock mode, so production bundles never contain it. */
+const loadMocks = () => import('../../mocks/store')
+
+const STAFF_SHOP_ROLES = ['OWNER', 'MANAGER', 'FRONT_DESK']
+
+interface Page<T> {
+  items: T[]
+  total: number
+  page: number
+  page_size: number
+}
+
 // ── Dev Error Simulation Toggle ────────────────────────────────────────────
+let simulatedErrorCode: string | null = null
+
 export function useErrorSimulation() {
+  const [currentError, setCurrentError] = useState<string | null>(simulatedErrorCode)
+  const setSimulatedError = (code: string | null) => {
+    simulatedErrorCode = code
+    setCurrentError(code)
+    if (USE_MOCKS) void loadMocks().then((m) => m.setSimulatedError(code))
+  }
   return {
-    currentError: getSimulatedError(),
+    currentError,
     setSimulatedError,
     clearError: () => setSimulatedError(null),
   }
@@ -122,10 +117,35 @@ export function useCourts(sport?: Sport) {
     queryFn: async () => {
       if (USE_MOCKS) {
         await new Promise((r) => setTimeout(r, 60))
-        return getMockCourts(sport)
+        return (await loadMocks()).getMockCourts(sport)
       }
       return api.get<Court[]>(`/courts${sport ? `?sport=${sport}` : ''}`)
     },
+  })
+}
+
+/** Courts admin list: inactive courts included (OWNER / MANAGER page). */
+export function useAllCourts(options?: { enabled?: boolean }) {
+  return useQuery<Court[], ApiError>({
+    queryKey: ['courts', 'all'],
+    queryFn: () => api.get<Court[]>('/courts?include_inactive=true'),
+    enabled: options?.enabled ?? true,
+  })
+}
+
+export function useCreateCourt() {
+  const qc = useQueryClient()
+  return useMutation<Court, ApiError, CourtCreateInput>({
+    mutationFn: (input) => api.post<Court>('/courts', input),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['courts'] }),
+  })
+}
+
+export function useUpdateCourt() {
+  const qc = useQueryClient()
+  return useMutation<Court, ApiError, { id: number; changes: CourtUpdateInput }>({
+    mutationFn: ({ id, changes }) => api.patch<Court>(`/courts/${id}`, changes),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['courts'] }),
   })
 }
 
@@ -135,7 +155,7 @@ export function useCourtAvailability(date: string, sport?: Sport, memberId?: num
     queryFn: async () => {
       if (USE_MOCKS) {
         await new Promise((r) => setTimeout(r, 60))
-        return getMockCourtAvailability(date, sport, memberId)
+        return (await loadMocks()).getMockCourtAvailability(date, sport, memberId)
       }
       const params = new URLSearchParams()
       if (date) params.append('date', date)
@@ -153,7 +173,7 @@ export function useBookings(filters?: { date?: string; court_id?: number; member
     queryFn: async () => {
       if (USE_MOCKS) {
         await new Promise((r) => setTimeout(r, 60))
-        return getMockBookings(filters)
+        return (await loadMocks()).getMockBookings(filters)
       }
       const params = new URLSearchParams()
       params.append('page_size', String(filters?.page_size ?? 100))
@@ -175,7 +195,7 @@ export function useCreateBooking() {
     mutationFn: async (input) => {
       if (USE_MOCKS) {
         await new Promise((r) => setTimeout(r, 100))
-        return createMockBooking(input)
+        return (await loadMocks()).createMockBooking(input)
       }
       return api.post<Booking>('/bookings', input)
     },
@@ -193,7 +213,7 @@ export function useCancelBooking() {
     mutationFn: async ({ id, reason, refund }) => {
       if (USE_MOCKS) {
         await new Promise((r) => setTimeout(r, 80))
-        return cancelMockBooking(id, reason)
+        return (await loadMocks()).cancelMockBooking(id, reason)
       }
       return api.post<BookingCancelResponse>(`/bookings/${id}/cancel`, { reason, refund })
     },
@@ -211,7 +231,7 @@ export function useUpdateBookingStatus() {
     mutationFn: async ({ id, status }) => {
       if (USE_MOCKS) {
         await new Promise((r) => setTimeout(r, 80))
-        return updateMockBookingStatus(id, status)
+        return (await loadMocks()).updateMockBookingStatus(id, status)
       }
       return api.post<Booking>(`/bookings/${id}/status`, { status })
     },
@@ -230,7 +250,7 @@ export function usePayBooking() {
     mutationFn: async ({ id, method }) => {
       if (USE_MOCKS) {
         await new Promise((r) => setTimeout(r, 80))
-        return payMockBooking(id, method)
+        return (await loadMocks()).payMockBooking(id, method)
       }
       return api.post<Booking>(`/bookings/${id}/pay`, { payment_method: method })
     },
@@ -246,8 +266,17 @@ export function useMembers(params?: { q?: string; status?: string; tier?: string
   return useQuery<Member[], ApiError>({
     queryKey: ['members', params],
     queryFn: async () => {
-      await new Promise((r) => setTimeout(r, 60))
-      return getMockMembers(params)
+      if (USE_MOCKS) {
+        await new Promise((r) => setTimeout(r, 60))
+        return (await loadMocks()).getMockMembers(params)
+      }
+      const search = new URLSearchParams({ page_size: '100' })
+      if (params?.q?.trim()) search.set('q', params.q.trim())
+      if (params?.status) search.set('status', params.status)
+      const res = await api.get<Page<MemberApi>>(`/members?${search.toString()}`)
+      const members = res.items.map(toMember)
+      // The API has no tier filter; tier is derived from the current plan.
+      return params?.tier ? members.filter((m) => m.tier === params.tier) : members
     },
   })
 }
@@ -258,9 +287,9 @@ export function useMember(id: number) {
     queryFn: async () => {
       if (USE_MOCKS) {
         await new Promise((r) => setTimeout(r, 60))
-        return getMockMember(id)
+        return (await loadMocks()).getMockMember(id)
       }
-      return api.get<Member>(`/members/${id}`)
+      return toMember(await api.get<MemberApi>(`/members/${id}`))
     },
     enabled: id > 0,
   })
@@ -284,8 +313,16 @@ export function useMemberByCode(code: string) {
     queryKey: ['member', 'code', code],
     queryFn: async () => {
       if (!code.trim()) return null
-      await new Promise((r) => setTimeout(r, 60))
-      return getMockMemberByCode(code)
+      if (USE_MOCKS) {
+        await new Promise((r) => setTimeout(r, 60))
+        return (await loadMocks()).getMockMemberByCode(code)
+      }
+      try {
+        return toMember(await api.get<MemberApi>(`/members/by-code/${encodeURIComponent(code.trim())}`))
+      } catch (err) {
+        if (err instanceof HttpError && err.status === 404) return null
+        throw err
+      }
     },
     enabled: code.trim().length >= 3,
   })
@@ -295,8 +332,12 @@ export function useCreateMember() {
   const qc = useQueryClient()
   return useMutation<Member, ApiError, MemberCreateInput>({
     mutationFn: async (input) => {
-      await new Promise((r) => setTimeout(r, 100))
-      return createMockMember(input)
+      if (USE_MOCKS) {
+        await new Promise((r) => setTimeout(r, 100))
+        return (await loadMocks()).createMockMember(input)
+      }
+      const created = await api.post<MemberApi & { payment_id: number | null }>('/members', input)
+      return toMember({ ...created, phone: input.phone, email: input.email ?? null, dob: input.dob ?? null })
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['members'] })
@@ -306,13 +347,26 @@ export function useCreateMember() {
 }
 
 // ── Products & Shop Hooks ──────────────────────────────────────────────────
+/**
+ * Staff read the full catalogue (`/products`, with stock); members may only read the
+ * public one, so their products carry a line cap instead of a stock count (S-15).
+ */
 export function useProducts(category?: string) {
+  const { user } = useAuth()
+  const staffCatalogue = !!user && STAFF_SHOP_ROLES.includes(user.role)
   return useQuery<Product[], ApiError>({
-    queryKey: ['products', category],
+    queryKey: ['products', staffCatalogue ? 'staff' : 'member', category],
     queryFn: async () => {
-      await new Promise((r) => setTimeout(r, 60))
-      return getMockProducts(category)
+      if (USE_MOCKS) {
+        await new Promise((r) => setTimeout(r, 60))
+        return (await loadMocks()).getMockProducts(category)
+      }
+      const query = category && category !== 'ALL' ? `?category=${category}` : ''
+      if (staffCatalogue) return api.get<Product[]>(`/products${query}`)
+      const items = await api.get<PublicProductApi[]>(`/public/products${query}`)
+      return items.map((p) => publicToProduct(toPublicProduct(p)))
     },
+    enabled: !!user,
   })
 }
 
@@ -320,8 +374,11 @@ export function useLowStockProducts() {
   return useQuery<Product[], ApiError>({
     queryKey: ['products', 'low-stock'],
     queryFn: async () => {
-      await new Promise((r) => setTimeout(r, 60))
-      return getMockLowStockProducts()
+      if (USE_MOCKS) {
+        await new Promise((r) => setTimeout(r, 60))
+        return (await loadMocks()).getMockLowStockProducts()
+      }
+      return api.get<Product[]>('/products/low-stock')
     },
   })
 }
@@ -330,8 +387,12 @@ export function useCreateShopOrder() {
   const qc = useQueryClient()
   return useMutation<ShopOrder, ApiError, ShopOrderCreateInput>({
     mutationFn: async (input) => {
-      await new Promise((r) => setTimeout(r, 100))
-      return createMockShopOrder(input)
+      if (USE_MOCKS) {
+        await new Promise((r) => setTimeout(r, 100))
+        return (await loadMocks()).createMockShopOrder(input)
+      }
+      const order = await api.post<ShopOrderApi>('/shop/orders', input)
+      return toShopOrder(order, new Date().toISOString())
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['products'] })
@@ -344,10 +405,16 @@ export function useCreateShopOrder() {
 
 export function useCancelShopOrder() {
   const qc = useQueryClient()
-  return useMutation<ShopOrder, ApiError, { orderId: number; reason?: string }>({
+  return useMutation<{ id: number; status: string }, ApiError, { orderId: number; reason?: string }>({
     mutationFn: async ({ orderId, reason }) => {
-      await new Promise((r) => setTimeout(r, 100))
-      return cancelMockShopOrder(orderId, reason)
+      if (USE_MOCKS) {
+        await new Promise((r) => setTimeout(r, 100))
+        return (await loadMocks()).cancelMockShopOrder(orderId, reason)
+      }
+      return api.post<{ id: number; status: string; refunded: boolean; refund_paise: number }>(
+        `/shop/orders/${orderId}/cancel`,
+        reason ? { reason } : {},
+      )
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['products'] })
@@ -360,10 +427,13 @@ export function useCancelShopOrder() {
 
 export function useRestockProduct() {
   const qc = useQueryClient()
-  return useMutation<Product, ApiError, { id: number; qty: number }>({
-    mutationFn: async ({ id, qty }) => {
-      await new Promise((r) => setTimeout(r, 80))
-      return restockMockProduct(id, qty)
+  return useMutation<Product, ApiError, { id: number; qty: number; note?: string }>({
+    mutationFn: async ({ id, qty, note }) => {
+      if (USE_MOCKS) {
+        await new Promise((r) => setTimeout(r, 80))
+        return (await loadMocks()).restockMockProduct(id, qty)
+      }
+      return api.post<Product>(`/products/${id}/restock`, note?.trim() ? { qty, note: note.trim() } : { qty })
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['products'] })
@@ -376,8 +446,13 @@ export function useCreateProduct() {
   const qc = useQueryClient()
   return useMutation<Product, ApiError, ProductCreateInput>({
     mutationFn: async (input) => {
-      await new Promise((r) => setTimeout(r, 100))
-      return createMockProduct(input)
+      if (USE_MOCKS) {
+        await new Promise((r) => setTimeout(r, 100))
+        return (await loadMocks()).createMockProduct(input)
+      }
+      // ProductCreate has no is_active (new products start active) and forbids extra fields.
+      const { is_active: _ignored, ...body } = input
+      return api.post<Product>('/products', body)
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['products'] })
@@ -390,8 +465,13 @@ export function useUpdateProduct() {
   const qc = useQueryClient()
   return useMutation<Product, ApiError, { id: number; data: ProductUpdateInput }>({
     mutationFn: async ({ id, data }) => {
-      await new Promise((r) => setTimeout(r, 80))
-      return updateMockProduct(id, data)
+      if (USE_MOCKS) {
+        await new Promise((r) => setTimeout(r, 80))
+        return (await loadMocks()).updateMockProduct(id, data)
+      }
+      // SKU is immutable and stock only moves through restock/sales; ProductUpdate forbids both.
+      const { sku: _sku, stock_qty: _stock, ...body } = data
+      return api.patch<Product>(`/products/${id}`, body)
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['products'] })
@@ -407,7 +487,7 @@ export function useMenuItems(category?: string) {
     queryFn: async () => {
       if (USE_MOCKS) {
         await new Promise((r) => setTimeout(r, 60))
-        return getMockMenuItems(category)
+        return (await loadMocks()).getMockMenuItems(category)
       }
       return api.get<MenuItem[]>(`/menu-items${category && category !== 'ALL' ? `?category=${category}` : ''}`)
     },
@@ -476,7 +556,7 @@ export function useBarTables() {
     queryFn: async () => {
       if (USE_MOCKS) {
         await new Promise((r) => setTimeout(r, 60))
-        return getMockBarTables()
+        return (await loadMocks()).getMockBarTables()
       }
       return api.get<BarTable[]>('/bar/tables')
     },
@@ -493,7 +573,7 @@ export function useBarOrders(
     queryFn: async () => {
       if (USE_MOCKS) {
         await new Promise((r) => setTimeout(r, 60))
-        return getMockBarOrders(filters)
+        return (await loadMocks()).getMockBarOrders(filters)
       }
       const params = new URLSearchParams()
       if (filters?.kitchen_status) params.set('kitchen_status', filters.kitchen_status)
@@ -515,7 +595,7 @@ export function useCreateBarOrder() {
     mutationFn: async (input) => {
       if (USE_MOCKS) {
         await new Promise((r) => setTimeout(r, 100))
-        return createMockBarOrder(input)
+        return (await loadMocks()).createMockBarOrder(input)
       }
       return api.post<BarOrder>('/bar/orders', input)
     },
@@ -533,7 +613,7 @@ export function useAddBarOrderItems() {
     mutationFn: async ({ orderId, items }) => {
       if (USE_MOCKS) {
         await new Promise((r) => setTimeout(r, 80))
-        return addMockBarOrderItems(orderId, items)
+        return (await loadMocks()).addMockBarOrderItems(orderId, items)
       }
       return api.post<BarOrder>(`/bar/orders/${orderId}/items`, { items })
     },
@@ -550,7 +630,7 @@ export function useSetKitchenStatus() {
     mutationFn: async ({ orderId, status }) => {
       if (USE_MOCKS) {
         await new Promise((r) => setTimeout(r, 80))
-        return setMockKitchenStatus(orderId, status)
+        return (await loadMocks()).setMockKitchenStatus(orderId, status)
       }
       return api.post<BarOrder>(`/bar/orders/${orderId}/kitchen-status`, { status })
     },
@@ -566,7 +646,7 @@ export function usePayBarOrder() {
     mutationFn: async ({ orderId, method }) => {
       if (USE_MOCKS) {
         await new Promise((r) => setTimeout(r, 80))
-        return payMockBarOrder(orderId, method)
+        return (await loadMocks()).payMockBarOrder(orderId, method)
       }
       return api.post<BarOrder>(`/bar/orders/${orderId}/pay`, { method })
     },
@@ -585,7 +665,7 @@ export function usePutOnTab() {
     mutationFn: async ({ orderId }) => {
       if (USE_MOCKS) {
         await new Promise((r) => setTimeout(r, 80))
-        return putMockOrderOnTab(orderId)
+        return (await loadMocks()).putMockOrderOnTab(orderId)
       }
       return api.post<BarOrder>(`/bar/orders/${orderId}/tab`)
     },
@@ -602,7 +682,7 @@ export function useSettleTabs() {
     mutationFn: async ({ memberId, orderIds, method }) => {
       if (USE_MOCKS) {
         await new Promise((r) => setTimeout(r, 100))
-        return settleMockTabs(memberId, method)
+        return (await loadMocks()).settleMockTabs(memberId, method)
       }
       let targetOrderIds = orderIds
       if (!targetOrderIds || targetOrderIds.length === 0) {
@@ -633,7 +713,7 @@ export function useBarDailyReport(date?: string) {
     queryFn: async () => {
       if (USE_MOCKS) {
         await new Promise((r) => setTimeout(r, 60))
-        return getMockBarDailyReport(date)
+        return (await loadMocks()).getMockBarDailyReport(date)
       }
       return api.get<BarDailyReport>(`/bar/reports/daily${date ? `?date=${date}` : ''}`)
     },
@@ -647,7 +727,7 @@ export function useDashboardSummary(period: 'today' | 'week' | 'month' = 'today'
     queryFn: async () => {
       if (USE_MOCKS) {
         await new Promise((r) => setTimeout(r, 60))
-        return getMockDashboardSummary(period)
+        return (await loadMocks()).getMockDashboardSummary(period)
       }
       return api.get<DashboardSummary>(`/dashboard/summary?period=${period}`)
     },
@@ -660,7 +740,7 @@ export function useRevenueSeries(period: 'today' | 'week' | 'month' = 'week') {
     queryFn: async () => {
       if (USE_MOCKS) {
         await new Promise((r) => setTimeout(r, 60))
-        return getMockRevenueSeries()
+        return (await loadMocks()).getMockRevenueSeries()
       }
       const res = await api.get<RevenueSeries>(`/dashboard/revenue-series?period=${period}`)
       return (res.days || []).map((d) => ({
@@ -689,7 +769,7 @@ export function usePayments(filters?: {
     queryFn: async () => {
       if (USE_MOCKS) {
         await new Promise((r) => setTimeout(r, 60))
-        const items = getMockPayments(filters)
+        const items = (await loadMocks()).getMockPayments(filters)
         return {
           items,
           total: items.length,
@@ -763,7 +843,7 @@ export function useRefundPayment() {
     mutationFn: async ({ paymentId, reason }) => {
       if (USE_MOCKS) {
         await new Promise((r) => setTimeout(r, 100))
-        return refundMockPayment(paymentId, reason)
+        return (await loadMocks()).refundMockPayment(paymentId, reason)
       }
       return api.post<Payment>(`/payments/${paymentId}/refund`, reason ? { reason } : {})
     },
@@ -775,24 +855,103 @@ export function useRefundPayment() {
 }
 
 // ── Social Sessions Hooks (SRS 3.2.6) ──────────────────────────────────────
+/**
+ * The API never tells a member which sessions they joined (the roster is staff-only, S-15),
+ * so joins made in this tab are remembered here; ALREADY_JOINED also marks a session.
+ */
+const joinedSessionIds = new Set<number>()
+
 export function useSocialSessions(params?: { from?: string; to?: string; memberId?: number }) {
   return useQuery<SocialSession[], ApiError>({
     queryKey: ['social-sessions', params],
     queryFn: async () => {
-      await new Promise((r) => setTimeout(r, 60))
-      return getMockSocialSessions(params?.from, params?.to, params?.memberId)
+      if (USE_MOCKS) {
+        await new Promise((r) => setTimeout(r, 60))
+        return (await loadMocks()).getMockSocialSessions(params?.from, params?.to, params?.memberId)
+      }
+      const search = new URLSearchParams()
+      if (params?.from) search.set('from', params.from)
+      if (params?.to) search.set('to', params.to)
+      const [sessions, courts] = await Promise.all([
+        api.get<SocialSessionApi[]>(`/social-sessions${search.toString() ? `?${search.toString()}` : ''}`),
+        api.get<Court[]>('/courts?include_inactive=true'),
+      ])
+      return sessions
+        .filter((s) => s.status !== 'CANCELLED')
+        .map((s) => toSocialSession(s, courts, joinedSessionIds.has(s.id)))
+    },
+  })
+}
+
+/** Staff view: every session in the range, cancelled ones included. */
+export function useStaffSocialSessions(params: { from?: string; to?: string }, options?: { enabled?: boolean }) {
+  return useQuery<SocialSession[], ApiError>({
+    queryKey: ['social-sessions', 'staff', params],
+    queryFn: async () => {
+      const search = new URLSearchParams()
+      if (params.from) search.set('from', params.from)
+      if (params.to) search.set('to', params.to)
+      const [sessions, courts] = await Promise.all([
+        api.get<SocialSessionApi[]>(`/social-sessions${search.toString() ? `?${search.toString()}` : ''}`),
+        api.get<Court[]>('/courts?include_inactive=true'),
+      ])
+      return sessions.map((s) => toSocialSession(s, courts, false))
+    },
+    enabled: options?.enabled ?? true,
+  })
+}
+
+export function useSocialParticipants(sessionId: number | null) {
+  return useQuery<SocialParticipant[], ApiError>({
+    queryKey: ['social-sessions', 'participants', sessionId],
+    queryFn: () => api.get<SocialParticipant[]>(`/social-sessions/${sessionId}/participants`),
+    enabled: !!sessionId,
+  })
+}
+
+export function useCreateSocialSession() {
+  const qc = useQueryClient()
+  return useMutation<SocialSessionApi, ApiError, SocialSessionCreateInput>({
+    mutationFn: (input) => api.post<SocialSessionApi>('/social-sessions', input),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['social-sessions'] })
+      qc.invalidateQueries({ queryKey: ['courts', 'availability'] })
+    },
+  })
+}
+
+export function useCancelSocialSession() {
+  const qc = useQueryClient()
+  return useMutation<SocialSessionApi, ApiError, number>({
+    mutationFn: (id) => api.delete<SocialSessionApi>(`/social-sessions/${id}`),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['social-sessions'] })
+      qc.invalidateQueries({ queryKey: ['courts', 'availability'] })
     },
   })
 }
 
 export function useJoinSocialSession() {
   const qc = useQueryClient()
-  return useMutation<SocialSession, ApiError, SocialSessionJoinInput>({
+  return useMutation<unknown, ApiError, SocialSessionJoinInput>({
     mutationFn: async ({ sessionId, memberId, memberName }) => {
-      await new Promise((r) => setTimeout(r, 100))
-      return joinMockSocialSession(sessionId, memberId, memberName)
+      if (USE_MOCKS) {
+        await new Promise((r) => setTimeout(r, 100))
+        return (await loadMocks()).joinMockSocialSession(sessionId, memberId, memberName)
+      }
+      try {
+        // The server binds a MEMBER caller to their own member id, so the body stays empty.
+        return await api.post<SocialParticipant>(`/social-sessions/${sessionId}/join`, {})
+      } catch (err) {
+        if (err instanceof HttpError && err.code === 'ALREADY_JOINED') joinedSessionIds.add(sessionId)
+        throw err
+      }
     },
-    onSuccess: () => {
+    onSuccess: (_data, { sessionId }) => {
+      joinedSessionIds.add(sessionId)
+      qc.invalidateQueries({ queryKey: ['social-sessions'] })
+    },
+    onError: () => {
       qc.invalidateQueries({ queryKey: ['social-sessions'] })
     },
   })
@@ -800,12 +959,21 @@ export function useJoinSocialSession() {
 
 export function useLeaveSocialSession() {
   const qc = useQueryClient()
-  return useMutation<SocialSession, ApiError, { sessionId: number; memberId: number }>({
+  return useMutation<unknown, ApiError, { sessionId: number; memberId: number }>({
     mutationFn: async ({ sessionId, memberId }) => {
-      await new Promise((r) => setTimeout(r, 80))
-      return leaveMockSocialSession(sessionId, memberId)
+      if (USE_MOCKS) {
+        await new Promise((r) => setTimeout(r, 80))
+        return (await loadMocks()).leaveMockSocialSession(sessionId, memberId)
+      }
+      try {
+        return await api.post<void>(`/social-sessions/${sessionId}/leave`, {})
+      } catch (err) {
+        if (err instanceof HttpError && err.status === 404) joinedSessionIds.delete(sessionId)
+        throw err
+      }
     },
-    onSuccess: () => {
+    onSuccess: (_data, { sessionId }) => {
+      joinedSessionIds.delete(sessionId)
       qc.invalidateQueries({ queryKey: ['social-sessions'] })
     },
   })
@@ -819,7 +987,7 @@ export function useMyBookings(memberId?: number, filters?: { date?: string; stat
       if (USE_MOCKS) {
         if (!memberId) return []
         await new Promise((r) => setTimeout(r, 60))
-        return getMockMyBookings(memberId)
+        return (await loadMocks()).getMockMyBookings(memberId)
       }
       const params = new URLSearchParams()
       params.append('page_size', String(filters?.page_size ?? 100))
@@ -840,8 +1008,13 @@ export function useMyPayments(memberId?: number) {
     queryKey: ['payments', 'my', memberId],
     queryFn: async () => {
       if (!memberId) return []
-      await new Promise((r) => setTimeout(r, 60))
-      return getMockMyPayments(memberId)
+      if (USE_MOCKS) {
+        await new Promise((r) => setTimeout(r, 60))
+        return (await loadMocks()).getMockMyPayments(memberId)
+      }
+      // /payments is OWNER-only; a member's own ledger rows come from their history feed.
+      const res = await api.get<Page<MemberHistoryEvent>>(`/members/${memberId}/history?page_size=100`)
+      return res.items.filter((e) => e.kind === 'PAYMENT').map((e) => historyToPayment(e, memberId))
     },
     enabled: !!memberId,
   })
@@ -852,8 +1025,22 @@ export function useMyOrders(memberId?: number) {
     queryKey: ['shop', 'orders', 'my', memberId],
     queryFn: async () => {
       if (!memberId) return []
-      await new Promise((r) => setTimeout(r, 60))
-      return getMockMyOrders(memberId)
+      if (USE_MOCKS) {
+        await new Promise((r) => setTimeout(r, 60))
+        return (await loadMocks()).getMockMyOrders(memberId)
+      }
+      // ShopOrderOut has no timestamp; the member history feed carries it per order.
+      const orders = await api.get<Page<ShopOrderApi>>('/shop/orders?page_size=100')
+      const placedAt = new Map<number, string>()
+      for (let page = 1; page <= 10; page++) {
+        const history = await api.get<Page<MemberHistoryEvent>>(
+          `/members/${memberId}/history?page=${page}&page_size=100`,
+        )
+        for (const e of history.items) if (e.kind === 'SHOP_ORDER') placedAt.set(e.id, e.at)
+        const done = orders.items.every((o) => placedAt.has(o.id))
+        if (done || page * history.page_size >= history.total) break
+      }
+      return orders.items.map((o) => toShopOrder(o, placedAt.get(o.id) ?? ''))
     },
     enabled: !!memberId,
   })
@@ -866,7 +1053,7 @@ export function usePlans() {
     queryFn: async () => {
       if (USE_MOCKS) {
         await new Promise((r) => setTimeout(r, 60))
-        return getMockPlans()
+        return (await loadMocks()).getMockPlans()
       }
       return api.get<Plan[]>('/plans')
     },
@@ -877,8 +1064,13 @@ export function useCourtPrices() {
   return useQuery<CourtPrice[], ApiError>({
     queryKey: ['court-prices', 'public'],
     queryFn: async () => {
-      await new Promise((r) => setTimeout(r, 60))
-      return getMockCourtPrices()
+      if (USE_MOCKS) {
+        await new Promise((r) => setTimeout(r, 60))
+        return (await loadMocks()).getMockCourtPrices()
+      }
+      // CourtPriceOut has no id; the (sport, tier) pair is unique, so the index is a stable key.
+      const prices = await api.get<Omit<CourtPrice, 'id'>[]>('/court-prices')
+      return prices.map((p, i) => ({ ...p, id: i + 1 }))
     },
   })
 }
@@ -887,8 +1079,15 @@ export function usePublicAvailability(params?: { from?: string; days?: number; s
   return useQuery<PublicAvailabilityResponse, ApiError>({
     queryKey: ['availability', 'public', params],
     queryFn: async () => {
-      await new Promise((r) => setTimeout(r, 60))
-      return getMockPublicAvailability(params?.from, params?.days ?? 7, params?.sport)
+      if (USE_MOCKS) {
+        await new Promise((r) => setTimeout(r, 60))
+        return (await loadMocks()).getMockPublicAvailability(params?.from, params?.days ?? 7, params?.sport)
+      }
+      const from = params?.from ?? getTodayIST()
+      const search = new URLSearchParams({ from, days: String(params?.days ?? 7) })
+      if (params?.sport) search.set('sport', params.sport)
+      const res = await api.get<PublicAvailabilityApi>(`/public/availability?${search.toString()}`)
+      return toPublicAvailability(res, from)
     },
   })
 }
@@ -897,18 +1096,67 @@ export function usePublicProducts(category?: string) {
   return useQuery<PublicProduct[], ApiError>({
     queryKey: ['products', 'public', category],
     queryFn: async () => {
-      await new Promise((r) => setTimeout(r, 60))
-      return getMockPublicProducts(category)
+      if (USE_MOCKS) {
+        await new Promise((r) => setTimeout(r, 60))
+        return (await loadMocks()).getMockPublicProducts(category)
+      }
+      const query = category && category !== 'ALL' ? `?category=${category}` : ''
+      const items = await api.get<PublicProductApi[]>(`/public/products${query}`)
+      return items.map(toPublicProduct)
     },
+  })
+}
+
+/**
+ * Fetch a single public product by id. There is no public single-product endpoint,
+ * so it is picked from `/public/products`; null when the id is not in the catalogue.
+ * S-15: Response never includes stock_qty, only in_stock boolean.
+ */
+export function usePublicProduct(id: number | null) {
+  return useQuery<PublicProduct | null, ApiError>({
+    queryKey: ['products', 'public', 'detail', id],
+    queryFn: async () => {
+      if (!id) return null
+      if (USE_MOCKS) {
+        await new Promise((r) => setTimeout(r, 60))
+        return (await loadMocks()).getMockPublicProduct(id)
+      }
+      const items = await api.get<PublicProductApi[]>('/public/products')
+      const found = items.find((p) => p.id === id)
+      return found ? toPublicProduct(found) : null
+    },
+    enabled: id !== null && id > 0,
   })
 }
 
 export function useSubmitEnquiry() {
   return useMutation<PublicEnquiryResponse, ApiError, PublicEnquiryInput>({
     mutationFn: async (input) => {
-      await new Promise((r) => setTimeout(r, 120))
-      return submitMockPublicEnquiry(input)
+      if (USE_MOCKS) {
+        await new Promise((r) => setTimeout(r, 120))
+        return (await loadMocks()).submitMockPublicEnquiry(input)
+      }
+      return api.post<PublicEnquiryResponse>('/public/enquiries', input)
     },
+  })
+}
+
+// ── Audit log (OWNER, read-only) ───────────────────────────────────────────
+export function useAuditLogs(
+  filters: { action?: string; entity?: string; actor_id?: number; page: number; page_size: number },
+  options?: { enabled?: boolean },
+) {
+  return useQuery<PaginatedAuditLogs, ApiError>({
+    queryKey: ['audit-logs', filters],
+    queryFn: () => {
+      const search = new URLSearchParams({ page: String(filters.page), page_size: String(filters.page_size) })
+      if (filters.action) search.set('action', filters.action)
+      if (filters.entity) search.set('entity', filters.entity)
+      if (filters.actor_id) search.set('actor_id', String(filters.actor_id))
+      return api.get<PaginatedAuditLogs>(`/audit-logs?${search.toString()}`)
+    },
+    placeholderData: (prev) => prev,
+    enabled: options?.enabled ?? true,
   })
 }
 
@@ -1011,11 +1259,19 @@ export function useConvertLead() {
 // ── Notifications Hooks (SRS 3.2.11) ────────────────────────────────────────
 export function useNotifications(
   params?: { unread_only?: boolean; page?: number; page_size?: number },
-  options?: { refetchInterval?: number | false }
+  options?: {
+    enabled?: boolean
+    refetchInterval?: number | false
+    refetchIntervalInBackground?: boolean
+    staleTime?: number
+  }
 ) {
   return useQuery<PaginatedNotifications, ApiError>({
     queryKey: ['notifications', params],
-    refetchInterval: options?.refetchInterval ?? 30000,
+    enabled: options?.enabled ?? true,
+    refetchInterval: options?.refetchInterval ?? false,
+    refetchIntervalInBackground: options?.refetchIntervalInBackground ?? false,
+    staleTime: options?.staleTime ?? 0,
     queryFn: async () => {
       const searchParams = new URLSearchParams()
       if (params?.unread_only) searchParams.set('unread_only', 'true')
@@ -1027,10 +1283,16 @@ export function useNotifications(
   })
 }
 
-export function useUnreadNotificationsCount(options?: { refetchInterval?: number | false }) {
+export function useUnreadNotificationsCount(options?: {
+  enabled?: boolean
+  refetchInterval?: number | false
+  refetchIntervalInBackground?: boolean
+}) {
   return useQuery<UnreadCountResponse, ApiError>({
     queryKey: ['notifications', 'unread-count'],
-    refetchInterval: options?.refetchInterval ?? 30000,
+    enabled: options?.enabled ?? true,
+    refetchInterval: options?.refetchInterval ?? 60000,
+    refetchIntervalInBackground: options?.refetchIntervalInBackground ?? false,
     queryFn: async () => {
       return api.get<UnreadCountResponse>('/notifications/unread-count')
     },
@@ -1043,8 +1305,22 @@ export function useMarkNotificationRead() {
     mutationFn: async ({ notificationId }) => {
       return api.post<{ id: number; read_at: string }>(`/notifications/${notificationId}/read`)
     },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['notifications'] })
+    onSuccess: (data, { notificationId }) => {
+      // Update unread-count immediately in cache
+      qc.setQueryData<UnreadCountResponse>(['notifications', 'unread-count'], (old) => {
+        if (!old) return old
+        return { count: Math.max(0, old.count - 1) }
+      })
+      // Update notifications list items in cache
+      qc.setQueriesData<{ items: Notification[]; total?: number }>({ queryKey: ['notifications'] }, (old) => {
+        if (!old || !old.items) return old
+        return {
+          ...old,
+          items: old.items.map((item) =>
+            item.id === notificationId ? { ...item, read_at: data.read_at || new Date().toISOString() } : item
+          ),
+        }
+      })
       qc.invalidateQueries({ queryKey: ['notifications', 'unread-count'] })
     },
   })

@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200" role="img" aria-label="Club sports cap illustration">
+  <rect width="200" height="200" fill="#fef3c7" rx="16"/>
+  <!-- Cap brim -->
+  <path d="M 38 120 Q 50 130 100 130 Q 150 130 162 120 L 155 115 Q 140 125 100 125 Q 60 125 45 115 Z" fill="#1f2937"/>
+  <!-- Cap body dome -->
+  <path d="M 55 118 Q 55 65 100 60 Q 145 65 145 118 Z" fill="#f59e0b"/>
+  <!-- Cap panels seams -->
+  <path d="M 100 60 L 100 118" stroke="#d97706" stroke-width="1.5"/>
+  <path d="M 100 60 Q 75 70 55 100" stroke="#d97706" stroke-width="1"/>
+  <path d="M 100 60 Q 125 70 145 100" stroke="#d97706" stroke-width="1"/>
+  <!-- Adjustable strap back -->
+  <rect x="70" y="115" width="60" height="8" fill="#d97706" rx="3"/>
+  <!-- Button on top -->
+  <circle cx="100" cy="62" r="5" fill="#d97706" stroke="#b45309" stroke-width="1"/>
+  <!-- UV logo on front -->
+  <text x="100" y="100" text-anchor="middle" font-family="sans-serif" font-size="16" font-weight="bold" fill="#1f2937">CC</text>
+  <text x="100" y="185" text-anchor="middle" font-family="sans-serif" font-size="9" fill="#b45309">Club Cap</text>
+</svg>

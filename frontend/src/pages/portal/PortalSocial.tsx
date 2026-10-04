@@ -100,15 +100,15 @@ export default function PortalSocial() {
       </div>
 
       {/* ── Club Notice Banner ── */}
-      <div className="p-4 rounded-3xl bg-purple-50/80 border border-purple-200 text-xs text-purple-950 flex items-start gap-3 shadow-soft">
-        <div className="w-8 h-8 rounded-xl bg-purple-100 text-accent-purple flex items-center justify-center flex-shrink-0 mt-0.5">
+      <div className="p-4 rounded-3xl bg-surface border border-border-light text-xs text-ink flex items-start gap-3 shadow-soft">
+        <div className="w-8 h-8 rounded-xl bg-primary-500 text-ink border border-ink flex items-center justify-center flex-shrink-0 mt-0.5">
           <Sparkles size={18} />
         </div>
         <div className="space-y-1">
-          <p className="font-bold text-sm text-purple-900">
+          <p className="font-bold text-sm text-ink">
             How Social Sessions Work (SRS §3.2.6)
           </p>
-          <p className="text-[11px] text-purple-800 leading-relaxed">
+          <p className="text-[11px] text-ink leading-relaxed">
             Friday social sessions are coach-facilitated club mixers with rotational doubles play. Joining social sessions does <span className="font-bold">NOT</span> count against your 2-per-day court reservation quota. Free for Gold members!
           </p>
         </div>
@@ -217,9 +217,9 @@ export default function PortalSocial() {
                     <div
                       className={`h-full rounded-full transition-all duration-500 ${
                         isFull
-                          ? 'bg-accent-red'
+                          ? 'bg-ink'
                           : fillPct > 75
-                          ? 'bg-amber-500'
+                          ? 'bg-brand-purple'
                           : 'bg-primary-500'
                       }`}
                       style={{ width: `${fillPct}%` }}
@@ -233,7 +233,7 @@ export default function PortalSocial() {
                     {session.participants.slice(0, 4).map((p, idx) => (
                       <div
                         key={idx}
-                        className="inline-block h-7 w-7 rounded-full ring-2 ring-surface bg-primary-100 text-primary-700 flex items-center justify-center font-bold text-[10px]"
+                        className="inline-block h-7 w-7 rounded-full ring-2 ring-surface bg-surface-dark text-white flex items-center justify-center font-bold text-[10px] border border-ink"
                         title={p.member_name}
                       >
                         {p.member_name.slice(0, 2).toUpperCase()}
@@ -254,7 +254,7 @@ export default function PortalSocial() {
                         icon={LogOut}
                         disabled={leavingId === session.id}
                         onClick={() => handleLeave(session)}
-                        className="touch-target text-xs text-accent-red hover:bg-rose-50 hover:border-rose-200"
+                        className="touch-target text-xs text-ink hover:bg-status-error hover:border-status-error-accent"
                       >
                         {leavingId === session.id ? 'Leaving...' : 'Leave Session'}
                       </Button>

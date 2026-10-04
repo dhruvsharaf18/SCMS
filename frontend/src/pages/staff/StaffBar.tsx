@@ -307,21 +307,21 @@ export default function StaffBar() {
                         'relative flex flex-col items-center justify-center p-4 rounded-2xl border-2 transition-all min-h-[6rem]',
                         'hover:shadow-md active:scale-[0.98]',
                         isSelected
-                          ? 'border-primary-500 bg-primary-50 shadow-md'
+                          ? 'border-ink bg-primary-500 shadow-md text-ink'
                           : hasOrder
-                          ? 'border-accent-yellow/50 bg-amber-50/50'
-                          : 'border-border-light bg-canvas hover:border-primary-300',
+                          ? 'border-ink bg-primary-50 text-ink'
+                          : 'border-border-light bg-surface hover:border-primary-500',
                       )}
                     >
                       <span className="text-sm font-bold text-text-primary">{table.label}</span>
                       <span className="text-xs text-text-tertiary mt-0.5">{table.seats} seats</span>
                       {hasOrder && (
-                        <span className="mt-2 text-xs font-bold text-accent-yellow">
+                        <span className="mt-2 text-xs font-bold text-ink">
                           {formatMoney(table.open_order_total_paise ?? 0)}
                         </span>
                       )}
                       {hasOrder && (
-                        <span className="absolute top-2 right-2 w-2.5 h-2.5 rounded-full bg-accent-yellow animate-pulse" />
+                        <span className="absolute top-2 right-2 w-2.5 h-2.5 rounded-full bg-primary-500 border border-ink animate-pulse" />
                       )}
                     </button>
                   )
@@ -583,7 +583,7 @@ export default function StaffBar() {
                       </button>
                       <button
                         onClick={() => setCart((prev) => prev.filter((ci) => ci.menuItem.id !== c.menuItem.id))}
-                        className="w-7 h-7 flex items-center justify-center rounded-lg text-accent-red hover:bg-red-50 transition-colors ml-1"
+                        className="w-7 h-7 flex items-center justify-center rounded-lg text-ink hover:bg-status-error transition-colors ml-1"
                       >
                         <Trash2 size={14} />
                       </button>
@@ -601,7 +601,7 @@ export default function StaffBar() {
                   <span className="font-bold text-text-primary">{formatMoney(cartSubtotal)}</span>
                 </div>
                 {isMember && lookedUpMember?.membership && (
-                  <div className="flex justify-between text-sm text-accent-green">
+                  <div className="flex justify-between text-sm text-ink font-semibold">
                     <span>Member discount</span>
                     <span className="font-medium">
                       {lookedUpMember.membership.plan_code === 'GOLD'
@@ -615,7 +615,7 @@ export default function StaffBar() {
                 )}
 
                 {cartError && (
-                  <div className="flex items-center gap-2 p-2 rounded-xl bg-red-50 text-accent-red text-xs font-medium">
+                  <div className="flex items-center gap-2 p-2 rounded-xl bg-status-error text-ink border border-status-error-accent text-xs font-medium">
                     <AlertTriangle size={14} />
                     {cartError}
                   </div>

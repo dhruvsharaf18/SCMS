@@ -59,14 +59,42 @@ FullName = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1,
 # failure comes back as one VALIDATION_ERROR describing exactly what is missing.
 Password = Annotated[str, StringConstraints(min_length=1, max_length=128)]
 
+# Tighter bounds for the login form only — the RSA-3072 payload capacity is ~318 bytes
+# so we must ensure email + password + JSON framing never exceed that.
+LoginEmail = Annotated[
+    str,
+    StringConstraints(
+        strip_whitespace=True,
+        to_lower=True,
+        min_length=3,
+        max_length=120,
+        pattern=r"^[^@\s]+@[^@\s]+\.[^@\s]+$",
+    ),
+]
+LoginPassword = Annotated[str, StringConstraints(min_length=1, max_length=100)]
+
 
 class _Request(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
 
 class LoginRequest(_Request):
-    email: Email
-    password: Password
+    """Plaintext login (still accepted when LOGIN_ALLOW_PLAINTEXT=true)."""
+    email: LoginEmail
+    password: LoginPassword
+
+
+class EncryptedLoginRequest(_Request):
+    """RSA-OAEP encrypted login payload sent by the browser."""
+    key_id: str
+    data: str   # base64(RSA-OAEP-encrypt(json({email, password, ts})))
+
+
+class LoginKeyResponse(BaseModel):
+    """Public key info returned by GET /auth/login-key."""
+    key_id: str
+    public_key_spki_b64: str
+    expires_at: str
 
 
 class UserCreate(_Request):
@@ -119,6 +147,9 @@ class UserOut(BaseModel):
 
 class LoginResponse(BaseModel):
     user: UserSummary
+    # Part B: short-lived JWT the SPA keeps in JS memory only (never localStorage).
+    access_token: str = ""
+    token_type: str = "bearer"
 
 
 # ------------------------------------------------------------------ pagination (SRS 1.4)

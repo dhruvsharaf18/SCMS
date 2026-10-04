@@ -113,7 +113,7 @@ export default function PlansPage() {
                 }`}
               >
                 {isGold && (
-                  <span className="absolute -top-3.5 right-6 px-3.5 py-1 rounded-full bg-primary-500 text-white text-[11px] font-extrabold tracking-wide uppercase shadow-pill">
+                  <span className="absolute -top-3.5 right-6 px-3.5 py-1 rounded-full bg-primary-500 text-ink border border-ink text-[11px] font-extrabold tracking-wide uppercase shadow-pill">
                     Best Value
                   </span>
                 )}
@@ -122,7 +122,7 @@ export default function PlansPage() {
                   <div>
                     <h3 className="text-xl font-bold text-text-primary flex items-center gap-2">
                       {plan.name} Tier
-                      {isGold && <Trophy size={18} className="text-amber-500" />}
+                      {isGold && <Trophy size={18} className="text-primary-500" />}
                     </h3>
                     <p className="text-xs text-text-secondary mt-1">
                       {isGold

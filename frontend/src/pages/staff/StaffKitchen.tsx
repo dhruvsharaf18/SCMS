@@ -27,11 +27,11 @@ import {
 import { cn } from '../../lib/utils'
 
 // ── Kitchen status columns (forward-only: NEW→PREPARING→READY→SERVED) ──
-const KITCHEN_COLUMNS: { status: KitchenStatus; label: string; color: string; icon: typeof ChefHat }[] = [
-  { status: 'NEW', label: 'New', color: 'bg-blue-500', icon: Clock },
-  { status: 'PREPARING', label: 'Preparing', color: 'bg-amber-500', icon: Flame },
-  { status: 'READY', label: 'Ready', color: 'bg-green-500', icon: CheckCircle },
-  { status: 'SERVED', label: 'Served', color: 'bg-gray-400', icon: UtensilsCrossed },
+const KITCHEN_COLUMNS: { status: KitchenStatus; label: string; color: string; countBadge: string; icon: typeof ChefHat }[] = [
+  { status: 'NEW', label: 'New', color: 'bg-primary-500 text-ink border border-ink', countBadge: 'bg-ink text-primary-500', icon: Clock },
+  { status: 'PREPARING', label: 'Preparing', color: 'bg-brand-purple text-white border border-brand-purple-dark', countBadge: 'bg-white text-brand-purple', icon: Flame },
+  { status: 'READY', label: 'Ready', color: 'bg-ink text-white border border-black', countBadge: 'bg-white text-ink', icon: CheckCircle },
+  { status: 'SERVED', label: 'Served', color: 'bg-surface-dark text-white border border-ink', countBadge: 'bg-white text-ink', icon: UtensilsCrossed },
 ]
 
 const NEXT_STATUS: Record<string, KitchenStatus | null> = {
@@ -79,17 +79,9 @@ export default function StaffKitchen() {
   const { toast } = useToast()
   const { currentError, setSimulatedError } = useErrorSimulation()
 
-  // Fetch all orders, refresh frequently for kitchen board
+  // Fetch all orders with 5-second polling for live kitchen board (PRD F-07)
   const { data: allOrders, isLoading, refetch } = useBarOrders()
   const setStatusMut = useSetKitchenStatus()
-
-  // Auto-refresh every 15 seconds for live kitchen board
-  useEffect(() => {
-    const interval = setInterval(() => {
-      refetch()
-    }, 15000)
-    return () => clearInterval(interval)
-  }, [refetch])
 
   // Group orders by kitchen status
   const grouped = useMemo(() => {
@@ -178,7 +170,7 @@ export default function StaffKitchen() {
                 {/* Column header */}
                 <div
                   className={cn(
-                    'flex items-center justify-between px-4 py-2.5 rounded-2xl text-white',
+                    'flex items-center justify-between px-4 py-2.5 rounded-2xl',
                     col.color,
                   )}
                 >
@@ -186,7 +178,7 @@ export default function StaffKitchen() {
                     <Icon size={18} />
                     <span className="text-sm font-bold">{col.label}</span>
                   </div>
-                  <span className="flex items-center justify-center w-7 h-7 rounded-full bg-white/20 text-sm font-bold">
+                  <span className={cn('flex items-center justify-center w-7 h-7 rounded-full text-sm font-bold', col.countBadge)}>
                     {orders.length}
                   </span>
                 </div>
@@ -234,11 +226,11 @@ export default function StaffKitchen() {
                             <div key={i} className="flex items-start justify-between">
                               <div className="flex-1">
                                 <p className="text-sm text-text-primary">
-                                  <span className="font-bold text-primary-500 mr-1">{item.qty}×</span>
+                                  <span className="font-bold text-ink mr-1">{item.qty}×</span>
                                   {item.name}
                                 </p>
                                 {item.note && (
-                                  <p className="text-xs text-accent-yellow italic ml-5">📝 {item.note}</p>
+                                  <p className="text-xs text-ink italic ml-5">📝 {item.note}</p>
                                 )}
                               </div>
                             </div>
@@ -255,13 +247,13 @@ export default function StaffKitchen() {
                               }}
                               disabled={setStatusMut.isPending}
                               className={cn(
-                                'w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold text-white transition-all',
+                                'w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold transition-all border border-ink',
                                 'hover:opacity-90 active:opacity-80 disabled:opacity-50',
                                 col.status === 'NEW'
-                                  ? 'bg-amber-500'
+                                  ? 'bg-brand-purple text-white'
                                   : col.status === 'PREPARING'
-                                  ? 'bg-green-500'
-                                  : 'bg-gray-500',
+                                  ? 'bg-ink text-white'
+                                  : 'bg-primary-500 text-ink',
                               )}
                             >
                               {setStatusMut.isPending ? (

@@ -198,7 +198,7 @@ export default function StaffHR() {
                       <>
                         <p className="font-bold text-text-primary">
                           {employee.login_role ? ROLE_LABELS[employee.login_role] : ''}
-                          {employee.login_active === false && <span className="text-accent-red"> · disabled</span>}
+                          {employee.login_active === false && <span className="text-ink font-bold"> · disabled</span>}
                         </p>
                         <p className="text-[11px] text-text-secondary truncate" title={employee.login_email}>
                           {employee.login_email}
@@ -220,7 +220,7 @@ export default function StaffHR() {
                       size="sm"
                       icon={employee.is_active ? UserX : UserCheck}
                       onClick={() => setConfirmTarget(employee)}
-                      className={employee.is_active ? 'text-accent-red hover:bg-rose-50' : ''}
+                      className={employee.is_active ? 'text-ink hover:bg-status-error' : ''}
                     >
                       {employee.is_active ? 'Deactivate' : 'Reactivate'}
                     </Button>
@@ -300,7 +300,7 @@ export default function StaffHR() {
               </p>
             ))}
 
-          {formError && <p className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-800">{formError}</p>}
+          {formError && <p className="p-3 rounded-xl bg-status-error border border-status-error-accent text-xs text-ink font-semibold">{formError}</p>}
 
           <div className="flex items-center justify-end gap-3 pt-3 border-t border-border-light">
             <Button type="button" variant="ghost" onClick={() => setFormOpen(false)}>

@@ -10,3 +10,7 @@ node_modules/
 dist/
 
 backup/
+
+certs/
+*.pem
+*.key

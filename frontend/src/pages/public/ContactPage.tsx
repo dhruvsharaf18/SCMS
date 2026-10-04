@@ -41,10 +41,26 @@ export default function ContactPage() {
   const [serverError, setServerError] = useState<string | null>(null)
   const [isSuccess, setIsSuccess] = useState(false)
 
+  // Bot Protection: Throttling state (Security Item 12)
+  const [lastSubmitTime, setLastSubmitTime] = useState(0)
+  const [pageMountTime] = useState(() => Date.now())
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setValidationError(null)
     setServerError(null)
+
+    // Security Item 12: Client-side throttling
+    const now = Date.now()
+    if (now - lastSubmitTime < 3000) {
+      setValidationError('Please wait a few seconds before submitting again.')
+      return
+    }
+    if (now - pageMountTime < 1000) {
+      setValidationError('Submission too fast. Please take a moment to review your enquiry.')
+      return
+    }
+    setLastSubmitTime(now)
 
     // Client-side validations
     if (!name.trim()) {
@@ -127,7 +143,7 @@ export default function ContactPage() {
           <Card className="p-6 sm:p-8 rounded-3xl border border-border-light shadow-card">
             {isSuccess ? (
               <div className="py-8 text-center space-y-5 animate-scale-in">
-                <div className="w-16 h-16 rounded-full bg-status-success text-accent-green flex items-center justify-center mx-auto border border-accent-green/30">
+                <div className="w-16 h-16 rounded-full bg-status-success text-ink flex items-center justify-center mx-auto border border-status-success-accent">
                   <CheckCircle2 size={36} />
                 </div>
 
@@ -141,7 +157,7 @@ export default function ContactPage() {
                 </div>
 
                 <div className="p-4 bg-canvas rounded-2xl border border-border-light max-w-md mx-auto text-xs text-text-tertiary">
-                  Status: <strong className="text-accent-green font-bold">Received (Code: 201)</strong> • Registered in club CRM queue
+                  Status: <strong className="text-ink font-bold">Received (Code: 201)</strong> • Registered in club CRM queue
                 </div>
 
                 <div className="pt-2">
@@ -280,7 +296,7 @@ export default function ContactPage() {
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between text-xs font-bold text-text-secondary">
                     <span>Message / Specific Request</span>
-                    <span className={`text-[10px] ${message.length > 900 ? 'text-accent-red font-bold' : 'text-text-tertiary font-normal'}`}>
+                    <span className={`text-[10px] ${message.length > 900 ? 'text-ink font-bold' : 'text-text-tertiary font-normal'}`}>
                       {message.length} / 1000
                     </span>
                   </div>
@@ -311,20 +327,46 @@ export default function ContactPage() {
 
                 {/* Dev Simulated Error Active Indicator */}
                 {currentError && (
-                  <div className="p-2.5 bg-accent-yellow/10 border border-accent-yellow/30 rounded-xl flex items-center justify-between text-xs">
-                    <div className="flex items-center gap-1.5 text-accent-yellow font-medium">
-                      <AlertTriangle size={14} />
+                  <div className="p-2.5 bg-status-warning border border-status-warning-accent rounded-xl flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-1.5 text-ink font-medium">
+                      <AlertTriangle size={14} className="text-status-warning-icon" />
                       <span>Mock Error Active: {currentError}</span>
                     </div>
                     <button
                       type="button"
                       onClick={() => setSimulatedError(null)}
-                      className="text-accent-yellow hover:underline font-bold text-[10px]"
+                      className="text-ink hover:underline font-bold text-[10px]"
                     >
                       Clear
                     </button>
                   </div>
                 )}
+
+                {/* Honeypot field (Item 12): hidden from humans & screen readers without breaking accessibility */}
+                <div
+                  style={{
+                    position: 'absolute',
+                    left: '-9999px',
+                    top: '-9999px',
+                    width: '1px',
+                    height: '1px',
+                    overflow: 'hidden',
+                    opacity: 0,
+                    pointerEvents: 'none',
+                  }}
+                  aria-hidden="true"
+                >
+                  <label htmlFor="website">Leave this field blank</label>
+                  <input
+                    type="text"
+                    id="website"
+                    name="website"
+                    tabIndex={-1}
+                    autoComplete="off"
+                    value={honeypot}
+                    onChange={(e) => setHoneypot(e.target.value)}
+                  />
+                </div>
 
                 <Button
                   type="submit"
@@ -401,8 +443,8 @@ export default function ContactPage() {
             </div>
           </Card>
 
-          <Card className="p-6 rounded-3xl border border-border-light bg-gradient-to-br from-canvas to-surface space-y-3">
-            <div className="flex items-center gap-2 text-xs font-bold text-accent-green">
+          <Card className="p-6 rounded-3xl border border-border-light bg-surface space-y-3">
+            <div className="flex items-center gap-2 text-xs font-bold text-ink">
               <ShieldCheck size={18} />
               <span>Safety & Fair Play Protocol</span>
             </div>

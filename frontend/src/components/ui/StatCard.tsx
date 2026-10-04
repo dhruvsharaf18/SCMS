@@ -19,8 +19,8 @@ export function StatCard({
   value,
   delta,
   icon: Icon,
-  iconBg = 'bg-primary-50',
-  iconColor = 'text-primary-500',
+  iconBg = 'bg-odoo-purple',
+  iconColor = 'text-white',
   className,
 }: StatCardProps) {
   const DeltaIcon = delta === undefined || delta === 0
@@ -30,33 +30,33 @@ export function StatCard({
       : TrendingDown
 
   const deltaColor = delta === undefined || delta === 0
-    ? 'text-text-tertiary'
+    ? 'text-ink'
     : delta > 0
-      ? 'text-accent-green'
-      : 'text-accent-red'
+      ? 'text-accent-green font-bold'
+      : 'text-accent-red font-bold'
 
   return (
     <div
       className={cn(
-        'bg-surface rounded-3xl shadow-card p-5 lg:p-6 flex flex-col gap-3',
+        'bg-surface rounded-3xl shadow-card p-5 lg:p-6 flex flex-col gap-3 border border-border-light',
         className,
       )}
     >
       <div className="flex items-center justify-between">
-        <span className="text-sm text-text-secondary font-medium">{label}</span>
+        <span className="text-sm text-ink font-semibold">{label}</span>
         {Icon && (
-          <span className={cn('flex items-center justify-center w-9 h-9 rounded-xl', iconBg)}>
+          <span className={cn('flex items-center justify-center w-9 h-9 rounded-xl border border-border-light shadow-pill', iconBg)}>
             <Icon size={18} className={iconColor} />
           </span>
         )}
       </div>
 
       <div className="flex items-end gap-2">
-        <span className="text-2xl lg:text-3xl font-bold text-text-primary tracking-tight">
+        <span className="text-2xl lg:text-3xl font-extrabold text-ink tracking-tight">
           {value}
         </span>
         {delta !== undefined && (
-          <span className={cn('flex items-center gap-0.5 text-sm font-medium mb-0.5', deltaColor)}>
+          <span className={cn('flex items-center gap-0.5 text-sm font-bold mb-0.5', deltaColor)}>
             <DeltaIcon size={14} />
             {Math.abs(delta).toFixed(1)}%
           </span>

@@ -68,15 +68,15 @@ export default function StaffReports() {
           label="GST collected"
           value={formatMoney(summary?.tax_paise ?? 0)}
           icon={Landmark}
-          iconBg="bg-amber-50"
-          iconColor="text-amber-600"
+          iconBg="bg-primary-500"
+          iconColor="text-ink"
         />
         <StatCard
           label="Net of GST"
           value={formatMoney((summary?.revenue_paise ?? 0) - (summary?.tax_paise ?? 0))}
           icon={Percent}
-          iconBg="bg-primary-50"
-          iconColor="text-primary-500"
+          iconBg="bg-surface-dark"
+          iconColor="text-white"
         />
       </div>
 

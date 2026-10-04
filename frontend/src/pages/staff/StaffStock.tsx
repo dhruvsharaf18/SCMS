@@ -155,6 +155,7 @@ export default function StaffStock() {
       await restockMutation.mutateAsync({
         id: restockProduct.id,
         qty: restockQty,
+        note: restockNote,
       })
       toast(`Successfully added ${restockQty} units to ${restockProduct.name}`, 'success')
       setRestockProduct(null)
@@ -372,12 +373,12 @@ export default function StaffStock() {
             <p className="text-xs font-medium text-text-secondary uppercase tracking-wider">
               Low Stock Warnings
             </p>
-            <p className="text-2xl font-bold text-accent-red mt-1">
+            <p className="text-2xl font-bold text-ink mt-1">
               {lowStockCount}
             </p>
             <p className="text-xs text-text-tertiary mt-0.5">Below reorder limit</p>
           </div>
-          <div className="w-12 h-12 rounded-2xl bg-rose-50 text-accent-red flex items-center justify-center">
+          <div className="w-12 h-12 rounded-2xl bg-status-error text-ink border border-status-error-accent flex items-center justify-center">
             <AlertTriangle size={24} />
           </div>
         </Card>
@@ -392,7 +393,7 @@ export default function StaffStock() {
             </p>
             <p className="text-xs text-text-tertiary mt-0.5">Retail inventory value</p>
           </div>
-          <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-accent-green flex items-center justify-center">
+          <div className="w-12 h-12 rounded-2xl bg-primary-500 text-ink border border-ink flex items-center justify-center">
             <Layers size={24} />
           </div>
         </Card>
@@ -429,8 +430,8 @@ export default function StaffStock() {
               onClick={() => setLowStockOnly(!lowStockOnly)}
               className={`px-3 py-2 rounded-xl text-xs font-medium flex items-center gap-1.5 transition-colors border ${
                 lowStockOnly
-                  ? 'bg-rose-50 border-rose-200 text-accent-red'
-                  : 'bg-canvas border-border-light text-text-secondary hover:text-text-primary'
+                  ? 'bg-status-error border-status-error-accent text-ink font-bold'
+                  : 'bg-surface-dark border-border-light text-ink hover:text-ink'
               }`}
             >
               <AlertTriangle size={14} />
@@ -539,7 +540,9 @@ export default function StaffStock() {
                 value={formData.sku}
                 onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
                 placeholder="e.g. RKT-004"
-                className="w-full px-3 py-2 rounded-xl border border-border-light bg-canvas text-xs font-mono font-bold text-text-primary focus:outline-none focus:border-primary-500 focus:bg-surface"
+                className="w-full px-3 py-2 rounded-xl border border-border-light bg-canvas text-xs font-mono font-bold text-text-primary focus:outline-none focus:border-primary-500 focus:bg-surface disabled:opacity-60"
+                disabled={!!editingProduct}
+                title={editingProduct ? 'SKU cannot be changed after creation' : undefined}
                 required
               />
             </div>
@@ -617,7 +620,9 @@ export default function StaffStock() {
                 min="0"
                 value={formData.stock_qty}
                 onChange={(e) => setFormData({ ...formData, stock_qty: parseInt(e.target.value) || 0 })}
-                className="w-full px-3 py-2 rounded-xl border border-border-light bg-canvas text-xs font-semibold text-text-primary focus:outline-none focus:border-primary-500 focus:bg-surface"
+                className="w-full px-3 py-2 rounded-xl border border-border-light bg-canvas text-xs font-semibold text-text-primary focus:outline-none focus:border-primary-500 focus:bg-surface disabled:opacity-60"
+                disabled={!!editingProduct}
+                title={editingProduct ? 'Use Restock to change stock' : undefined}
                 required
               />
             </div>

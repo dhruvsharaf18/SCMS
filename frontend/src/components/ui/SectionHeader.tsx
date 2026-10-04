@@ -21,7 +21,7 @@ export function SectionHeader({
       {viewAllTo && (
         <Link
           to={viewAllTo}
-          className="text-sm font-medium text-primary-500 hover:text-primary-600 transition-colors"
+          className="text-sm font-semibold text-odoo-purple hover:underline transition-colors"
         >
           {viewAllLabel} →
         </Link>

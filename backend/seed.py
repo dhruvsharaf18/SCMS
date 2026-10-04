@@ -4,6 +4,7 @@ Every section is idempotent on its own table, so adding a section later still ru
 even though users already exist. The API calls this on every startup when SEED=true.
 """
 
+import os
 from datetime import date, datetime, time, timedelta, timezone
 
 from sqlalchemy import func, select
@@ -585,6 +586,115 @@ def _seed_reservations(session: Session) -> None:
             session.rollback()
 
 
+# ------------------------------------------------------------------ bulk members
+# Optional demo volume. Off by default, so the 30-member seed and the tests are untouched.
+# Set SEED_MEMBERS_TOTAL=300 in .env to grow the club to 300 members (codes CC-000031 ...).
+# Deterministic: same input, same rows. Fake data only (.test emails, 98xxxxxxxx phones).
+
+_FIRST_NAMES = (
+    "Aarav", "Vivaan", "Aditya", "Arjun", "Rohan", "Karan", "Rahul", "Siddharth", "Ishaan",
+    "Kabir", "Vikram", "Amit", "Nikhil", "Varun", "Yash", "Dev", "Meera", "Ananya", "Diya",
+    "Isha", "Kavya", "Neha", "Pooja", "Priya", "Riya", "Sana", "Shreya", "Tanvi", "Aisha",
+    "Anjali", "Divya", "Nisha", "Simran", "Sneha", "Zoya", "Farhan", "Imran", "Harpreet",
+    "Gurpreet", "Manish",
+)
+_LAST_NAMES = (
+    "Sharma", "Verma", "Patel", "Shah", "Mehta", "Desai", "Joshi", "Kulkarni", "Iyer", "Nair",
+    "Menon", "Reddy", "Rao", "Naidu", "Gupta", "Agarwal", "Singh", "Kaur", "Khan", "Ansari",
+    "Sheikh", "Bose", "Banerjee", "Chatterjee", "Das", "Ghosh", "Kapoor", "Malhotra", "Chopra",
+    "Bhatt",
+)
+
+
+def _bulk_plan(n: int) -> PlanCode:
+    slot = n % 20
+    if slot < 3:
+        return PlanCode.GOLD      # 15%
+    if slot < 15:
+        return PlanCode.SILVER    # 60%
+    return PlanCode.JUNIOR        # 25%
+
+
+def _bulk_end_date(n: int, today: date) -> date:
+    slot = (n * 7 + 3) % 20
+    if slot < 2:                  # 10% expired, 1-60 days ago
+        return today - timedelta(days=1 + (n * 5) % 60)
+    if slot < 4:                  # 10% expiring, today .. today+7
+        return today + timedelta(days=(n * 3) % 8)
+    return today + timedelta(days=8 + (n * 11) % 23)   # 80% active, 8-30 days left
+
+
+def _bulk_dob(n: int, plan: PlanCode, today: date) -> date:
+    month, day = (n * 5) % 12 + 1, (n * 11) % 28 + 1
+    age = 8 + (n * 3) % 10 if plan is PlanCode.JUNIOR else 19 + (n * 7) % 45   # Junior < 18
+    return date(today.year - age, month, day)
+
+
+def _bulk_joined(n: int, today: date) -> datetime:
+    # Back-dated so the dashboard's "new members" tiles are not flooded with 270 rows.
+    days = 1 + (n // 25) % 20 if n % 25 == 0 else 35 + (n * 37) % 330
+    return datetime.combine(
+        today - timedelta(days=days), time(10, 0), tzinfo=CLUB_TZ
+    ).astimezone(timezone.utc)
+
+
+def _backdate(row, when: datetime) -> None:
+    if hasattr(row, "created_at"):
+        row.created_at = when
+
+
+def _seed_bulk_members(session: Session) -> None:
+    try:
+        total = min(int(os.environ.get("SEED_MEMBERS_TOTAL", "0") or 0), 1000)
+    except ValueError:
+        return
+    if total <= MEMBER_COUNT:
+        return
+
+    today = _today_ist()
+    plans = {code: plan_id for code, plan_id in session.execute(select(Plan.code, Plan.id))}
+    existing_codes = set(session.execute(select(Member.member_code)).scalars())
+    existing_phones = set(session.execute(select(Member.phone)).scalars())
+
+    pending = []
+    for n in range(MEMBER_COUNT + 1, total + 1):
+        code, phone = f"CC-{n:06d}", f"98{n:08d}"
+        if code in existing_codes or phone in existing_phones:
+            continue
+        plan_code = _bulk_plan(n)
+        joined = _bulk_joined(n, today)
+        member = Member(
+            member_code=code,
+            full_name=(
+                f"{_FIRST_NAMES[(n * 7) % len(_FIRST_NAMES)]} "
+                f"{_LAST_NAMES[(n * 13 + n // 40) % len(_LAST_NAMES)]}"
+            ),
+            phone=phone,
+            email=f"member{n:02d}@club.test",
+            dob=_bulk_dob(n, plan_code, today),
+            emergency_contact=f"97{n:08d}",
+        )
+        _backdate(member, joined)
+        pending.append((member, plan_code, joined, _bulk_end_date(n, today)))
+
+    if not pending:
+        return
+    session.add_all([m for m, _, _, _ in pending])
+    session.flush()  # assigns member ids
+    for member, plan_code, joined, end_date in pending:
+        membership = Membership(
+            member_id=member.id,
+            plan_id=plans[plan_code.value],
+            start_date=end_date - timedelta(days=30),
+            end_date=end_date,
+            status=MembershipStatus.ACTIVE.value,
+        )
+        _backdate(membership, joined)
+        session.add(membership)
+    session.commit()
+    print(f"seed: added {len(pending)} bulk members (target total {total})")
+
+
 def run_seed(session: Session) -> None:
     _seed_users(session)
     _seed_plans(session)
@@ -596,3 +706,4 @@ def run_seed(session: Session) -> None:
     _seed_members(session)
     _seed_history(session)
     _seed_reservations(session)
+    _seed_bulk_members(session)

@@ -31,6 +31,20 @@ export function formatTime(iso: string): string {
   })
 }
 
+/**
+ * Returns `raw` only when it is a same-origin relative path: one leading "/", not "//",
+ * no backslash, no control characters. Anything else (absolute URLs, "//host", "/\host")
+ * could send the user off-site after login, so it yields null.
+ */
+export function safeNextPath(raw: string | null | undefined): string | null {
+  if (!raw || raw.length > 512) return null
+  if (!raw.startsWith('/') || raw.startsWith('//')) return null
+  if (raw.includes('\\')) return null
+  if (/[\u0000-\u001f\u007f]/.test(raw)) return null
+  if (raw === '/login' || raw.startsWith('/login?')) return null
+  return raw
+}
+
 /** Generate initials from a full name (max 2 chars). */
 export function getInitials(name: string): string {
   return name

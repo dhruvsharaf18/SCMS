@@ -18,13 +18,13 @@ export function IconRailItem({ icon: Icon, label, active, onClick, badge }: Icon
       className={cn(
         'relative flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-200 touch-target',
         active
-          ? 'bg-primary-50 text-primary-600 shadow-pill'
-          : 'text-text-tertiary hover:text-text-primary hover:bg-canvas',
+          ? 'bg-odoo-purple text-white shadow-pill'
+          : 'text-ink hover:text-ink hover:bg-grey-tint',
       )}
     >
       <Icon size={20} strokeWidth={active ? 2.2 : 1.8} />
       {badge !== undefined && badge > 0 && (
-        <span className="absolute -top-0.5 -right-0.5 flex items-center justify-center min-w-[16px] h-4 px-1 rounded-full bg-accent-red text-[10px] font-bold text-white">
+        <span className="absolute -top-0.5 -right-0.5 flex items-center justify-center min-w-[16px] h-4 px-1 rounded-full bg-primary-500 text-[10px] font-bold text-ink border border-ink">
           {badge > 99 ? '99+' : badge}
         </span>
       )}

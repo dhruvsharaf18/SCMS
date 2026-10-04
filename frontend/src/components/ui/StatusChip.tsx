@@ -17,26 +17,26 @@ export interface StatusChipProps {
 }
 
 const variantStyles: Record<ChipVariant, string> = {
-  success: 'bg-status-success text-status-success-text',
-  warning: 'bg-status-warning text-status-warning-text',
-  error: 'bg-status-error text-status-error-text',
-  info: 'bg-status-info text-status-info-text',
-  pending: 'bg-status-pending text-status-pending-text',
-  neutral: 'bg-canvas text-text-secondary',
+  success: 'bg-status-success text-ink border border-accent-green font-bold',
+  warning: 'bg-status-warning text-ink border border-accent-orange font-bold',
+  error: 'bg-status-error text-ink border border-accent-red font-bold',
+  info: 'bg-status-info text-ink border border-accent-teal font-bold',
+  pending: 'bg-status-pending text-ink border border-accent-purple font-bold',
+  neutral: 'bg-odoo-grey text-ink border border-border-light font-bold',
 }
 
 export function StatusChip({ label, variant = 'neutral', className, dot }: StatusChipProps) {
   if (dot) {
     return (
-      <span className={cn('flex items-center gap-1.5 text-xs font-medium', className)}>
+      <span className={cn('flex items-center gap-1.5 text-xs font-bold text-ink', className)}>
         <span
-          className={cn('w-2 h-2 rounded-full', {
+          className={cn('w-2.5 h-2.5 rounded-full border border-ink/40', {
             'bg-accent-green': variant === 'success',
-            'bg-accent-yellow': variant === 'warning',
+            'bg-accent-orange': variant === 'warning',
             'bg-accent-red': variant === 'error',
-            'bg-primary-500': variant === 'info',
+            'bg-accent-teal': variant === 'info',
             'bg-accent-purple': variant === 'pending',
-            'bg-text-tertiary': variant === 'neutral',
+            'bg-ink': variant === 'neutral',
           })}
         />
         {label}

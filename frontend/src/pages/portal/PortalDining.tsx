@@ -143,11 +143,11 @@ export default function PortalDining() {
       <div
         className={`p-4 rounded-2xl border flex items-start gap-3 ${
           discountPct > 0
-            ? 'bg-gradient-to-r from-amber-50 to-rose-50 border-amber-200'
-            : 'bg-canvas border-border-light'
+            ? 'bg-primary-500 border-ink text-ink'
+            : 'bg-surface border-border-light text-ink'
         }`}
       >
-        <div className="w-10 h-10 rounded-xl bg-white shadow-soft flex items-center justify-center text-amber-600 flex-shrink-0">
+        <div className="w-10 h-10 rounded-xl bg-surface-dark text-white flex items-center justify-center flex-shrink-0 border border-ink">
           <Sparkles size={20} />
         </div>
         <div>
@@ -190,7 +190,7 @@ export default function PortalDining() {
                 const discounted = item.member_price_paise < item.price_paise
                 return (
                   <Card key={item.id} className="p-4 flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center flex-shrink-0">
+                    <div className="w-10 h-10 rounded-xl bg-primary-500 text-ink border border-ink flex items-center justify-center flex-shrink-0">
                       <Icon size={18} />
                     </div>
                     <div className="min-w-0 flex-1">
@@ -201,7 +201,7 @@ export default function PortalDining() {
                       {discounted && (
                         <p className="text-[11px] text-text-tertiary line-through">{formatMoney(item.price_paise)}</p>
                       )}
-                      <p className={`font-extrabold text-sm ${discounted ? 'text-accent-green' : 'text-text-primary'}`}>
+                      <p className="font-extrabold text-sm text-ink">
                         {formatMoney(item.member_price_paise)}
                       </p>
                     </div>
@@ -319,12 +319,12 @@ export default function PortalDining() {
               />
 
               {reservedOnSelectedDate && (
-                <p className="text-[11px] text-amber-700 flex items-center gap-1.5">
+                <p className="text-[11px] text-ink flex items-center gap-1.5 font-bold">
                   <AlertTriangle size={12} /> You already have a table on this day (limit 1 per day).
                 </p>
               )}
               {inlineError && (
-                <p className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-800">{inlineError}</p>
+                <p className="p-3 rounded-xl bg-status-error border border-status-error-accent text-xs text-ink font-semibold">{inlineError}</p>
               )}
 
               <Button

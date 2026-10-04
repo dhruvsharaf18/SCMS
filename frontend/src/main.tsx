@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import './index.css'
 
 import { AuthProvider } from './lib/auth-context'
+import { CartProvider } from './lib/cart-context'
 import { ToastProvider } from './components/ui/Toast'
 import { AppShell } from './components/layout/AppShell'
 import { PublicLayout } from './components/layout/PublicLayout'
@@ -16,6 +17,7 @@ import AboutPage from './pages/public/AboutPage'
 import PlansPage from './pages/public/PlansPage'
 import AvailabilityPage from './pages/public/AvailabilityPage'
 import ShopPage from './pages/public/ShopPage'
+import ProductDetailPage from './pages/public/ProductDetailPage'
 import ContactPage from './pages/public/ContactPage'
 import LoginPage from './pages/public/LoginPage'
 
@@ -43,8 +45,6 @@ import StaffKitchen from './pages/staff/StaffKitchen'
 import StaffReservations from './pages/staff/StaffReservations'
 import StaffLeads from './pages/staff/StaffLeads'
 import StaffPayments from './pages/staff/StaffPayments'
-import StaffInvoices from './pages/staff/StaffInvoices'
-import StaffExpenses from './pages/staff/StaffExpenses'
 import StaffReports from './pages/staff/StaffReports'
 import StaffHR from './pages/staff/StaffHR'
 import StaffAudit from './pages/staff/StaffAudit'
@@ -70,6 +70,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
+        <CartProvider>
         <ToastProvider>
           <BrowserRouter>
             <Routes>
@@ -80,6 +81,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
                 <Route path="/plans" element={<PlansPage />} />
                 <Route path="/availability" element={<AvailabilityPage />} />
                 <Route path="/shop" element={<ShopPage />} />
+                <Route path="/shop/:productId" element={<ProductDetailPage />} />
                 <Route path="/contact" element={<ContactPage />} />
                 <Route path="/login" element={<LoginPage />} />
               </Route>
@@ -123,8 +125,6 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
                 <Route path="/staff/reservations" element={<StaffReservations />} />
                 <Route path="/staff/leads" element={<StaffLeads />} />
                 <Route path="/staff/payments" element={<StaffPayments />} />
-                <Route path="/staff/invoices" element={<StaffInvoices />} />
-                <Route path="/staff/expenses" element={<StaffExpenses />} />
                 <Route path="/staff/reports" element={<StaffReports />} />
                 <Route path="/staff/hr" element={<StaffHR />} />
                 <Route path="/staff/audit" element={<StaffAudit />} />
@@ -143,6 +143,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
             </Routes>
           </BrowserRouter>
         </ToastProvider>
+        </CartProvider>
       </AuthProvider>
     </QueryClientProvider>
   </React.StrictMode>,

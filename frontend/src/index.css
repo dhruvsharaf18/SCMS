@@ -17,7 +17,13 @@
     min-height: 100dvh;
   }
 
-  /* Custom scrollbar — subtle, matches the soft UI */
+  /* Selection color: accent-yellow background with ink text */
+  ::selection {
+    background-color: #EAB14D;
+    color: #141B2D;
+  }
+
+  /* Custom scrollbar — subtle, matches the Odoo palette */
   ::-webkit-scrollbar {
     width: 6px;
     height: 6px;
@@ -26,15 +32,35 @@
     @apply bg-transparent;
   }
   ::-webkit-scrollbar-thumb {
-    @apply bg-border-light rounded-full;
+    background-color: #8E8E8E;
+    border-radius: 9999px;
   }
   ::-webkit-scrollbar-thumb:hover {
-    @apply bg-border;
+    background-color: #141B2D;
   }
 
-  /* Remove default focus outline, add custom */
+  /* Focus ring clearly visible on white (16.87:1), grey (5.12:1), and purple (3.01:1) */
   *:focus-visible {
-    @apply outline-2 outline-offset-2 outline-primary-500;
+    outline: 2px solid #141B2D !important;
+    outline-offset: 2px !important;
+  }
+
+  /* Inputs: white fill, ink text, visible ink-or-grey border */
+  input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]),
+  select,
+  textarea {
+    background-color: #FFFFFF !important;
+    color: #141B2D !important;
+    border-color: #8E8E8E !important;
+  }
+  input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):focus,
+  select:focus,
+  textarea:focus {
+    border-color: #141B2D !important;
+  }
+  input::placeholder,
+  textarea::placeholder {
+    color: #71717A !important;
   }
 }
 
@@ -45,14 +71,14 @@
       -45deg,
       transparent,
       transparent 4px,
-      rgba(148, 163, 184, 0.15) 4px,
-      rgba(148, 163, 184, 0.15) 5px
+      rgba(20, 27, 45, 0.25) 4px,
+      rgba(20, 27, 45, 0.25) 5px
     );
   }
 
-  /* Glass overlay for modals */
+  /* Flat solid dark overlay for modals (no blur or translucency per prompt) */
   .backdrop-blur-overlay {
-    @apply bg-text-primary/20 backdrop-blur-sm;
+    background-color: rgba(20, 27, 45, 0.65);
   }
 }
 
@@ -75,5 +101,13 @@
   }
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
+  }
+}
+
+/* Print stylesheet: white background with dark text */
+@media print {
+  body {
+    background: #FFFFFF !important;
+    color: #141B2D !important;
   }
 }
